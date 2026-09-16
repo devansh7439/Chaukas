@@ -173,15 +173,13 @@ Chaukas/                          ← repo root
 ├── LICENSE                       ← Apache-2.0
 ├── .gitignore                    ← models/, eval/cache/, large audio
 ├── Chaukas_BLUEPRINT.md          ← this file
-├── pyproject.toml
+├── pyproject.toml                ← uv project, Python 3.12, ruff + strict mypy + pytest
 ├── run.bat
-├── config/
-│   ├── default.yaml              ← thresholds, weights, backends, feature flags
-│   ├── lexicon.yaml              ← tiers, fast-path verbs, exclusions (EN / romanised HI / Devanagari)
-│   └── templates.yaml            ← attack-chain templates
-├── chaukas/
-│   ├── app.py                    ← entry point, wires threads + Qt
-│   ├── core/        events.py (bus) · models.py · clock.py (real + virtual) · config.py
+├── src/chaukas/                  ← src layout: tests always run against the installed package
+│   ├── app.py                    ← CLI entry point (check-config now; later wires threads + Qt)
+│   ├── resources/   default.yaml (single source of truth for tunables) · lexicon.yaml · templates.yaml
+│   ├── core/        models.py · events.py (sync + threaded bus) · clock.py (monotonic + virtual)
+│   │                timeline.py (heap) · window.py (sliding time window) · config.py · errors.py
 │   ├── audio/       capture.py · vad.py · segmenter.py · replay.py · echo_guard.py · playback_guard.py
 │   ├── asr/         base.py · whisper_qnn.py · whisper_cpu.py · normalise.py
 │   ├── signals/     lexicon.py · negation.py · digits.py · extractor.py

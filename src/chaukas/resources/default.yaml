@@ -1,0 +1,84 @@
+# Chaukas default configuration: the single source of truth for every tunable.
+# All numbers are starting hypotheses (blueprint section 6.7). Tune on the dev split only,
+# then freeze with the git tag `eval-freeze` before touching the test split.
+
+audio:
+  sample_rate: 16000           # Hz, mono
+  vad_silence_ms: 600          # silence that closes a segment
+  max_segment_s: 12.0          # forced cut, at the quietest frame in the last second
+  playback_guard_tail_ms: 300  # caller audio discarded this long after an alert clip ends
+  echo_similarity: 0.6         # token overlap above which a user segment is treated as echo
+
+signals:
+  weak: 0.3
+  strong: 0.5
+  phrase: 0.6
+  fast_path: 0.75
+  fast_path_window_tokens: 6   # request verb and object must be this close
+  digit_min: 4
+  digit_max: 8
+  digit_lookback_s: 90         # user digits count only this soon after a credential request
+
+llm:
+  base_url: "http://127.0.0.1:8080/v1"  # set to the GenieX serve endpoint on Day 2
+  model: ""                              # set to the chosen AI Hub bundle on Day 2
+  window_s: 90
+  context_lookback_s: 300
+  heartbeat_s: 45
+  heartbeat_min_speech_s: 10
+  debounce_s: 8
+  timeout_s: 10                # replace with 2 x the measured median latency
+  failure_grace_s: 20          # lift the pre-LLM cap after this long without a response
+  max_tokens: 300
+  temperature: 0.0
+  can_discount: true           # bounded LLM discount of authority/threat/urgency keywords
+
+engine:
+  weights:
+    authority: 0.5
+    threat: 0.7
+    urgency: 0.4
+    isolation: 0.9
+    surveillance: 0.9
+    money_request: 0.8
+    remote_access_request: 0.6
+    credential_request: 0.9
+  evidence_half_life_s: 600    # measured in call time; the decay clock pauses during silence
+  thresholds:
+    notice: 0.20
+    warning: 0.45
+    critical: 0.70
+  gates:
+    addressed_false: 0.3          # G when the LLM says the speech isn't addressed to the user
+    addressed_true_memory_s: 90   # ...unless an assessment this recent said it was
+    action_none: 0.70             # A with no relevant context
+    action_other: 0.85            # A with context for a different objective
+    action_match: 1.00            # A with context matching the active chain
+    context_lookback_s: 300
+    sequence_floor: 0.6           # S = floor + (1 - floor) * progress
+  chain:
+    step_min_confidence: 0.5
+    required_step_cap: 0.75
+    order_penalty_threshold: 0.7
+    order_penalty: 0.85
+    tie_margin: 0.05
+  rules:
+    coercion_min_evidence: 0.5
+    pre_disclosure_min_confidence: 0.7
+    hysteresis_margin: 0.10
+    hysteresis_hold_s: 30
+    dismissal_s: 180
+
+ablation:
+  use_llm: true
+  use_action_gate: true
+  use_sequence: true
+
+ui:
+  capture_exclusion: false     # also hides Chaukas from screen recorders; see blueprint 6.8
+  language: en
+
+privacy:
+  transcript_horizon_s: 300
+  session_idle_end_s: 1800
+  debug_text_logs: false
