@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Models and perception caches: downloaded or regenerated, never committed
+models/
+eval/cache/
+
+# Audio: FLAC is committed, raw WAV is not
+*.wav
+
+# Local overrides and logs
+config/local.yaml
+logs/
+*.log
+
+# OS / editors
+Thumbs.db
+.DS_Store
+.idea/
