@@ -18,6 +18,8 @@ signals:
   digit_min: 4
   digit_max: 8
   digit_lookback_s: 90         # user digits count only this soon after a credential request
+  digit_request_min_confidence: 0.6  # ...and only if that request was at least this confident
+  digit_confidence: 0.9        # confidence of the resulting user_digits_spoken signal
 
 llm:
   base_url: "http://127.0.0.1:8080/v1"  # set to the GenieX serve endpoint on Day 2

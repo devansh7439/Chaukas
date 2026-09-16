@@ -63,6 +63,8 @@ extend-exclude = ["*.md"]  # docs keep hand-aligned code snippets
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "C4", "PT", "RUF"]
+# En dash (Aho–Corasick) and the apostrophe variants the normaliser exists to unify.
+allowed-confusables = ["–", "’", "‘", "ʼ"]
 
 [tool.mypy]
 python_version = "3.11"

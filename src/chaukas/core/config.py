@@ -47,6 +47,8 @@ class SignalsConfig(_Section):
     digit_min: PositiveInt
     digit_max: PositiveInt
     digit_lookback_s: Seconds
+    digit_request_min_confidence: UnitFloat
+    digit_confidence: UnitFloat
 
     @model_validator(mode="after")
     def _check_order(self) -> Self:

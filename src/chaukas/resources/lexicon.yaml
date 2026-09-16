@@ -1,0 +1,89 @@
+# Chaukas lexicon (blueprint 6.3).
+#
+# Every entry passes through the same normaliser as the transcript, so write terms
+# naturally: case, apostrophes ("don't" = "do not") and Devanagari digits don't matter.
+# English entries also match -s/-es/-ed/-ing forms of their last word ("arrest" matches
+# "arrested").
+#
+#   tactics.<kind>.terms     one word → strong tier (0.5); several words → phrase tier (0.6)
+#   tactics.<kind>.weak      weak tier (0.3): never triggers the LLM or counts as a chain step
+#   requests.<kind>          fast path (0.75): a verb and an object close together
+#   negation                 a negator next to a request verb turns it into advice, not a request
+#   suppress                 keyword hits inside these phrases count for nothing
+#
+# Expand with the spellings Whisper actually produces; keep ambiguous everyday words weak.
+
+version: 1
+
+tactics:
+  authority:
+    terms: [cbi, police, cyber cell, crime branch, trai, rbi, customs, narcotics,
+            enforcement directorate, microsoft support, bank manager,
+            police se, cbi se, bank se bol raha,
+            पुलिस, सीबीआई, साइबर सेल, क्राइम ब्रांच, बैंक से बोल रहा]
+    weak: [officer, customer care, अधिकारी]
+
+  threat:
+    terms: [arrest, warrant, fir, case registered, money laundering, account blocked,
+            account frozen, virus, hacked, illegal,
+            giraftar, case darj, account band, jail,
+            गिरफ्तार, वारंट, केस दर्ज, मनी लॉन्ड्रिंग, खाता बंद, जेल, वायरस, हैक]
+
+  urgency:
+    weak: [immediately, right now, within one hour, last chance, urgent,
+           turant, abhi, jaldi, तुरंत, अभी, जल्दी]
+
+  isolation:
+    terms: [don't tell anyone, don't inform your family, keep this confidential,
+            secret investigation, kisi ko mat batana, ghar walon ko mat batana,
+            किसी को मत बताना, परिवार को मत बताना, गोपनीय]
+
+  surveillance:
+    terms: [stay on camera, don't disconnect, don't cut the call, digital arrest,
+            under surveillance, camera on rakho, call mat kaatna,
+            कैमरा चालू रखें, कॉल मत काटना, डिजिटल अरेस्ट]
+
+  money_request:
+    terms: [rtgs, neft, verification amount, safe account, rbi account, break your fd,
+            paise bhejo, amount transfer karo, पैसे भेजो, ट्रांसफर करें, सुरक्षित खाता]
+    weak: [transfer, upi]
+
+  remote_access_request:
+    terms: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
+            share your screen, download this app, tell me the code on screen,
+            app download karo, screen share karo,
+            एनीडेस्क, टीमव्यूअर, स्क्रीन शेयर, ऐप डाउनलोड]
+
+  credential_request:
+    terms: [otp, one time password, cvv, password, atm pin, upi pin, pin,
+            the code you received, otp batao, code batao,
+            ओटीपी, पिन, पासवर्ड, कोड बताइए]
+
+requests:
+  credential_request:
+    verbs: [tell, share, send, read, give, say, ask,
+            batao, bataiye, bataye, batayein, bata do, batana, bataana, bolo, bol do,
+            bhejo, bhej do, share karo,
+            बताओ, बताइए, बताएं, बता दो, बताना, बोलो, भेजो, भेज दो]
+    objects: [otp, one time password, cvv, password, pin, atm pin, upi pin,
+              verification code, code you received, ओटीपी, पासवर्ड, पिन]
+
+  remote_access_request:
+    verbs: [install, download, run, share, install karo, download karo, share karo,
+            इंस्टॉल करो, डाउनलोड करो, शेयर करो]
+    objects: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
+              app, application, software, screen, code on screen, code on your screen,
+              एनीडेस्क, टीमव्यूअर, ऐप, स्क्रीन]
+
+  money_request:
+    verbs: [transfer, send, pay, deposit, transfer karo, bhejo, bhej do, jama karo, daalo,
+            ट्रांसफर करो, भेजो, भेज दो, जमा करो, डालो]
+    objects: [money, amount, funds, payment, paise, paisa, rupees, rupaye, rs, ₹,
+              पैसे, रकम, रुपये]
+
+negation:
+  gap: 1                                   # words allowed between a negator and its verb
+  before: [not, never, "no", mat, nahi, nahin, na, मत, नहीं, न]   # quoted: bare no is a YAML boolean
+  after: [nahi, nahin, नहीं]                # "batana nahi"
+
+suppress: [pin code, pincode, postal code, पिन कोड]

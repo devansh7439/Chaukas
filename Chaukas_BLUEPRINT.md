@@ -181,8 +181,9 @@ Chaukas/                          ← repo root
 │   ├── core/        models.py · events.py (sync + threaded bus) · clock.py (monotonic + virtual)
 │   │                timeline.py (heap) · window.py (sliding time window) · config.py · errors.py
 │   ├── audio/       capture.py · vad.py · segmenter.py · replay.py · echo_guard.py · playback_guard.py
-│   ├── asr/         base.py · whisper_qnn.py · whisper_cpu.py · normalise.py
-│   ├── signals/     lexicon.py · negation.py · digits.py · extractor.py
+│   ├── asr/         base.py · whisper_qnn.py · whisper_cpu.py
+│   ├── signals/     normalise.py · automaton.py (Aho–Corasick) · lexicon.py · requests.py (fast path + negation)
+│   │                digits.py · extractor.py
 │   ├── llm/         client.py · prompts.py · schema.py · trigger.py · evidence.py
 │   ├── context/     processes.py · windows.py · downloads.py · ocr.py · replay_events.py
 │   ├── engine/      chains.py · risk.py · state.py
