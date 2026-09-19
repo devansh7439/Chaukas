@@ -87,14 +87,16 @@ def format_summary(summary: Summary) -> str:
 
 def format_ablation(summaries: Mapping[str, Summary]) -> str:
     """The A-E table from blueprint 8.5."""
+    width = 28  # a proportion with its confidence interval needs the room
     header = (
-        f"{'config':<7} {'detection':<22} {'critical before harm':<22} {'false alarms':<22} latency"
+        f"{'config':<7} {'detection':<{width}} {'critical before harm':<{width}}"
+        f" {'false alarms':<{width}} latency"
     )
     lines = [header, "-" * len(header)]
     for name, summary in summaries.items():
         lines.append(
-            f"{name:<7} {summary.detection!s:<22} {summary.critical_before_harm!s:<22}"
-            f" {summary.false_alarms!s:<22} {_latency(summary)}"
+            f"{name:<7} {summary.detection!s:<{width}} {summary.critical_before_harm!s:<{width}}"
+            f" {summary.false_alarms!s:<{width}} {_latency(summary)}"
         )
     return "\n".join(lines)
 
