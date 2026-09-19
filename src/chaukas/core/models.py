@@ -218,6 +218,25 @@ class ContextEvent:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class LLMAssessment:
+    """The parts of one LLM reply the risk engine consumes.
+
+    The LLM layer turns tactics and requested actions into ordinary signals; this carries
+    what isn't a signal: whether speech was addressed to the user, the suspected objective,
+    and which segments and tactics the reply covered (for the bounded keyword discount).
+    """
+
+    t: float  # when the reply became available
+    addressed_to_user: bool
+    suspected_objective: Objective
+    covered_seg_ids: frozenset[int] = frozenset()
+    listed_kinds: frozenset[SignalKind] = frozenset()
+
+    def __post_init__(self) -> None:
+        _check_time("t", self.t)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class ChainState:
     """Snapshot of one attack-chain template's progress.
 
@@ -246,6 +265,29 @@ class ChainState:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class RiskComponents:
+    """The factors of R = P · G · A · S, kept for the Why panel, logs and evaluation."""
+
+    pressure: float
+    addressed: float
+    action: float
+    sequence: float
+
+    def __post_init__(self) -> None:
+        for name in ("pressure", "addressed", "action", "sequence"):
+            _check_unit_interval(name, getattr(self, name))
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Reason:
+    """One line of evidence for the Why panel. The UI turns ``label`` into localised text."""
+
+    t: float
+    label: str  # a SignalKind or ContextKind value
+    detail: str  # evidence snippet or context detail (memory only)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class RiskState:
     """The engine's output after each update: what the UI shows and what evaluation scores."""
 
@@ -253,10 +295,12 @@ class RiskState:
     score: float
     level: Level
     objective: Objective
+    components: RiskComponents | None = None
     chain: ChainState | None = None
     coercion: bool = False
     llm_assessed: bool = False
-    reasons: tuple[str, ...] = ()
+    dismissed: bool = False  # the user acknowledged this level; show it without interrupting
+    reasons: tuple[Reason, ...] = ()
 
     def __post_init__(self) -> None:
         _check_time("t", self.t)

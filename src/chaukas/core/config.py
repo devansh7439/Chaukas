@@ -9,15 +9,14 @@ deep-merged on top in order, and the result is validated and frozen.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from importlib.resources import files
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from chaukas.core.errors import ConfigError
 from chaukas.core.models import SignalKind
+from chaukas.core.yamlio import read_file_mapping, read_resource_mapping
 
 UnitFloat = Annotated[float, Field(ge=0.0, le=1.0)]
 Seconds = Annotated[float, Field(gt=0.0)]
@@ -114,7 +113,7 @@ class ChainConfig(_Section):
 
 
 class RulesConfig(_Section):
-    coercion_min_evidence: UnitFloat
+    min_evidence: UnitFloat  # decayed evidence that counts as present
     pre_disclosure_min_confidence: UnitFloat
     hysteresis_margin: UnitFloat
     hysteresis_hold_s: Seconds
@@ -171,9 +170,10 @@ class ChaukasConfig(_Section):
 
 def load_config(*overrides: ConfigSource) -> ChaukasConfig:
     """Load the packaged defaults, deep-merge ``overrides`` in order, validate and freeze."""
-    data: dict[str, Any] = _read_default()
+    data: dict[str, Any] = read_resource_mapping("default.yaml")
     for source in overrides:
-        data = deep_merge(data, _read(source))
+        override = read_file_mapping(source, "config file") if isinstance(source, Path) else source
+        data = deep_merge(data, override)
     try:
         return ChaukasConfig.model_validate(data)
     except ValidationError as exc:
@@ -194,30 +194,3 @@ def deep_merge(base: Mapping[str, Any], override: Mapping[str, Any]) -> dict[str
         else:
             merged[key] = value
     return merged
-
-
-def _read_default() -> dict[str, Any]:
-    text = files("chaukas.resources").joinpath("default.yaml").read_text(encoding="utf-8")
-    return _parse(text, "packaged default.yaml")
-
-
-def _read(source: ConfigSource) -> Mapping[str, Any]:
-    if isinstance(source, Path):
-        try:
-            text = source.read_text(encoding="utf-8")
-        except OSError as exc:
-            raise ConfigError(f"cannot read config file {source}: {exc}") from exc
-        return _parse(text, str(source))
-    return source
-
-
-def _parse(text: str, origin: str) -> dict[str, Any]:
-    try:
-        data = yaml.safe_load(text)
-    except yaml.YAMLError as exc:
-        raise ConfigError(f"{origin} is not valid YAML: {exc}") from exc
-    if data is None:
-        return {}
-    if not isinstance(data, dict):
-        raise ConfigError(f"{origin} must contain a mapping at the top level")
-    return data

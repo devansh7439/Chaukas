@@ -1,0 +1,29 @@
+# Attack-chain templates (blueprint 6.6).
+# Steps are listed in the order attackers usually use them; order_score compares against it.
+#   required     every required step must be seen for critical (and progress is capped until then)
+#   distinctive  the step belongs to this attack mode, so seeing it makes the objective clear
+
+digital_arrest:
+  objective: money_transfer
+  steps:
+    - {id: authority,   signals: [authority],                weight: 1.0, required: true,  distinctive: false}
+    - {id: threat,      signals: [threat],                   weight: 1.0, required: true,  distinctive: false}
+    - {id: control,     signals: [isolation, surveillance],  weight: 1.2, required: true,  distinctive: true}
+    - {id: money,       signals: [money_request],            weight: 1.2, required: true,  distinctive: true}
+    - {id: bank_ctx,    events:  [bank_page, transfer_page], weight: 1.0, required: false, distinctive: true}
+
+remote_access:
+  objective: remote_control
+  steps:
+    - {id: authority,   signals: [authority],                weight: 1.0, required: true,  distinctive: false}
+    - {id: fear,        signals: [threat, urgency],          weight: 0.8, required: false, distinctive: false}
+    - {id: install_req, signals: [remote_access_request],    weight: 1.2, required: true,  distinctive: true}
+    - {id: remote_ctx,  events:  [remote_app_started, download_executable], weight: 1.2, required: false, distinctive: true}
+
+credential_theft:
+  objective: credential_disclosure
+  steps:
+    - {id: authority,   signals: [authority],                weight: 1.0, required: true,  distinctive: false}
+    - {id: urgency,     signals: [urgency, threat],          weight: 0.6, required: false, distinctive: false}
+    - {id: cred_req,    signals: [credential_request],       weight: 1.4, required: true,  distinctive: true}
+    - {id: cred_ctx,    events:  [otp_field_visible, password_field_visible], weight: 0.8, required: false, distinctive: true}

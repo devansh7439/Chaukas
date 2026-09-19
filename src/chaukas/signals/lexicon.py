@@ -9,15 +9,14 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from importlib.resources import files
 from pathlib import Path
 from typing import Any, Literal, Self, TypeVar
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from chaukas.core.errors import ConfigError
 from chaukas.core.models import SignalKind, Tier
+from chaukas.core.yamlio import read_file_mapping, read_resource_mapping
 from chaukas.signals.automaton import TokenAutomaton
 from chaukas.signals.normalise import tokenize
 
@@ -137,21 +136,8 @@ class Lexicon:
     def load(cls, path: Path | None = None) -> Lexicon:
         """Load the packaged lexicon, or the file at ``path``."""
         if path is None:
-            origin = "packaged lexicon.yaml"
-            text = files("chaukas.resources").joinpath("lexicon.yaml").read_text(encoding="utf-8")
-        else:
-            origin = str(path)
-            try:
-                text = path.read_text(encoding="utf-8")
-            except OSError as exc:
-                raise ConfigError(f"cannot read lexicon {path}: {exc}") from exc
-        try:
-            data = yaml.safe_load(text)
-        except yaml.YAMLError as exc:
-            raise ConfigError(f"{origin} is not valid YAML: {exc}") from exc
-        if not isinstance(data, dict):
-            raise ConfigError(f"{origin} must contain a mapping at the top level")
-        return cls.from_mapping(data)
+            return cls.from_mapping(read_resource_mapping("lexicon.yaml"))
+        return cls.from_mapping(read_file_mapping(path, "lexicon"))
 
 
 def _tokens(text: str) -> tuple[str, ...]:

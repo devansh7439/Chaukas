@@ -65,7 +65,7 @@ engine:
     order_penalty: 0.85
     tie_margin: 0.05
   rules:
-    coercion_min_evidence: 0.5
+    min_evidence: 0.5             # decayed evidence that counts as present (coercion, authority, recovery)
     pre_disclosure_min_confidence: 0.7
     hysteresis_margin: 0.10
     hysteresis_hold_s: 30

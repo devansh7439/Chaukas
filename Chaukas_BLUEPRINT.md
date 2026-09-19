@@ -186,7 +186,8 @@ Chaukas/                          ← repo root
 │   │                digits.py · extractor.py
 │   ├── llm/         client.py · prompts.py · schema.py · trigger.py · evidence.py
 │   ├── context/     processes.py · windows.py · downloads.py · ocr.py · replay_events.py
-│   ├── engine/      chains.py · risk.py · state.py
+│   ├── engine/      templates.py · chains.py · activity.py (call time) · evidence.py (decay)
+│   │                levels.py (hysteresis + dismissal) · risk.py
 │   ├── ui/          tray.py · notice_card.py · warning_panel.py · critical_screen.py
 │   │                why_panel.py · privacy_panel.py · capture_exclusion.py · strings.py
 │   └── privacy/     session.py
