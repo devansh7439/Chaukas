@@ -1,0 +1,19 @@
+case_id: BN01
+category: benign
+scenario: news_report
+split: dev
+author: me
+language: hinglish
+notes: >
+  A news bulletin about digital-arrest scams: every keyword, no manipulation of the
+  listener. The scripted llm verdict (not addressed to the user) is what keeps Chaukas
+  quiet; without the LLM this case raises a warning, which is the point of the ablation.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Aaj ki badi khabar: digital arrest scam ke maamle tezi se badh rahe hain."}
+  - {at: 5.0, caller: "Thag khud ko CBI officer batakar arrest warrant ka dar dikhate hain."}
+  - {at: 9.0, llm: {addressed_to_user: false, objective: none}}
+  - {at: 10.0, caller: "Police ne salaah di hai ki aise callers par bharosa na karein."}

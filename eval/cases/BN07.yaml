@@ -1,0 +1,20 @@
+case_id: BN07
+category: benign
+scenario: legit_it_support
+split: dev
+author: me
+language: hinglish
+notes: >
+  Support the user asked for: a remote-access request and a real AnyDesk launch, but no
+  fear, no authority claim and no isolation. A notice is acceptable; a warning is not.
+expected:
+  max_level: notice
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Main ne helpdesk par ticket banaya tha, laptop bahut slow hai."}
+  - {at: 5.0, caller: "Sure sir, please install AnyDesk so I can take a look."}
+  - {at: 9.0, llm: {addressed_to_user: true, objective: remote_control}}
+  - {at: 10.0, event: download_executable, detail: "AnyDesk.exe"}
+  - {at: 20.0, event: remote_app_started, detail: "AnyDesk.exe"}
+  - {at: 22.0, caller: "Thoda intezaar karein, main disk cleanup chala raha hoon."}

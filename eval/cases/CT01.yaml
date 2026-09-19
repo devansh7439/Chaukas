@@ -1,0 +1,23 @@
+case_id: CT01
+category: attack
+scenario: credential_theft
+split: dev
+author: me
+language: hinglish
+notes: >
+  Build-time smoke case. Critical must fire before the user starts saying the code, and the
+  recovery card must follow once they do.
+expected:
+  max_level: critical_recovery
+  acceptable_levels: [critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Main SBI bank se bol raha hoon, security department se."}
+  - {at: 1.0, mark: first_tactic}
+  - {at: 4.0, caller: "Aapka account band ho jayega, KYC update karna zaroori hai."}
+  - {at: 8.0, llm: {addressed_to_user: true, objective: credential_disclosure}}
+  - {at: 8.5, caller: "Turant verification chahiye, warna problem ho jayegi."}
+  - {at: 12.5, mark: expected_warning}
+  - {at: 13.0, caller: "Aapke phone par OTP aaya hai, OTP batao."}
+  - {at: 17.0, mark: harm} # the user starts reading the code out
+  - {at: 17.5, user: "Saat aath nau paanch."}

@@ -1,0 +1,28 @@
+case_id: DA01
+category: attack
+scenario: digital_arrest
+split: dev
+author: me
+language: hinglish
+notes: >
+  Build-time smoke case, not part of the 60-case dataset. The llm entry is scripted so the
+  engine's LLM path can be exercised before the LLM layer exists; real dataset cases must
+  never script it.
+expected:
+  max_level: critical
+  acceptable_levels: [critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "Namaste, main CBI se bol raha hoon, Delhi cyber cell se."}
+  - {at: 1.0, mark: first_tactic}
+  - {at: 4.5, caller: "Aapke Aadhaar par ek money laundering case darj hua hai."}
+  - {at: 8.5, user: "Kya? Maine kuch nahi kiya."}
+  - {at: 10.5, caller: "Aapke naam pe arrest warrant hai, giraftar ho sakte hain."}
+  - {at: 15.0, llm: {addressed_to_user: true, objective: money_transfer}}
+  - {at: 15.5, caller: "Yeh baat kisi ko mat batana, ghar walon ko mat batana."}
+  - {at: 19.5, mark: expected_warning}
+  - {at: 20.0, caller: "Camera on rakho aur call mat kaatna."}
+  - {at: 24.0, caller: "Verification ke liye safe account mein amount transfer karo."}
+  - {at: 29.0, event: bank_page, detail: "DemoBank (MOCK) - Login"}
+  - {at: 34.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {at: 42.0, mark: harm} # transfer submitted

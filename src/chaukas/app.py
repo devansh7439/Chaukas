@@ -8,11 +8,21 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from chaukas import __version__
-from chaukas.core.config import load_config
-from chaukas.core.errors import ConfigError
+from chaukas.core.config import ChaukasConfig, load_config
+from chaukas.core.errors import ChaukasError
+from chaukas.evaluation.ablation import ABLATIONS, config_for
+from chaukas.evaluation.cases import Split, load_case, load_cases
+from chaukas.evaluation.metrics import CaseOutcome, Summary, score_case, summarise
+from chaukas.evaluation.report import format_ablation, format_outcomes, format_run
+from chaukas.evaluation.runner import run_case
+from chaukas.signals.lexicon import Lexicon
 
 EXIT_OK = 0
-EXIT_CONFIG_ERROR = 2
+EXIT_ERROR = 2
+
+# Until the LLM layer exists, E (everything except the LLM) is the honest default:
+# configurations that use the LLM stay quiet while no assessment ever arrives.
+DEFAULT_ABLATION = "E"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,7 +36,51 @@ def build_parser() -> argparse.ArgumentParser:
     check = commands.add_parser(
         "check-config", help="validate the configuration and print the merged result"
     )
-    check.add_argument(
+    _add_config_option(check)
+
+    replay = commands.add_parser(
+        "replay", help="replay one case script through signals and the risk engine"
+    )
+    replay.add_argument("case", type=Path, help="case script (YAML)")
+    _add_config_option(replay)
+    _add_ablation_option(replay)
+    replay.add_argument("--tick", type=float, default=1.0, metavar="SECONDS")
+
+    evaluate = commands.add_parser("eval", help="score every case in a directory")
+    evaluate.add_argument("cases", type=Path, help="directory of case scripts")
+    _add_config_option(evaluate)
+    _add_ablation_option(evaluate)
+    evaluate.add_argument("--split", choices=[split.value for split in Split])
+
+    ablate = commands.add_parser("ablate", help="run every ablation configuration and compare")
+    ablate.add_argument("cases", type=Path, help="directory of case scripts")
+    _add_config_option(ablate)
+    ablate.add_argument("--split", choices=[split.value for split in Split])
+
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    try:
+        if args.command == "check-config":
+            print(load_config(*args.config).model_dump_json(indent=2))
+        elif args.command == "replay":
+            print(_replay(args))
+        elif args.command == "eval":
+            print(_evaluate(args))
+        elif args.command == "ablate":
+            print(_ablate(args))
+        else:  # pragma: no cover - argparse rejects anything else
+            raise AssertionError(f"unhandled command {args.command!r}")
+    except ChaukasError as exc:
+        print(exc, file=sys.stderr)
+        return EXIT_ERROR
+    return EXIT_OK
+
+
+def _add_config_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
         "--config",
         type=Path,
         action="append",
@@ -34,21 +88,39 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         help="YAML override applied on top of the defaults (repeatable, applied in order)",
     )
-    return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
-    if args.command == "check-config":
-        return _check_config(args.config)
-    raise AssertionError(f"unhandled command {args.command!r}")  # pragma: no cover
+def _add_ablation_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--ablation",
+        choices=sorted(ABLATIONS),
+        default=DEFAULT_ABLATION,
+        help=f"ablation configuration (default {DEFAULT_ABLATION})",
+    )
 
 
-def _check_config(paths: list[Path]) -> int:
-    try:
-        config = load_config(*paths)
-    except ConfigError as exc:
-        print(exc, file=sys.stderr)
-        return EXIT_CONFIG_ERROR
-    print(config.model_dump_json(indent=2))
-    return EXIT_OK
+def _replay(args: argparse.Namespace) -> str:
+    config = config_for(args.ablation, *args.config)
+    run = run_case(load_case(args.case), config=config, lexicon=Lexicon.load(), tick_s=args.tick)
+    return format_run(run)
+
+
+def _evaluate(args: argparse.Namespace) -> str:
+    config = config_for(args.ablation, *args.config)
+    outcomes = _score_all(args, config)
+    return format_outcomes(outcomes, summarise(outcomes))
+
+
+def _ablate(args: argparse.Namespace) -> str:
+    summaries: dict[str, Summary] = {}
+    for name in sorted(ABLATIONS):
+        config = config_for(name, *args.config)
+        summaries[name] = summarise(_score_all(args, config))
+    return format_ablation(summaries)
+
+
+def _score_all(args: argparse.Namespace, config: ChaukasConfig) -> list[CaseOutcome]:
+    split = Split(args.split) if args.split else None
+    lexicon = Lexicon.load()
+    cases = load_cases(args.cases, split=split)
+    return [score_case(run_case(case, config=config, lexicon=lexicon)) for case in cases]

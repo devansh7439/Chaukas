@@ -190,11 +190,13 @@ Chaukas/                          ← repo root
 │   │                levels.py (hysteresis + dismissal) · risk.py
 │   ├── ui/          tray.py · notice_card.py · warning_panel.py · critical_screen.py
 │   │                why_panel.py · privacy_panel.py · capture_exclusion.py · strings.py
-│   └── privacy/     session.py
+│   ├── privacy/     session.py
+│   └── evaluation/  cases.py (case scripts) · session.py (pipeline) · runner.py (replay)
+│                    metrics.py · ablation.py · report.py
 ├── mockbank/        index.html · otp.html · transfer.html · success.html  ← "DemoBank (MOCK)"
 ├── tools/           download_models.py   ← models are never committed
 ├── eval/
-│   ├── scripts/     ← case scripts as YAML (speaker, line, gap, events)
+│   ├── cases/       ← case scripts as YAML (timeline, marks, expectations)
 │   ├── lines/       ← per-line recordings (FLAC)
 │   ├── assemble.py  ← scripts + lines → caller.flac, user.flac, events.jsonl, label times
 │   ├── audio/       ← caseid_caller.flac, caseid_user.flac
@@ -809,7 +811,7 @@ Report **raw counts with 95% Wilson intervals**: "2 of 18 benign test cases rais
 1. **Perception pass**, once per backend: replay each case in real time through VAD and ASR. Call the LLM on a *superset* trigger schedule (every moment any config could trigger it). Cache segments, signals, LLM responses and measured latencies in `eval/cache/<backend>/`.
 2. **Engine pass**, per config, in seconds: replay the cache on a virtual clock. An LLM result becomes visible at its request time plus its measured latency.
 
-`eval/run_eval.py --split test --config D --backend npu` → `eval/results/*.csv` → `report.py` produces tables, a confusion chart, and a risk-over-time plot for one attack and one hard negative.
+Commands: `chaukas replay eval/cases/DA01.yaml --ablation D` for one case (a timeline of level changes with the evidence behind each), `chaukas eval eval/cases --split test --ablation D` for the table of outcomes and metrics, and `chaukas ablate eval/cases --split test` for the A–E comparison. `report.py` also produces a confusion chart and a risk-over-time plot for one attack and one hard negative.
 
 Hypothesis to test (don't assume it): *adding context, action and sequence reduces false alarms without meaningfully hurting detection or latency.* Gating delays critical by design, so config A may win on critical-before-harm. If the data disagrees with the hypothesis, report that honestly and explain it.
 
