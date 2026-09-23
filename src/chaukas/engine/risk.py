@@ -14,6 +14,9 @@ Levels come from thresholds on R, then:
   * pre-disclosure rule: a confident caller credential request is critical at once if
     authority or coercion was seen this session, and a warning otherwise;
   * recovery rule: a code read out after a pre-disclosure alert is critical_recovery.
+  * A critical or critical_recovery raised by these rules holds until the session ends:
+    the request's evidence decays, but a caller who stalls after asking for the OTP is
+    still waiting for it.
 Hysteresis and dismissal then decide what is shown.
 """
 
@@ -74,7 +77,7 @@ class RiskEngine:
         self._latest: LLMAssessment | None = None
         self._discounted: set[tuple[int, SignalKind]] = set()
         self._first_trigger_t: float | None = None
-        self._pre_disclosure_raised = False
+        self._held = Level.QUIET  # raised by the credential rules; held until session end
         self._changes = 0  # new chain steps or context events; invalidates dismissals
 
     @classmethod
@@ -131,7 +134,7 @@ class RiskEngine:
         self._latest = None
         self._discounted.clear()
         self._first_trigger_t = None
-        self._pre_disclosure_raised = False
+        self._held = Level.QUIET
         self._changes = 0
 
     # ------------------------------------------------------------- evaluation
@@ -267,14 +270,18 @@ class RiskEngine:
                 self._evidence.peak(kind) >= rules.min_evidence for kind in _COERCIVE
             )
             if primed:
-                level = max(level, Level.CRITICAL)
-                self._pre_disclosure_raised = True
+                self._held = max(self._held, Level.CRITICAL)
             else:
                 level = max(level, Level.WARNING)
         if evidence[SignalKind.USER_DIGITS_SPOKEN] >= rules.min_evidence:
             rule_objective = Objective.CREDENTIAL_DISCLOSURE
-            recovery = Level.CRITICAL_RECOVERY if self._pre_disclosure_raised else Level.WARNING
-            level = max(level, recovery)
+            if self._held >= Level.CRITICAL:
+                self._held = Level.CRITICAL_RECOVERY
+            else:
+                level = max(level, Level.WARNING)
+        if self._held > level:
+            level = self._held
+            rule_objective = Objective.CREDENTIAL_DISCLOSURE
         return level, rule_objective
 
     def _objective(

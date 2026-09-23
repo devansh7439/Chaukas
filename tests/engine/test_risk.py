@@ -178,6 +178,16 @@ def test_worked_example(case: Case) -> None:
     assert state.objective is case.objective
 
 
+def talk_and_tick(engine: RiskEngine, start: float, seconds: float) -> RiskState:
+    """The caller keeps talking for ``seconds``; evaluate every second, like a live session."""
+    engine.on_segment(Segment(session_id="s", seg_id=99, stream=Stream.CALLER,
+                              t_start=start, t_end=start + seconds, text=""))  # fmt: skip
+    state = engine.evaluate(start)
+    for step in range(1, int(seconds) + 1):
+        state = engine.evaluate(start + step)
+    return state
+
+
 def case(name_prefix: str) -> Case:
     return next(c for c in CASES if c.name.startswith(name_prefix))
 
@@ -250,6 +260,46 @@ class TestCredentialRules:
         engine.on_assessment(assessment(0.0, True))
         engine.on_signal(user_digits(1.0))
         assert engine.evaluate(2.0).level is L.WARNING
+
+    def test_pre_disclosure_critical_holds_while_the_caller_keeps_talking(self) -> None:
+        # A fast-path request (0.75) decays below 0.7 after ~60 s of speech. The protection
+        # must not lapse while the caller stalls: only the session boundary ends it.
+        engine = make_engine()
+        end = play(engine, case("14 "))
+        assert engine.evaluate(end).level is L.CRITICAL
+        state = talk_and_tick(engine, end, 600.0)
+        assert state.level is L.CRITICAL
+        assert state.objective is CR
+
+    def test_recovery_holds_after_the_digits_fade(self) -> None:
+        engine = make_engine()
+        end = play(engine, case("14 "))
+        engine.on_signal(user_digits(end))
+        assert engine.evaluate(end + 1.0).level is L.CRITICAL_RECOVERY
+        assert talk_and_tick(engine, end + 1.0, 1800.0).level is L.CRITICAL_RECOVERY
+
+    def test_a_pre_disclosure_warning_is_not_held(self) -> None:
+        # Without authority or coercion ("beta, OTP bata do") the warning fades normally.
+        engine = make_engine()
+        end = play(engine, case("15 "))
+        assert engine.evaluate(end).level is L.WARNING
+        assert talk_and_tick(engine, end, 1800.0).level is L.QUIET
+
+    def test_a_later_attack_that_reaches_critical_shows_its_own_objective(self) -> None:
+        engine = make_engine()
+        end = talk_and_tick(engine, play(engine, case("14 ")), 600.0).t
+        for offset, (kind, confidence) in enumerate(WITH_MONEY[1:], start=1):
+            engine.on_signal(caller(kind, confidence, end + offset))
+        engine.on_context(ContextEvent(t=end + 5.0, kind=C.TRANSFER_PAGE))
+        state = engine.evaluate(end + 6.0)
+        assert state.level is L.CRITICAL
+        assert state.objective is M
+
+    def test_reset_releases_the_hold(self) -> None:
+        engine = make_engine()
+        engine.evaluate(play(engine, case("14 ")))
+        engine.reset()
+        assert engine.evaluate(100.0).level is L.QUIET
 
     def test_pre_disclosure_needs_speech_addressed_to_the_user(self) -> None:
         engine = make_engine()
