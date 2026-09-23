@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    participant IN as Caller speech<br/>(case line, typed line,<br/>or ASR later)
+    participant S as Session
+    participant X as SignalExtractor
+    participant E as RiskEngine
+    participant L as Reasoner (LLM)
+    participant U as Dashboard + alerts
+
+    IN->>S: Segment "SBI bank se bol raha hoon" (ends t=4.0)
+    S->>X: extract(segment)
+    X-->>S: Signal authority, phrase tier 0.6
+    S->>E: on_signal, evaluate(4.0)
+    E-->>S: RiskState quiet (waits for the first LLM look)
+    S-->>L: strong keyword: trigger fires
+    L->>L: prompt = last 90 s + screen context + state
+    L-->>S: answer at t = request + latency:<br/>quotes checked, signals timed at their lines
+    S->>E: on_signal (LLM), on_assessment, evaluate
+
+    IN->>S: Segment "OTP batao" (ends t=16.2)
+    S->>X: extract(segment)
+    X-->>S: Signal credential_request, fast path 0.75
+    S->>E: on_signal, evaluate(16.2)
+    E-->>S: RiskState CRITICAL (pre-disclosure rule),<br/>objective credential_disclosure, reasons
+    S-->>U: view: headline, objective, evidence timeline
+    U->>U: full-screen "Pause before continuing"
+
+    IN->>S: user Segment "4 5 6 7" (the code, t=19.1)
+    S->>X: extract(segment)
+    X-->>S: Signal user_digits_spoken 0.9
+    S->>E: on_signal, evaluate
+    E-->>S: RiskState CRITICAL_RECOVERY
+    S-->>U: recovery card: "call your bank now"
+
+    Note over U: The user decides. Ticking "I understand" unlocks "Continue anyway",<br/>which dismisses this level for 3 min unless something new happens.

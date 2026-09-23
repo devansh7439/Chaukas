@@ -1,0 +1,40 @@
+flowchart LR
+    subgraph SHIPPED["Shipped inside the package (read-only)"]
+        direction TB
+        DEF["resources/default.yaml<br/>every tunable number"]
+        LEX["resources/lexicon.yaml<br/>keywords, requests, negators"]
+        TPL["resources/templates.yaml<br/>attack chains"]
+        CTXY["resources/context.yaml<br/>banks, remote tools, file types"]
+        ASSETS["ui/assets<br/>fonts, icons"]
+    end
+
+    subgraph DEV["Written by developers (in the repo)"]
+        direction TB
+        CASES["eval/cases/*.yaml<br/>case scripts + labels"]
+        EVENTS["eval/events/*.jsonl<br/>screen events for replay"]
+        OVR["--config file.yaml<br/>overrides"]
+    end
+
+    subgraph RUNTIME["Written at run time"]
+        direction TB
+        SET["%APPDATA%/Chaukas/settings.json<br/>language, trusted contact,<br/>capture exclusion"]
+        CACHE["eval/cache/*.json<br/>LLM answers + latency<br/>(evaluation only, git-ignored)"]
+    end
+
+    NEVER["Never written to disk:<br/>call audio, transcripts, signals,<br/>risk states, screen contents"]:::never
+
+    CORE(("Chaukas<br/>process"))
+
+    DEF --> CORE
+    LEX --> CORE
+    TPL --> CORE
+    CTXY --> CORE
+    ASSETS --> CORE
+    CASES --> CORE
+    EVENTS --> CORE
+    OVR --> CORE
+    CORE <--> SET
+    CORE <--> CACHE
+    CORE -. memory only .- NEVER
+
+    classDef never fill:#FFFFFF,stroke:#2E7A52,stroke-width:2px,color:#2E7A52

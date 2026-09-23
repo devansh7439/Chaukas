@@ -1,0 +1,85 @@
+erDiagram
+    SESSION ||--o{ SEGMENT : "hears"
+    SESSION ||--o{ CONTEXT_EVENT : "observes"
+    SESSION ||--o{ LLM_ASSESSMENT : "receives"
+    SESSION ||--o{ RISK_STATE : "evaluates, 1 per tick"
+    SEGMENT ||--o{ SIGNAL : "yields (keyword, rule)"
+    LLM_ASSESSMENT }o--o{ SEGMENT : "covers"
+    LLM_ASSESSMENT ||--o{ SIGNAL : "yields (llm, quote-checked)"
+    CHAIN_TEMPLATE ||--|{ STEP : "has, in order"
+    STEP }o--o{ SIGNAL : "matched by kind"
+    STEP }o--o{ CONTEXT_EVENT : "matched by kind"
+    CHAIN_STATE }o--|| CHAIN_TEMPLATE : "tracks progress of"
+    RISK_STATE ||--|| RISK_COMPONENTS : "R = P x G x A x S"
+    RISK_STATE |o--o| CHAIN_STATE : "active chain"
+    RISK_STATE ||--o{ REASON : "explained by"
+    REASON }o--o| SIGNAL : "quotes"
+    REASON }o--o| CONTEXT_EVENT : "describes"
+
+    SESSION {
+        string session_id
+        float now "seconds since start"
+    }
+    SEGMENT {
+        int seg_id PK
+        string stream "caller or user"
+        float t_start
+        float t_end
+        string text "memory only"
+    }
+    SIGNAL {
+        float t "start of its segment"
+        string kind "authority, threat, ..."
+        string source "keyword, llm, rule"
+        string tier "weak ... fast_path, llm, rule"
+        string speaker
+        float confidence "0..1"
+        int seg_id FK
+    }
+    CONTEXT_EVENT {
+        float t
+        string kind "bank_page, remote_app_started, ..."
+        string detail "window title or file name"
+    }
+    LLM_ASSESSMENT {
+        float t "request time + latency"
+        bool addressed_to_user
+        string suspected_objective
+    }
+    CHAIN_TEMPLATE {
+        string name PK "digital_arrest, ..."
+        string objective
+    }
+    STEP {
+        string id
+        float weight
+        bool required
+        bool distinctive
+    }
+    CHAIN_STATE {
+        string template FK
+        float progress "0..1"
+        float order_score "0..1"
+        bool required_seen
+        bool distinctive_seen
+    }
+    RISK_STATE {
+        float t
+        float score "R, 0..1"
+        string level "quiet ... critical_recovery"
+        string objective
+        bool coercion
+        bool llm_assessed
+        bool dismissed
+    }
+    RISK_COMPONENTS {
+        float pressure "P"
+        float addressed "G"
+        float action "A"
+        float sequence "S"
+    }
+    REASON {
+        float t
+        string label "signal or context kind"
+        string detail "quote or title"
+    }

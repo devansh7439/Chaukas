@@ -3,6 +3,8 @@
 What has been built, how it works, and what is left. A new entry is added at the end of
 every piece of work, so this file is always current. The design spec is
 [Chaukas_BLUEPRINT.md](../Chaukas_BLUEPRINT.md); this log says how far the code has got.
+Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). Data model and file schemas:
+[DATA_MODEL.md](DATA_MODEL.md).
 
 - [1. How Chaukas works today](#1-how-chaukas-works-today)
 - [2. Running it](#2-running-it)
@@ -303,3 +305,34 @@ Windows renderer confirmed the text spacing; capture exclusion was tested on a r
 window. Tests: 556 (was 483).
 
 Needs a person: a native Hindi speaker to review `copy.py` and `strings.py`.
+
+### 2026-09-23 - Documentation: README, architecture, data model
+
+The repo had no architecture document, ERD or schema reference; the blueprint's pipeline
+sketch (2.1) and data contracts (5) predate the code. Written from the code as it is now:
+
+- **[README.md](../README.md)**, rewritten for judges and developers: pitch, a 5-minute
+  demo with no microphone, the problem, the "suspicious combinations" idea, how it works,
+  what the user sees, an honest *What works today* table, privacy, all commands (including
+  using a real LLM), development, related work, limitations, roadmap, credits and licences.
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: system diagram (built vs planned), components and
+  dependency direction (verified against the imports), how one sentence becomes an alert
+  (sequence diagram), the risk engine and alert-level state machine, the LLM's trigger and
+  evidence guard, threads and time, evaluation, what runs where, design decisions, known gaps.
+- **[DATA_MODEL.md](DATA_MODEL.md)**: why there is no database, an entity-relationship
+  diagram of the in-memory model, every entity's fields, the enumerations, a storage map
+  (what is shipped, written by developers, written at run time, and never written), and the
+  schema of every file: config (every key and default), lexicon, templates, context rules,
+  case scripts, replay events, the LLM reply, the LLM cache and `settings.json`.
+- **Diagrams**: five Mermaid sources in `docs/diagrams/`, rendered to PNG in `docs/images/`
+  so they show everywhere (GitHub, VS Code, PDFs). Rendering doubles as a syntax check; each
+  image was inspected and two were redrawn for legibility.
+
+Found while documenting (recorded as known gaps, not yet fixed):
+- The config sections `audio`, `privacy` and `ui` are not read by any code yet.
+- The window keeps the current call's transcript until "End session"; the blueprint's
+  5-minute horizon arrives with the `privacy/` module.
+- The window does not call the LLM or start the desktop monitor yet (both work in replay).
+
+Correction: the demo's first notice arrives at about 8 s in the window (configuration E),
+not 15 s as said earlier in this session; the README has the measured timings.

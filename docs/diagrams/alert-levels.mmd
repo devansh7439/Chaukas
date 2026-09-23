@@ -1,0 +1,22 @@
+stateDiagram-v2
+    direction LR
+    [*] --> quiet
+
+    quiet --> notice: R >= 0.20
+    notice --> warning: R >= 0.45<br/>and coercion
+    warning --> critical: R >= 0.70<br/>and hard gate
+    quiet --> critical: caller asks for an OTP<br/>after authority or coercion
+    critical --> recovery: user reads out a code
+
+    critical --> warning: R < 0.60 for 30 s<br/>(threshold-based critical only)
+    warning --> notice: R < 0.35 for 30 s
+    notice --> quiet: R < 0.10 for 30 s
+
+    recovery: critical_recovery
+
+    note right of critical
+        Hard gate: every required step of the attack chain,
+        screen activity matching its objective, and speech
+        addressed to the user. A critical raised by the OTP
+        rules holds until the session ends.
+    end note

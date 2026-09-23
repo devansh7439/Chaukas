@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph IN["1. Background protection: inputs"]
+        direction LR
+        AUD["Call audio<br/>WASAPI loopback + mic"]:::planned
+        CASE["Case scripts<br/>eval/cases/*.yaml"]
+        TYPED["Typed lines<br/>dashboard box"]
+        DESK["Windows desktop<br/>processes, window titles,<br/>Downloads folder"]
+    end
+
+    subgraph PERCEIVE["Perceive"]
+        direction LR
+        VAD["audio/<br/>VAD + segmenter,<br/>playback and echo guards"]:::planned
+        ASR["asr/<br/>Whisper, NPU or CPU"]:::planned
+        CTX["context/<br/>1 Hz monitor"]
+    end
+
+    subgraph DETECT["2-3. Detect and assess (CPU)"]
+        direction LR
+        SIG["signals/<br/>lexicon tiers, request fast path,<br/>negation, suppression, digit rule"]
+        LLM["llm/<br/>trigger, prompt, client,<br/>schema, evidence guard"]
+        ENG["engine/<br/>decaying evidence, attack chains,<br/>gates, levels, special rules"]
+    end
+
+    MODEL[("Local LLM server<br/>GenieX on the NPU, or any<br/>OpenAI-compatible server")]
+
+    subgraph ACT["4-6. Interrupt, explain why, let the user decide"]
+        direction LR
+        UI["ui/<br/>dashboard, notice, warning,<br/>critical card, Why page"]
+        EVAL["evaluation/<br/>replay, metrics, ablation A-E"]
+    end
+
+    AUD --> VAD --> ASR
+    ASR -- Segment --> SIG
+    CASE -- "Segment,<br/>ContextEvent" --> SIG
+    TYPED -- Segment --> SIG
+    DESK --> CTX
+    CTX -- ContextEvent --> ENG
+    SIG -- Signal --> ENG
+    SIG -. "strong keyword:<br/>call the LLM" .-> LLM
+    LLM <-- "HTTP, localhost only" --> MODEL
+    LLM -- "Signal +<br/>LLMAssessment" --> ENG
+    ENG -- RiskState --> UI
+    ENG -- RiskState --> EVAL
+
+    classDef planned stroke-dasharray: 6 4,fill:#F7F7F7,color:#6B6B6B
