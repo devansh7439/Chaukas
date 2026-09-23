@@ -37,7 +37,7 @@ the alert: quiet → notice → warning → critical.
                                                   RiskState: level, objective, reasons
                                                         │
                                                         ▼
-                                          [UI: NOT BUILT YET]  today: printed by the CLI
+                                   ui/  dashboard + alert windows (PySide6 / QML)
 ```
 
 Until audio and speech-to-text exist, transcripts come from **case scripts**
@@ -113,11 +113,34 @@ validity, LLM evidence rejected, and LLM calls per minute, all with 95% confiden
 intervals. `ablate` runs configurations A-E (keywords only → full Chaukas → full minus
 LLM) to show what each layer adds.
 
-**`ui/strings.py`** - the alert text in English and Hindi (the rest of the UI is not built).
+**`ui/` - the window (built this session).** A PySide6 / Qt Quick dashboard in the style of
+the reference design, following the product flow: *background protection → detect → assess
+→ interrupt → explain why → let the user decide*.
+
+- **Home:** a headline that changes with the level ("You're protected." → "Pause before
+  continuing."), a *Risk right now* card (level, what the caller seems to want, risk bar),
+  action tiles (Pause, End session, Trusted contact, Helpline 1930, Privacy), the *Live call*
+  panel (caller and user lines, tactic tags, the strongest current tactics as rings, and a
+  box to type a line as the caller or as yourself), and a summary: pressure vs risk arcs,
+  risk over time, and the attack pattern drawn as a route.
+- **Interrupt:** three always-on-top windows that escalate: a corner notice, a side warning
+  panel, and a full-screen critical card. On the critical card, "Continue anyway" unlocks
+  only after "I understand this warning" is ticked. Nothing is ever blocked.
+- **Why:** every reason with the moment it happened and what was said, the fact line
+  ("There is no such thing as a digital arrest...") and the safe next steps.
+- **Privacy:** where each kind of data is processed, the listening indicator with Pause, and
+  End session (wipes everything). **Settings:** language (English / हिन्दी), trusted contact
+  (saved only on this PC), hide alerts from screen sharing.
+
+How it is put together: `live.py` (the session on a real clock, pure Python) →
+`presenter.py` (engine state → plain text and numbers, both languages, pure Python) →
+`bridge.py` (Qt properties and slots, ticks 4x a second) → `qml/` (the views; every colour,
+size and timing lives in `Theme.qml`). Icons are Lucide SVGs recoloured on the fly by
+`icons.py`; fonts are bundled so it looks the same on every PC.
 
 ### 1.4 Quality bar
 
-Every change is written test-first. Current state: **483 tests, 97% coverage, `ruff` lint
+Every change is written test-first. Current state: **556 tests, 97% coverage, `ruff` lint
 and format clean, `mypy --strict` clean.** Everything that touches Windows goes through thin
 wrappers so the logic is tested without the OS, and the wrappers themselves are tested for
 real on this PC.
@@ -127,11 +150,13 @@ real on this PC.
 ## 2. Running it
 
 ```powershell
-uv sync --extra context                 # dev tools + the context monitor's packages
+uv sync --extra context --extra ui      # dev tools + context monitor + the window
 uv run pytest                           # all tests
 uv run chaukas replay eval/cases/DA01.yaml --ablation D   # one case, alert timeline
 uv run chaukas eval eval/cases --ablation D               # score every case
 uv run chaukas ablate eval/cases                          # configurations A-E side by side
+uv run chaukas ui --demo eval/cases/DA01.yaml             # the window, playing a scam call
+uv run chaukas ui                                         # the window, type lines yourself
 ```
 
 With a real LLM (any OpenAI-compatible server; point `llm.base_url` at it in a YAML file
@@ -149,7 +174,7 @@ replays those answers exactly, with no model running.
 
 ## 3. What is left
 
-Built so far: core, signals, engine, evaluation, LLM layer, context monitor, alert text.
+Built so far: core, signals, engine, evaluation, LLM layer, context monitor, the window.
 
 | Still to build (in order) | Notes |
 |---|---|
@@ -158,7 +183,7 @@ Built so far: core, signals, engine, evaluation, LLM layer, context monitor, ale
 | Privacy session (`privacy/`) | 5-minute transcript buffer, wipe on "End session" or 30 min idle |
 | Audio (`audio/`) | Two-stream capture, speech detection (Silero VAD), segmenter, playback and echo guards, file replay |
 | Speech-to-text (`asr/`) | Whisper on CPU now (`faster-whisper-small` is cached on this PC); NPU backend behind the same interface |
-| UI (`ui/`) | Tray, notice / warning / critical cards, Why panel, privacy panel, capture exclusion |
+| UI leftovers | System tray icon ("LOCAL MODE"), spoken alert clips (`assets/audio/`), onboarding consent screen |
 | Live app + `run.bat` | Wires threads together; one-command start |
 | Tooling | `tools/download_models.py`, `bench/`, `eval/assemble.py`, `labels.csv`, more cases |
 | Docs | Full README, architecture diagram |
@@ -245,3 +270,36 @@ Decisions:
 Tests: 58 new, including real Windows calls on this PC (foreground window, Downloads
 folder, version info of `python.exe`) and a real folder watcher catching a browser-style
 `.crdownload` → `.exe` rename.
+
+### 2026-09-23 - M7: The window (`ui/`)
+
+Built to the reference design the user supplied (soft grey panels, dark pill sidebar, one
+copper accent), mapped onto the product flow the user gave: background protection →
+detect → assess → interrupt → explain why → let the user decide.
+
+Files: `live.py`, `presenter.py`, `copy.py` (every on-screen word in English and Hindi),
+`settings.py`, `bridge.py`, `icons.py`, `capture_exclusion.py`, `app.py`, and 25 QML files
+in `qml/`. Command: `chaukas ui [--demo CASE] [--speed N] [--screenshot PNG --at SECONDS]`.
+
+Decisions:
+- **Qt Quick (QML), not classic widgets**, because only QML can do this soft, layered look.
+- **Shadows without GPU shaders** (stacked translucent layers), so it looks the same with the
+  software renderer on VMs and Device Cloud, and headless screenshots match.
+- **Fonts bundled**: Plus Jakarta Sans, and Noto Sans Devanagari for Hindi, which a VM may not
+  have. Text switches font by language (and by content for Hindi typed in English mode).
+- **Level is never colour alone**: always an icon and a word too; muted text keeps at least
+  4.5:1 contrast; every control works from the keyboard with a visible focus ring; click
+  targets are at least 44 px.
+- **The critical card never blocks**: no countdown; "Continue anyway" needs one tick.
+- **"Type what the caller said"** lets a judge try Chaukas with no microphone.
+- **Engine addition**: `RiskState.evidence` now reports each tactic's current strength (for
+  the rings). `Session.evaluate(t)` evaluates at an exact time (the screen shows "now", not
+  the last whole second).
+
+How it was checked: every QML file loads with zero Qt warnings in tests; each page and each
+alert window was rendered to PNG and inspected, which found and fixed two collapsed layouts
+(Why, Settings), an overflowing warning panel and clipped shadows; one render with the real
+Windows renderer confirmed the text spacing; capture exclusion was tested on a real Windows
+window. Tests: 556 (was 483).
+
+Needs a person: a native Hindi speaker to review `copy.py` and `strings.py`.

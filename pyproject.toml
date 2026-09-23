@@ -65,6 +65,11 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "C4", "PT", "RUF"]
 # En dash (Aho–Corasick) and the apostrophe variants the normaliser exists to unify.
 allowed-confusables = ["–", "’", "‘", "ʼ"]
 
+[tool.ruff.lint.per-file-ignores]
+# Qt's API and QML property names are camelCase by contract.
+"src/chaukas/ui/bridge.py" = ["N802", "N815"]
+"src/chaukas/ui/icons.py" = ["N802", "N803"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true

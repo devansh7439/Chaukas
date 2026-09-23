@@ -69,7 +69,28 @@ def build_parser() -> argparse.ArgumentParser:
     _add_llm_options(ablate)
     ablate.add_argument("--split", choices=[split.value for split in Split])
 
+    ui = commands.add_parser("ui", help="open the Chaukas window (needs the 'ui' extra)")
+    ui.add_argument("--demo", type=Path, metavar="CASE", help="play a case script in real time")
+    ui.add_argument("--speed", type=float, default=1.0, help="demo playback speed (default 1)")
+    _add_config_option(ui)
+    _add_ablation_option(ui)
+    ui.add_argument("--screenshot", type=Path, metavar="PNG",
+                    help="render headless to PNG files and exit")  # fmt: skip
+    ui.add_argument("--at", type=float, default=0.0, metavar="SECONDS",
+                    help="with --screenshot: the moment of the demo to render")  # fmt: skip
+    ui.add_argument("--page", type=int, choices=range(4), default=0,
+                    help="0 home, 1 why, 2 privacy, 3 settings")  # fmt: skip
+    ui.add_argument("--size", type=_size, default=(1440, 920), metavar="WxH")
+
     return parser
+
+
+def _size(text: str) -> tuple[int, int]:
+    try:
+        width, height = (int(part) for part in text.lower().split("x"))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"expected WIDTHxHEIGHT, got {text!r}") from None
+    return width, height
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -88,6 +109,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(_evaluate(args))
         elif args.command == "ablate":
             print(_ablate(args))
+        elif args.command == "ui":
+            return _ui(args)
         else:  # pragma: no cover - argparse rejects anything else
             raise AssertionError(f"unhandled command {args.command!r}")
     except ChaukasError as exc:
@@ -175,6 +198,23 @@ def _ablate(args: argparse.Namespace) -> str:
         if config.ablation.use_llm and not args.llm:
             llm_configs.append(name)
     return _with_llm_note(format_ablation(summaries), cases, llm_configs)
+
+
+def _ui(args: argparse.Namespace) -> int:
+    try:
+        from chaukas.ui.app import run
+    except ImportError as exc:  # pragma: no cover - depends on the environment
+        raise ChaukasError(f"the window needs PySide6: uv sync --extra ui ({exc})") from exc
+    return run(
+        case=args.demo,
+        ablation=args.ablation,
+        config_paths=args.config,
+        speed=args.speed,
+        screenshot=args.screenshot,
+        at=args.at,
+        page=args.page,
+        size=args.size,
+    )
 
 
 def _load_cases(args: argparse.Namespace) -> tuple[Case, ...]:

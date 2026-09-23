@@ -156,7 +156,7 @@ WASAPI loopback                WASAPI mic                 processes, window titl
 | Context | `psutil`, `pywin32`, `watchdog`, `mss` | |
 | OCR | AI Hub OCR model if feasible; fallback Windows OCR via `winrt-Windows.Media.Ocr` | `winsdk` is unmaintained. Check which OCR languages are available |
 | Validation | `pydantic` v2 | LLM JSON |
-| UI | `PySide6` | Tray + overlays |
+| UI | `PySide6`, Qt Quick (QML) | Dashboard + alert windows (built). Shadows avoid GPU shaders so the software renderer (VMs, Device Cloud) looks the same. Fonts: Plus Jakarta Sans + Noto Sans Devanagari (OFL); icons: Lucide (ISC), all bundled |
 | Config | YAML (`pyyaml`) | |
 | Tests / eval | `pytest`, `pandas`, `matplotlib` | |
 | Packaging | PyInstaller (verify ARM64), fallback: zipped venv + `run.bat` | Decide Day 12. Criterion 3 is Deployment & Accessibility, so a judge must be able to run it. Sign the installer (12.4) so SmartScreen doesn't show a scam-like warning |
@@ -962,7 +962,7 @@ Chaukas is free and open source. Being free doesn't answer "who installs it?" by
 | Item | Decision / check |
 |---|---|
 | Our code | Apache-2.0 (permissive, includes a patent grant) |
-| Libraries | Whisper and Silero VAD are MIT; GenieX is BSD-3-Clause; PySide6 is LGPL, which is fine for a free, open-source app. Check the rest on Day 12 |
+| Libraries | Whisper and Silero VAD are MIT; GenieX is BSD-3-Clause; PySide6 is LGPL, which is fine for a free, open-source app. Bundled UI assets: Plus Jakarta Sans and Noto Sans Devanagari (SIL OFL 1.1, licence files next to the fonts), Lucide icons (ISC, licence next to the icons). Check the rest on Day 12 |
 | Competition rules | Read the official rules for any IP licence or ownership terms before publishing the repo |
 | LLM | Check the chosen model's licence. Llama models need "Built with Llama" credit and an acceptable-use policy; some Qwen sizes are research/non-commercial only, which is fine for a free app but blocks selling it later |
 | Model files | Never bundle them. `tools/download_models.py` fetches them from the official source so each user accepts the terms; check AI Hub's terms for compiled models |

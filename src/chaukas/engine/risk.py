@@ -178,6 +178,7 @@ class RiskEngine:
             llm_assessed=self._latest is not None,
             dismissed=self._levels.is_dismissed(now, self._changes),
             reasons=self._reasons(now, evidence),
+            evidence=tuple((kind, value) for kind, value in evidence.items() if value > 0.0),
         )
 
     # ---------------------------------------------------------------- helpers

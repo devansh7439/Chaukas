@@ -179,3 +179,20 @@ def test_offline_needs_a_cache(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         main(["eval", str(CASES_DIR), "--llm", "--llm-offline"])
     assert "--llm-cache" in capsys.readouterr().err
+
+
+def test_ui_screenshot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    pytest.importorskip("PySide6")
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
+    target = tmp_path / "ui.png"
+    args = ["ui", "--demo", str(CASES_DIR / "CT01.yaml"), "--screenshot", str(target),
+            "--at", "10", "--size", "1280x820"]  # fmt: skip
+    assert main(args) == EXIT_OK
+    assert target.is_file()
+
+
+def test_ui_rejects_a_bad_size(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        main(["ui", "--size", "big"])
+    assert "WIDTHxHEIGHT" in capsys.readouterr().err

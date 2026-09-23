@@ -396,3 +396,9 @@ def test_reset_returns_to_quiet() -> None:
     assert state.level is L.QUIET
     assert state.reasons == ()
     assert not state.llm_assessed
+
+
+def test_state_reports_current_evidence_per_tactic() -> None:
+    engine = make_engine()
+    state = engine.evaluate(play(engine, case("4 ")))
+    assert dict(state.evidence) == {K.AUTHORITY: 0.5, K.THREAT: 0.5, K.ISOLATION: 0.6}

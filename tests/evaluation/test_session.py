@@ -126,3 +126,12 @@ def test_llm_results_reach_the_engine(lexicon: Lexicon) -> None:
     assert snapshots[-1].t == 5.0
     assert snapshots[-1].level is Level.NOTICE
     assert session.state.llm_assessed
+
+
+def test_evaluate_at_an_exact_time(lexicon: Lexicon) -> None:
+    session = make_session(lexicon)
+    session.advance_to(2.5)  # ticks at 1.0 and 2.0 only
+    assert session.now == 2.0
+    snapshot = session.evaluate(2.5)
+    assert snapshot.t == 2.5
+    assert session.evaluate(1.0).t == 2.5  # never backwards

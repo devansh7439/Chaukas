@@ -301,6 +301,7 @@ class RiskState:
     llm_assessed: bool = False
     dismissed: bool = False  # the user acknowledged this level; show it without interrupting
     reasons: tuple[Reason, ...] = ()
+    evidence: tuple[tuple[SignalKind, float], ...] = ()  # current (decayed) e_t, non-zero only
 
     def __post_init__(self) -> None:
         _check_time("t", self.t)

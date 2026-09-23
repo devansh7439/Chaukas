@@ -145,6 +145,10 @@ class Session:
             snapshots.append(self._evaluate(self._now + self._tick_s))
         return snapshots
 
+    def evaluate(self, t: float) -> Snapshot:
+        """One evaluation at exactly ``t`` (or now, if ``t`` is in the past), off the tick grid."""
+        return self._evaluate(t)
+
     def reset(self) -> None:
         """Session end: wipe the engine and extractor state, keep the clock."""
         self._engine.reset()
