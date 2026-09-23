@@ -67,3 +67,42 @@ def test_ablate_prints_a_comparison_table(capsys: pytest.CaptureFixture[str]) ->
     assert "config" in out
     for name in ("A", "B", "C", "D", "E"):
         assert f"\n{name}  " in out or out.startswith(f"{name}  ")
+
+
+SCRIPTED_NOTE = "script the LLM's verdict"
+
+CASE_WITHOUT_LLM = """\
+case_id: BNX
+category: benign
+scenario: family_call
+split: dev
+author: test
+expected: {max_level: quiet, acceptable_levels: [quiet, notice], objective: none}
+timeline:
+  - {at: 0.0, caller: "Beta, khana kha liya?"}
+"""
+
+
+def test_ablate_flags_cases_that_script_the_llm(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["ablate", str(CASES_DIR)]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert f"4 of 4 cases {SCRIPTED_NOTE}" in out
+    assert "BN01, BN07, CT01, DA01" in out
+    assert "B, C and D" in out
+
+
+def test_eval_flags_scripted_llm_only_when_the_config_uses_the_llm(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["eval", str(CASES_DIR), "--ablation", "D"]) == EXIT_OK
+    assert SCRIPTED_NOTE in capsys.readouterr().out
+    assert main(["eval", str(CASES_DIR), "--ablation", "E"]) == EXIT_OK
+    assert SCRIPTED_NOTE not in capsys.readouterr().out
+
+
+def test_no_note_when_no_case_scripts_the_llm(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "BNX.yaml").write_text(CASE_WITHOUT_LLM, encoding="utf-8")
+    assert main(["ablate", str(tmp_path)]) == EXIT_OK
+    assert SCRIPTED_NOTE not in capsys.readouterr().out

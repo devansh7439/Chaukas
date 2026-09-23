@@ -93,7 +93,7 @@ class Session:
         return snapshots
 
     def feed_signal(self, signal: Signal) -> list[Snapshot]:
-        """A signal from outside the extractor (the LLM layer), evaluated at ``at``."""
+        """A signal from outside the extractor (the LLM layer), evaluated at the current time."""
         self._extractor.observe(signal)
         self._engine.on_signal(signal)
         return [self._evaluate(self._now)]

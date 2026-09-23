@@ -101,6 +101,15 @@ def format_ablation(summaries: Mapping[str, Summary]) -> str:
     return "\n".join(lines)
 
 
+def format_scripted_llm_note(scripted: Sequence[str], total: int, configs: Sequence[str]) -> str:
+    """Say plainly that LLM configurations ran on hand-written verdicts, not a real model."""
+    names = configs[0] if len(configs) == 1 else f"{', '.join(configs[:-1])} and {configs[-1]}"
+    return (
+        f"note: {len(scripted)} of {total} cases script the LLM's verdict"
+        f" ({', '.join(scripted)}); results for {names} reflect those scripts, not a real model."
+    )
+
+
 def _latency(summary: Summary) -> str:
     if summary.warning_latency_median is None:
         return "-"

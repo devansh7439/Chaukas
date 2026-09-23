@@ -11,17 +11,23 @@ from chaukas import __version__
 from chaukas.core.config import ChaukasConfig, load_config
 from chaukas.core.errors import ChaukasError
 from chaukas.evaluation.ablation import ABLATIONS, config_for
-from chaukas.evaluation.cases import Split, load_case, load_cases
+from chaukas.evaluation.cases import Case, Split, load_case, load_cases
 from chaukas.evaluation.metrics import CaseOutcome, Summary, score_case, summarise
-from chaukas.evaluation.report import format_ablation, format_outcomes, format_run
+from chaukas.evaluation.report import (
+    format_ablation,
+    format_outcomes,
+    format_run,
+    format_scripted_llm_note,
+)
 from chaukas.evaluation.runner import run_case
 from chaukas.signals.lexicon import Lexicon
 
 EXIT_OK = 0
 EXIT_ERROR = 2
 
-# Until the LLM layer exists, E (everything except the LLM) is the honest default:
-# configurations that use the LLM stay quiet while no assessment ever arrives.
+# Until the LLM layer exists, E (everything except the LLM) is the honest default. The LLM
+# configurations only see verdicts a case scripts; without one, the pre-LLM cap keeps them
+# quiet until llm.failure_grace_s passes, after which they behave as if the LLM had failed.
 DEFAULT_ABLATION = "E"
 
 
@@ -107,20 +113,36 @@ def _replay(args: argparse.Namespace) -> str:
 
 def _evaluate(args: argparse.Namespace) -> str:
     config = config_for(args.ablation, *args.config)
-    outcomes = _score_all(args, config)
-    return format_outcomes(outcomes, summarise(outcomes))
+    cases = _load_cases(args)
+    outcomes = _score_all(cases, config)
+    llm_configs = [args.ablation] if config.ablation.use_llm else []
+    return _with_llm_note(format_outcomes(outcomes, summarise(outcomes)), cases, llm_configs)
 
 
 def _ablate(args: argparse.Namespace) -> str:
+    cases = _load_cases(args)
     summaries: dict[str, Summary] = {}
+    llm_configs: list[str] = []
     for name in sorted(ABLATIONS):
         config = config_for(name, *args.config)
-        summaries[name] = summarise(_score_all(args, config))
-    return format_ablation(summaries)
+        summaries[name] = summarise(_score_all(cases, config))
+        if config.ablation.use_llm:
+            llm_configs.append(name)
+    return _with_llm_note(format_ablation(summaries), cases, llm_configs)
 
 
-def _score_all(args: argparse.Namespace, config: ChaukasConfig) -> list[CaseOutcome]:
-    split = Split(args.split) if args.split else None
+def _load_cases(args: argparse.Namespace) -> tuple[Case, ...]:
+    return load_cases(args.cases, split=Split(args.split) if args.split else None)
+
+
+def _score_all(cases: Sequence[Case], config: ChaukasConfig) -> list[CaseOutcome]:
     lexicon = Lexicon.load()
-    cases = load_cases(args.cases, split=split)
     return [score_case(run_case(case, config=config, lexicon=lexicon)) for case in cases]
+
+
+def _with_llm_note(text: str, cases: Sequence[Case], llm_configs: Sequence[str]) -> str:
+    """Append a caveat when LLM configurations were scored on scripted verdicts."""
+    scripted = [case.case_id for case in cases if case.assessments]
+    if not scripted or not llm_configs:
+        return text
+    return f"{text}\n\n{format_scripted_llm_note(scripted, len(cases), llm_configs)}"
