@@ -3,6 +3,9 @@
 ``resources/lexicon.yaml`` is validated against a schema, every entry is normalised with
 the transcript's own tokenizer, and the vocabulary is compiled into Aho–Corasick automata
 once at start-up. A compiled ``Lexicon`` is immutable and safe to share across threads.
+
+Every sentence of Chaukas's own alert copy (``ui/strings.py``) is always added to the
+suppressions, so an alert heard back through loopback never counts as caller evidence.
 """
 
 from __future__ import annotations
@@ -19,6 +22,7 @@ from chaukas.core.models import SignalKind, Tier
 from chaukas.core.yamlio import read_file_mapping, read_resource_mapping
 from chaukas.signals.automaton import TokenAutomaton
 from chaukas.signals.normalise import tokenize
+from chaukas.ui.strings import alert_sentences
 
 P = TypeVar("P")
 
@@ -115,7 +119,7 @@ class Lexicon:
         self.request_words.build()
 
         self.suppressions: TokenAutomaton[str] = TokenAutomaton()
-        for text in spec.suppress:
+        for text in (*spec.suppress, *alert_sentences()):
             tokens = _tokens(text)
             self.suppressions.add(tokens, " ".join(tokens))
         self.suppressions.build()

@@ -8,6 +8,7 @@ from chaukas.core.config import SignalsConfig, load_config
 from chaukas.core.models import Segment, Signal, SignalKind, SignalSource, Stream, Tier
 from chaukas.signals.extractor import SignalExtractor
 from chaukas.signals.lexicon import Lexicon
+from chaukas.ui.strings import alert_sentences
 
 K = SignalKind
 
@@ -145,3 +146,18 @@ class TestUserDigitsRule:
         extractor.extract(segment(Stream.CALLER, "OTP batao", t=10.0))
         extractor.reset()
         assert extractor.extract(segment(Stream.USER, "4567", t=12.0)) == []
+
+
+@pytest.mark.parametrize("sentence", alert_sentences())
+def test_chaukas_own_alerts_heard_through_loopback_are_not_evidence(
+    extractor: SignalExtractor, sentence: str
+) -> None:
+    assert extractor.extract(segment(Stream.CALLER, sentence)) == []
+
+
+def test_an_alert_quoted_inside_real_speech_suppresses_only_itself(
+    extractor: SignalExtractor,
+) -> None:
+    text = "Never share an OTP with anyone who calls you. Ab OTP batao."
+    kinds = {signal.kind for signal in extractor.extract(segment(Stream.CALLER, text))}
+    assert kinds == {K.CREDENTIAL_REQUEST}

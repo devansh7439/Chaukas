@@ -9,7 +9,8 @@
 #   tactics.<kind>.weak      weak tier (0.3): never triggers the LLM or counts as a chain step
 #   requests.<kind>          fast path (0.75): a verb and an object close together
 #   negation                 a negator next to a request verb turns it into advice, not a request
-#   suppress                 keyword hits inside these phrases count for nothing
+#   suppress                 keyword hits inside these phrases count for nothing; every
+#                            sentence of Chaukas's own alerts (ui/strings.py) is added too
 #
 # Expand with the spellings Whisper actually produces; keep ambiguous everyday words weak.
 
