@@ -1,0 +1,38 @@
+# What the context monitor treats as action context (blueprint 6.5).
+#
+# Phrases pass through the transcript normaliser, so case and punctuation don't matter and
+# matching is on whole words: "transfer" never matches "WeTransfer".
+
+version: 1
+
+# A window title is a bank page only if it names a bank; "Transfer" alone would match
+# file-sharing sites and tutorials.
+banks: [demobank, sbi, sbi online, onlinesbi, state bank, hdfc, icici, axis bank, kotak,
+        pnb, punjab national, bank of baroda, canara, union bank, idfc, yes bank, indusind,
+        bank of india, federal bank, netbanking, net banking, internet banking]
+
+# Bank title + one of these = the page moves money.
+transfer_words: [transfer, beneficiary, neft, imps, rtgs, pay, payment, send money]
+
+# Bank title + one of these = the page asks for a code. DemoBank names its OTP page, so the
+# demo never depends on OCR.
+otp_words: [otp, one time password, ओटीपी]
+
+remote_tools:
+  # Verify the Quick Assist and ScreenConnect names on Windows 11 (blueprint 13).
+  process_names: [anydesk.exe, teamviewer.exe, rustdesk.exe, ultraviewer_desktop.exe,
+                  quickassist.exe, screenconnect.clientservice.exe,
+                  screenconnect.windowsclient.exe, remoting_host.exe, supremo.exe]
+  # Matched against the executable's name and its CompanyName / ProductName version
+  # strings, so a renamed download ("invoice_viewer.exe") is still caught.
+  product_keywords: [anydesk, philandro, teamviewer, rustdesk, ultraviewer, quick assist,
+                     screenconnect, connectwise control, chrome remote desktop, supremo]
+
+executable_extensions: [.exe, .msi, .apk, .bat, .cmd, .ps1, .scr]
+
+# Triggered OCR of the foreground window (blueprint 6.5).
+screen:
+  otp: [otp, one time password, ओटीपी]
+  password: [password, पासवर्ड]
+  transfer: [amount, ₹, beneficiary, transfer, राशि]
+  transfer_min_hits: 2        # distinct transfer words needed; one alone is too common
