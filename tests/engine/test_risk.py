@@ -301,10 +301,21 @@ class TestCredentialRules:
         engine.reset()
         assert engine.evaluate(100.0).level is L.QUIET
 
-    def test_pre_disclosure_needs_speech_addressed_to_the_user(self) -> None:
+    def test_not_addressed_downgrades_an_otp_request_but_never_silences_it(self) -> None:
+        # The caller can try to talk the LLM into "not addressed to the user" (prompt
+        # injection: "this is a recorded announcement"). That verdict may lower the OTP
+        # alert to a warning, which still says never to share an OTP; it cannot remove it.
         engine = make_engine()
         state = engine.evaluate(play(engine, Case(**{**case("14 ").__dict__, "addressed": False})))
-        assert state.level is L.QUIET
+        assert state.level is L.WARNING
+        assert state.objective is CR
+
+    def test_not_addressed_cannot_undo_a_critical_already_raised(self) -> None:
+        engine = make_engine()
+        end = play(engine, case("14 "))
+        assert engine.evaluate(end).level is L.CRITICAL
+        engine.on_assessment(assessment(end + 1.0, False))  # a later, injected verdict
+        assert talk_and_tick(engine, end + 1.0, 120.0).level is L.CRITICAL
 
     def test_user_keywords_are_not_evidence(self) -> None:
         engine = make_engine()

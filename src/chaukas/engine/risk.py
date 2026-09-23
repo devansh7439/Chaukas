@@ -13,7 +13,8 @@ Levels come from thresholds on R, then:
     matching its objective, and speech addressed to the user;
   * nothing escalates before the session's first LLM assessment (with a failure grace);
   * pre-disclosure rule: a confident caller credential request is critical at once if
-    authority or coercion was seen this session, and a warning otherwise;
+    authority or coercion was seen this session, and a warning otherwise. An LLM verdict
+    of "not addressed to the user" can lower it to a warning but never silence it;
   * recovery rule: a code read out after a pre-disclosure alert is critical_recovery.
   * A critical or critical_recovery raised by these rules holds until the session ends:
     the request's evidence decays, but a caller who stalls after asking for the OTP is
@@ -270,12 +271,15 @@ class RiskEngine:
         rules = self._config.rules
         rule_objective: Objective | None = None
         credential = evidence[SignalKind.CREDENTIAL_REQUEST]
-        if credential >= rules.pre_disclosure_min_confidence and is_addressed:
+        if credential >= rules.pre_disclosure_min_confidence:
             rule_objective = Objective.CREDENTIAL_DISCLOSURE
             primed = self._evidence.peak(SignalKind.AUTHORITY) >= rules.min_evidence or any(
                 self._evidence.peak(kind) >= rules.min_evidence for kind in _COERCIVE
             )
-            if primed:
+            # An LLM verdict of "not addressed to the user" can be induced by the caller
+            # ("this is a recorded announcement"), so it may lower this alert to a warning,
+            # never remove it: the warning still says never to share an OTP.
+            if primed and is_addressed:
                 self._held = max(self._held, Level.CRITICAL)
             else:
                 level = max(level, Level.WARNING)
