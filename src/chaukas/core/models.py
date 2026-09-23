@@ -176,6 +176,22 @@ class Segment:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class HeardLine:
+    """One segment of live audio after speech-to-text, before it becomes a Segment.
+
+    The audio pipeline produces these on its own threads; the session numbers them
+    (``seg_id``) when it accepts them.
+    """
+
+    stream: Stream
+    t_start: float
+    t_end: float
+    text: str
+    language: str | None = None
+    asr_ms: float = 0.0
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Signal:
     """One piece of evidence.
 

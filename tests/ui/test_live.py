@@ -147,3 +147,60 @@ class TestSettings:
     )
     def test_numbers_keep_only_dialable_characters(self, number: str, clean: str) -> None:
         assert UserSettings(contact_number=number).contact_number == clean
+
+
+class TestLiveInput:
+    """Lines heard from real audio and events from the desktop monitor."""
+
+    def heard(self, stream: Stream, text: str, start: float, end: float) -> object:
+        from chaukas.core.models import HeardLine
+
+        return HeardLine(stream=stream, t_start=start, t_end=end, text=text, language="en",
+                         asr_ms=900.0)  # fmt: skip
+
+    def test_a_heard_line_is_evidence_timed_as_spoken(self, lexicon: Lexicon) -> None:
+        session = live(lexicon, ablation="E")
+        session.advance(12.0)
+        session.hear(self.heard(Stream.CALLER, "CBI se bol raha hoon, arrest warrant hai",
+                                8.0, 11.0))  # type: ignore[arg-type]  # fmt: skip
+        assert session.state.level is Level.NOTICE
+        (entry,) = session.transcript
+        assert entry.t == 8.0
+        assert set(entry.kinds) == {"authority", "threat"}
+
+    def test_nothing_is_heard_while_paused(self, lexicon: Lexicon) -> None:
+        session = live(lexicon, ablation="E")
+        session.set_paused(True)
+        session.hear(self.heard(Stream.CALLER, "arrest warrant", 1.0, 2.0))  # type: ignore[arg-type]
+        assert session.transcript == ()
+
+    def test_screen_events_are_context_and_appear_in_the_call_log(self, lexicon: Lexicon) -> None:
+        from chaukas.core.models import ContextEvent, ContextKind
+
+        session = live(lexicon, ablation="E")
+        session.advance(5.0)
+        session.observe(ContextEvent(t=5.0, kind=ContextKind.REMOTE_APP_STARTED,
+                                     detail="AnyDesk.exe"))  # fmt: skip
+        session.observe(ContextEvent(t=5.5, kind=ContextKind.WINDOW_CHANGED, detail="Inbox"))
+        assert [e.speaker for e in session.transcript] == ["system"]  # window changes are noise
+        assert any(r.label == "remote_app_started" for r in session.state.reasons)
+
+    def test_transcript_older_than_the_privacy_horizon_is_forgotten(self, lexicon: Lexicon) -> None:
+        session = live(lexicon, ablation="E")  # horizon 300 s
+        session.advance(10.0)
+        session.hear(self.heard(Stream.CALLER, "hello", 5.0, 6.0))  # type: ignore[arg-type]
+        session.advance(200.0)
+        session.hear(self.heard(Stream.CALLER, "still here", 199.0, 200.0))  # type: ignore[arg-type]
+        session.advance(307.0)
+        assert [e.text for e in session.transcript] == ["still here"]
+
+    def test_long_silence_ends_the_session(self, lexicon: Lexicon) -> None:
+        session = live(lexicon, ablation="E")  # idle end 1800 s
+        session.advance(10.0)
+        session.hear(self.heard(Stream.CALLER, "CBI se bol raha, arrest warrant", 5.0, 9.0))  # type: ignore[arg-type]
+        assert session.state.level is Level.NOTICE
+        assert session.advance(1800.0) is False  # 1791 s of silence: not yet
+        assert session.advance(1810.0) is True  # ended now
+        assert session.state.level is Level.QUIET
+        assert session.transcript == ()
+        assert session.advance(4000.0) is False  # nothing left to end

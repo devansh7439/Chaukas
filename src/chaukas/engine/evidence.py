@@ -49,10 +49,18 @@ class EvidenceStore:
         entry = _Entry(signal, signal.confidence, self._clock.call_time(signal.t))
         self._entries[signal.kind].append(entry)
 
-    def level(self, kind: SignalKind, now: float) -> float:
-        """Decayed evidence for ``kind`` at session time ``now``."""
+    def level(self, kind: SignalKind, now: float, *, min_confidence: float = 0.0) -> float:
+        """Decayed evidence for ``kind`` at session time ``now``, counting only signals that
+        were at least ``min_confidence`` when heard."""
         now_call = self._clock.call_time(now)
-        return max((self._decayed(e, now_call) for e in self._entries.get(kind, ())), default=0.0)
+        return max(
+            (
+                self._decayed(e, now_call)
+                for e in self._entries.get(kind, ())
+                if e.confidence >= min_confidence
+            ),
+            default=0.0,
+        )
 
     def strongest(self, kind: SignalKind, now: float) -> Signal | None:
         """The signal currently contributing ``level(kind, now)``."""

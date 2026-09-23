@@ -161,3 +161,19 @@ def test_an_alert_quoted_inside_real_speech_suppresses_only_itself(
     text = "Never share an OTP with anyone who calls you. Ab OTP batao."
     kinds = {signal.kind for signal in extractor.extract(segment(Stream.CALLER, text))}
     assert kinds == {K.CREDENTIAL_REQUEST}
+
+
+@pytest.mark.parametrize(
+    ("text", "kind"),
+    [
+        ("Install any desk so I can check your computer.", K.REMOTE_ACCESS_REQUEST),
+        ("Download team viewer from the website.", K.REMOTE_ACCESS_REQUEST),
+        ("Open rust desk and tell me the code.", K.REMOTE_ACCESS_REQUEST),
+        ("I am calling from the CBI Cybercell.", K.AUTHORITY),
+    ],
+)
+def test_spellings_whisper_actually_produces(
+    extractor: SignalExtractor, text: str, kind: SignalKind
+) -> None:
+    kinds = {signal.kind for signal in extractor.extract(segment(Stream.CALLER, text))}
+    assert kind in kinds

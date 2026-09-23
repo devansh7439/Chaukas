@@ -336,3 +336,45 @@ Found while documenting (recorded as known gaps, not yet fixed):
 
 Correction: the demo's first notice arrives at about 8 s in the window (configuration E),
 not 15 s as said earlier in this session; the README has the measured timings.
+
+### 2026-09-23 - M8: Live protection (`audio/`, `asr/`, `ui/services.py`)
+
+Chaukas now listens to real calls on this PC: `chaukas run` (or `run.bat`).
+
+- `audio/capture.py`: WASAPI capture via PyAudioWPatch. Caller = loopback of the default
+  output device; user = default microphone.
+- `audio/convert.py`, `vad.py`, `segmenter.py`: 48 kHz stereo -> 16 kHz mono (soxr), Silero
+  VAD v6 (the copy bundled with faster-whisper), segments closed after 0.6 s of silence or
+  cut at the quietest moment before 12 s; gaps when loopback goes silent are handled.
+- `audio/guards.py`, `pipeline.py`: one worker thread per stream, one transcription worker;
+  echo guard (text) plus echo skip (mic speech inside the caller's speech is not
+  transcribed); user lines wait until the caller's audio up to that moment is processed.
+- `asr/whisper_cpu.py`: faster-whisper on the CPU, models loaded from disk only (no network
+  during a call); drops Whisper's "Thank you." hallucinations; re-runs "Urdu" as Hindi.
+- `ui/services.py`, bridge: audio and the desktop monitor feed the window from their own
+  threads through queued signals; the window shows "Listening: caller = ... · you = ...".
+  Pause drops audio before any processing. 5-minute transcript horizon and 30-minute idle
+  session end are now enforced.
+- CLI: `chaukas run`, `chaukas setup` (the only command that downloads), `chaukas devices`.
+
+Measured on this PC (Intel i7-1360P, CPU only):
+- Whisper small, 6.5 s of speech: 4.1 s with language auto-detection, 2.2 s with the
+  language fixed; base: 1.1 s / 0.6 s. Whisper pays a fixed cost per call, so each
+  speaker's language is detected once and reused, and a backlog is merged into one call.
+- Live end-to-end (synthetic English scam call played through the speakers): all four
+  sentences transcribed and tagged; notice 12 s, warning 14 s, **critical 35 s after
+  playback started, about 17 s after "tell me the OTP"**. The mic's echo doubled the
+  transcription load; the echo skip was added after this run and has not been re-measured.
+- Hotwords ("OTP, AnyDesk, ..."), 24 synthetic scam + 24 innocent clips: key word heard
+  22/24 vs 20/24 without, 0 invented either way. Every miss was "AnyDesk" written as
+  "any desk", so the lexicon now has those spellings and hotwords stay off.
+
+Bugs found by live testing and fixed:
+- The Why panel dropped "claimed to be an official" / "threatened you" within seconds
+  (reasons used faded evidence, and strong keywords start exactly at the bar).
+- A threat keyword stopped counting as coercion within seconds of speech, so warnings
+  needed isolation; coercion now lasts about 5 minutes of speech (`coercion_floor`).
+- A timing-dependent echo test: the release rule now works in stream time.
+
+Not yet: speech-to-text on Windows ARM64 / the NPU; Hinglish accuracy (only English
+synthetic speech has been tested); real-model LLM in live mode.

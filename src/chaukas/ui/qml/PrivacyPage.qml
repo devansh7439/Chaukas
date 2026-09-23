@@ -91,9 +91,11 @@ Item {
                         }
                         AppText {
                             Layout.fillWidth: true
-                            text: dashboard.view.statusLine
+                            text: dashboard.liveStatus.length > 0 ? dashboard.liveStatus
+                                                                   : dashboard.view.statusLine
                             color: Theme.textOnDarkMuted
                             font.pixelSize: Theme.body
+                            maximumLineCount: 2
                         }
                     }
                     PillButton {

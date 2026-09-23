@@ -7,7 +7,8 @@
     R = clamp(P * G * A * S)                 every gate is <= 1, so R never exceeds P
 
 Levels come from thresholds on R, then:
-  * warning and above need coercion (threat, isolation or surveillance evidence);
+  * warning and above need coercion: a threat, isolation or surveillance signal that was
+    confident when heard and has not faded below ``coercion_floor`` (minutes of speech);
   * critical also needs the hard gate: every required step of the active chain, context
     matching its objective, and speech addressed to the user;
   * nothing escalates before the session's first LLM assessment (with a failure grace);
@@ -153,8 +154,12 @@ class RiskEngine:
         action, context_matches = self._action_gate(active)
         sequence = self._sequence_gate(active)
         score = min(1.0, max(0.0, pressure * addressed * action * sequence))
-        min_evidence = self._config.rules.min_evidence
-        coercion = any(evidence[kind] >= min_evidence for kind in _COERCIVE)
+        rules = self._config.rules
+        coercion = any(
+            self._evidence.level(kind, now, min_confidence=rules.min_evidence)
+            >= rules.coercion_floor
+            for kind in _COERCIVE
+        )
 
         raw = self._threshold_level(score, active, context_matches, is_addressed, coercion)
         if self._awaiting_llm(now):
@@ -177,7 +182,7 @@ class RiskEngine:
             coercion=coercion,
             llm_assessed=self._latest is not None,
             dismissed=self._levels.is_dismissed(now, self._changes),
-            reasons=self._reasons(now, evidence),
+            reasons=self._reasons(now),
             evidence=tuple((kind, value) for kind, value in evidence.items() if value > 0.0),
         )
 
@@ -300,11 +305,14 @@ class RiskEngine:
             return hint
         return Objective.UNCLEAR if level > Level.QUIET else Objective.NONE
 
-    def _reasons(self, now: float, evidence: dict[SignalKind, float]) -> tuple[Reason, ...]:
+    def _reasons(self, now: float) -> tuple[Reason, ...]:
+        """Everything that counted this session. Evidence fades for scoring, but the Why
+        panel keeps explaining it: a strong keyword starts exactly at ``min_evidence`` and
+        would otherwise vanish from the explanation within seconds."""
         min_evidence = self._config.rules.min_evidence
         reasons: list[Reason] = []
         for kind in SignalKind:
-            if evidence[kind] < min_evidence:
+            if self._evidence.peak(kind) < min_evidence:
                 continue
             signal = self._evidence.strongest(kind, now)
             if signal is not None:

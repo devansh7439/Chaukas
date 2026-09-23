@@ -20,7 +20,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-asr = ["numpy>=1.26", "onnxruntime>=1.18"]
+asr = [
+    "numpy>=1.26",
+    "onnxruntime>=1.18",
+    # CPU Whisper for development PCs. CTranslate2 has no Windows-on-ARM64 wheel; on
+    # Snapdragon, Whisper runs on the NPU through ONNX Runtime instead.
+    "faster-whisper>=1.1; platform_machine != 'ARM64'",
+]
 audio = [
     "numpy>=1.26",
     "soxr>=0.3",
@@ -71,9 +77,16 @@ allowed-confusables = ["–", "’", "‘", "ʼ"]
 "src/chaukas/ui/icons.py" = ["N802", "N803"]
 
 [tool.mypy]
-python_version = "3.11"
+# The project runs on 3.12 (.python-version); numpy's stubs need 3.12 syntax. 3.11 remains
+# supported at run time.
+python_version = "3.12"
 strict = true
 files = ["src"]
+
+[[tool.mypy.overrides]]
+# These ship no type information.
+module = ["faster_whisper", "faster_whisper.*", "pyaudiowpatch", "soxr", "onnxruntime"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

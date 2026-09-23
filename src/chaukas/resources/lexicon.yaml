@@ -18,7 +18,7 @@ version: 1
 
 tactics:
   authority:
-    terms: [cbi, police, cyber cell, crime branch, trai, rbi, customs, narcotics,
+    terms: [cbi, police, cyber cell, cybercell, crime branch, trai, rbi, customs, narcotics,
             enforcement directorate, microsoft support, bank manager,
             police se, cbi se, bank se bol raha,
             पुलिस, सीबीआई, साइबर सेल, क्राइम ब्रांच, बैंक से बोल रहा]
@@ -51,6 +51,7 @@ tactics:
 
   remote_access_request:
     terms: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
+            any desk, team viewer, rust desk, ultra viewer,       # as Whisper often writes them
             share your screen, download this app, tell me the code on screen,
             app download karo, screen share karo,
             एनीडेस्क, टीमव्यूअर, स्क्रीन शेयर, ऐप डाउनलोड]
@@ -73,6 +74,7 @@ requests:
     verbs: [install, download, run, share, install karo, download karo, share karo,
             इंस्टॉल करो, डाउनलोड करो, शेयर करो]
     objects: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
+              any desk, team viewer, rust desk, ultra viewer,
               app, application, software, screen, code on screen, code on your screen,
               एनीडेस्क, टीमव्यूअर, ऐप, स्क्रीन]
 

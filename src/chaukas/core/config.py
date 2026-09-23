@@ -35,6 +35,22 @@ class AudioConfig(_Section):
     max_segment_s: Seconds
     playback_guard_tail_ms: Annotated[int, Field(ge=0)]
     echo_similarity: UnitFloat
+    echo_overlap_skip: UnitFloat
+    vad_threshold: UnitFloat
+    min_speech_ms: PositiveInt
+    speech_pad_ms: Annotated[int, Field(ge=0)]
+    gap_reset_s: Seconds
+
+
+class ASRConfig(_Section):
+    model: str = Field(min_length=1)
+    language: Literal["auto", "en", "hi"]
+    cpu_threads: PositiveInt
+    beam_size: PositiveInt
+    no_speech_threshold: UnitFloat
+    redetect_every: PositiveInt
+    merge_max_s: Annotated[float, Field(ge=0.0)]
+    hotwords: str
 
 
 class SignalsConfig(_Section):
@@ -115,6 +131,7 @@ class ChainConfig(_Section):
 
 class RulesConfig(_Section):
     min_evidence: UnitFloat  # decayed evidence that counts as present
+    coercion_floor: UnitFloat  # a confident coercive signal counts while it stays above this
     pre_disclosure_min_confidence: UnitFloat
     hysteresis_margin: UnitFloat
     hysteresis_hold_s: Seconds
@@ -161,6 +178,7 @@ class PrivacyConfig(_Section):
 
 class ChaukasConfig(_Section):
     audio: AudioConfig
+    asr: ASRConfig
     signals: SignalsConfig
     llm: LLMConfig
     engine: EngineConfig

@@ -8,6 +8,24 @@ audio:
   max_segment_s: 12.0          # forced cut, at the quietest frame in the last second
   playback_guard_tail_ms: 300  # caller audio discarded this long after an alert clip ends
   echo_similarity: 0.6         # token overlap above which a user segment is treated as echo
+  echo_overlap_skip: 0.8       # mic speech this much inside the caller's speech is the speakers'
+                               # echo: not transcribed at all (saves Whisper time on speakers)
+  vad_threshold: 0.5           # Silero speech probability that counts as speech
+  min_speech_ms: 250           # shorter bursts (clicks, coughs) are not segments
+  speech_pad_ms: 200           # kept before and after speech so no syllable is lost
+  gap_reset_s: 0.5             # a longer gap in the audio (loopback idle) closes speech
+
+asr:
+  model: small                 # CPU Whisper size: tiny, base, small, medium (small ~0.6x real time here)
+  language: auto               # auto | en | hi  (auto re-runs "Urdu" as Hindi)
+  cpu_threads: 8
+  beam_size: 1                 # greedy decoding: fastest, accurate enough for keywords
+  no_speech_threshold: 0.6     # drop text Whisper produced from silence
+  redetect_every: 6            # reuse a speaker's detected language, re-checking every N lines
+  merge_max_s: 20              # when behind, transcribe a speaker's queued lines in one call
+  # Words Whisper should expect, e.g. "OTP, UPI, AnyDesk". Off: on 24 synthetic scam clips it
+  # added only AnyDesk (the lexicon now matches "any desk"), and it is unmeasured on real calls.
+  hotwords: ""
 
 signals:
   weak: 0.3
@@ -66,7 +84,10 @@ engine:
     order_penalty: 0.85
     tie_margin: 0.05
   rules:
-    min_evidence: 0.5             # decayed evidence that counts as present (coercion, authority, recovery)
+    min_evidence: 0.5             # decayed evidence that counts as present (authority, recovery)
+    coercion_floor: 0.35          # a coercive signal heard at >= min_evidence keeps counting as
+                                  # coercion while its faded value stays above this (a 0.5
+                                  # keyword: about 5 minutes of speech)
     pre_disclosure_min_confidence: 0.7
     hysteresis_margin: 0.10
     hysteresis_hold_s: 30

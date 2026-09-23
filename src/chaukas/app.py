@@ -82,6 +82,20 @@ def build_parser() -> argparse.ArgumentParser:
                     help="0 home, 1 why, 2 privacy, 3 settings")  # fmt: skip
     ui.add_argument("--size", type=_size, default=(1440, 920), metavar="WxH")
 
+    run = commands.add_parser("run", help="live protection: listen to calls on this PC")
+    _add_config_option(run)
+    _add_ablation_option(run)
+    run.add_argument("--no-audio", action="store_true", help="don't listen (screen only)")
+    run.add_argument("--no-screen", action="store_true", help="don't watch apps and pages")
+    run.add_argument("--asr-model", metavar="SIZE", help="Whisper size: tiny, base, small, medium")
+    run.add_argument("--language", choices=["auto", "en", "hi"], help="speech language")
+
+    setup = commands.add_parser("setup", help="download the speech model (one time)")
+    _add_config_option(setup)
+    setup.add_argument("--asr-model", metavar="SIZE", help="Whisper size to download")
+
+    commands.add_parser("devices", help="list the audio devices Chaukas would use")
+
     return parser
 
 
@@ -111,6 +125,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(_ablate(args))
         elif args.command == "ui":
             return _ui(args)
+        elif args.command == "run":
+            return _run(args)
+        elif args.command == "setup":
+            _setup(args)
+        elif args.command == "devices":
+            _devices()
         else:  # pragma: no cover - argparse rejects anything else
             raise AssertionError(f"unhandled command {args.command!r}")
     except ChaukasError as exc:
@@ -215,6 +235,62 @@ def _ui(args: argparse.Namespace) -> int:
         page=args.page,
         size=args.size,
     )
+
+
+def _run(args: argparse.Namespace) -> int:
+    try:
+        from chaukas.ui.app import run_live
+    except ImportError as exc:  # pragma: no cover - depends on the environment
+        raise ChaukasError(f"the window needs PySide6: uv sync --extra ui ({exc})") from exc
+    asr: dict[str, str] = {}
+    if args.asr_model:
+        asr["model"] = args.asr_model
+    if args.language:
+        asr["language"] = args.language
+    return run_live(
+        ablation=args.ablation,
+        config_paths=args.config,
+        config_overrides=[{"asr": asr}] if asr else [],
+        audio=not args.no_audio,
+        screen=not args.no_screen,
+    )
+
+
+def _setup(args: argparse.Namespace) -> None:
+    """Download what live protection needs. The only command that uses the network."""
+    try:
+        from chaukas.asr.whisper_cpu import ModelMissingError, WhisperCpu, download
+        from chaukas.audio.vad import find_vad_model
+    except ImportError as exc:
+        raise ChaukasError(
+            f"speech recognition is not installed: uv sync --extra audio --extra asr ({exc})"
+        ) from exc
+    config = load_config(*args.config)
+    model = args.asr_model or config.asr.model
+    try:
+        WhisperCpu(model, language="auto", cpu_threads=1, beam_size=1, no_speech_threshold=0.6)
+        print(f"Whisper {model}: already on this PC")
+    except ModelMissingError:
+        print(f"Whisper {model}: downloading (one time)...")
+        print(f"  saved to {download(model)}")
+    print("Voice detection model: " + ("ready" if find_vad_model() else "MISSING"))
+    _devices()
+
+
+def _devices() -> None:
+    try:
+        from chaukas.audio.capture import AudioSystem
+    except ImportError as exc:
+        raise ChaukasError(
+            f"audio capture is not installed: uv sync --extra audio ({exc})"
+        ) from exc
+    system = AudioSystem()
+    try:
+        loopback, microphone = system.default_loopback(), system.default_microphone()
+        print(f"Caller (what this PC plays): {loopback or 'not found'}")
+        print(f"You (microphone):            {microphone or 'not found'}")
+    finally:
+        system.close()
 
 
 def _load_cases(args: argparse.Namespace) -> tuple[Case, ...]:

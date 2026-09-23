@@ -402,3 +402,44 @@ def test_state_reports_current_evidence_per_tactic() -> None:
     engine = make_engine()
     state = engine.evaluate(play(engine, case("4 ")))
     assert dict(state.evidence) == {K.AUTHORITY: 0.5, K.THREAT: 0.5, K.ISOLATION: 0.6}
+
+
+def test_the_why_panel_keeps_every_reason_of_the_session() -> None:
+    # A strong keyword starts at exactly min_evidence (0.5) and fades below it within
+    # seconds of speech; the Why panel must still explain it.
+    engine = make_engine()
+    end = play(engine, case("4 "))  # authority .5, threat .5, isolation .6
+    engine.on_segment(Segment(session_id="s", seg_id=9, stream=Stream.CALLER,
+                              t_start=end, t_end=end + 60.0, text=""))  # fmt: skip
+    state = engine.evaluate(end + 60.0)
+    assert [reason.label for reason in state.reasons] == ["authority", "threat", "isolation"]
+
+
+class TestCoercionLasts:
+    """A confident coercive keyword keeps counting for minutes of speech, not seconds."""
+
+    def test_a_threat_still_counts_after_twenty_seconds_of_talk(self) -> None:
+        engine = make_engine()
+        end = play(engine, case("10 "))  # threat .5 is the only coercion
+        assert engine.evaluate(end).level is L.WARNING
+        assert talk_and_tick(engine, end, 20.0).coercion
+
+    def test_it_fades_out_after_several_minutes(self) -> None:
+        engine = make_engine()
+        end = play(engine, case("10 "))
+        assert not talk_and_tick(engine, end, 600.0).coercion  # one half-life: 0.25
+
+    def test_an_unconfident_signal_is_never_coercion(self) -> None:
+        engine = make_engine()
+        engine.on_assessment(assessment(0.0, True))
+        engine.on_signal(
+            Signal(
+                t=1.0,
+                kind=K.THREAT,
+                source=SignalSource.LLM,
+                tier=Tier.LLM,
+                speaker=Stream.CALLER,
+                confidence=0.4,
+            )
+        )
+        assert not engine.evaluate(2.0).coercion

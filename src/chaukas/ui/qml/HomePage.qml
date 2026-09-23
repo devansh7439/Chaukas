@@ -10,6 +10,7 @@ Item {
     signal showSheet(string kind)
 
     readonly property var view: dashboard.view
+    readonly property bool audioProblem: dashboard.liveStatus.indexOf("Audio unavailable") === 0
 
     ColumnLayout {
         anchors.fill: parent
@@ -47,7 +48,8 @@ Item {
                         width: 10
                         height: 10
                         radius: 5
-                        color: root.view.paused ? Theme.inkFaint : "#3FAE72"
+                        color: root.view.paused ? Theme.inkFaint
+                             : root.audioProblem ? Theme.levelColor("warning") : "#3FAE72"
                     }
                     AppText {
                         Layout.fillWidth: true
@@ -56,6 +58,17 @@ Item {
                         font.pixelSize: Theme.body
                         maximumLineCount: 2
                     }
+                }
+
+                // Live mode: what is being listened to, or what went wrong.
+                AppText {
+                    visible: dashboard.liveStatus.length > 0
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 20
+                    text: dashboard.liveStatus
+                    color: root.audioProblem ? Theme.levelColor("warning") : Theme.inkFaint
+                    font.pixelSize: Theme.label
+                    maximumLineCount: 2
                 }
 
                 Item { Layout.fillHeight: true; Layout.minimumHeight: 0 }

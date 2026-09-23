@@ -196,3 +196,40 @@ def test_ui_rejects_a_bad_size(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         main(["ui", "--size", "big"])
     assert "WIDTHxHEIGHT" in capsys.readouterr().err
+
+
+def test_devices_lists_what_chaukas_would_listen_to(capsys: pytest.CaptureFixture[str]) -> None:
+    pytest.importorskip("pyaudiowpatch")
+    assert main(["devices"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Caller (what this PC plays):" in out
+    assert "You (microphone):" in out
+
+
+def test_setup_reports_models_already_present(capsys: pytest.CaptureFixture[str]) -> None:
+    pytest.importorskip("faster_whisper")
+    from chaukas.asr.whisper_cpu import ModelMissingError, WhisperCpu
+
+    try:
+        WhisperCpu("base", language="auto", cpu_threads=1, beam_size=1, no_speech_threshold=0.6)
+    except ModelMissingError:
+        pytest.skip("Whisper base is not downloaded")
+    assert main(["setup", "--asr-model", "base"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Whisper base: already on this PC" in out
+    assert "Voice detection model: ready" in out
+
+
+def test_run_opens_the_live_window(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    pytest.importorskip("PySide6")
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtCore import QTimer
+
+    from chaukas.ui.app import create_app
+
+    app = create_app(headless=True)
+    QTimer.singleShot(300, app.quit)
+    assert main(["run", "--no-audio", "--no-screen"]) == EXIT_OK

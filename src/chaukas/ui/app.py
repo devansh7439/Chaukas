@@ -9,16 +9,17 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
 from PySide6.QtCore import QObject, QTimer, QUrl
 from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterSingletonType
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 
+from chaukas.core.config import ChaukasConfig
 from chaukas.core.errors import ChaukasError
 from chaukas.engine.templates import load_templates
 from chaukas.evaluation.ablation import config_for
@@ -71,6 +72,7 @@ class LoadedUi:
     engine: QQmlApplicationEngine
     bridge: DashboardBridge
     main_window: QQuickWindow
+    config: ChaukasConfig
 
     def window(self, name: str) -> QQuickWindow:
         found = self.main_window.findChild(QQuickWindow, name)
@@ -93,11 +95,12 @@ def load_ui(
     headless: bool = False,
     ablation: str = "E",
     config_paths: Sequence[Path] = (),
+    config_overrides: Sequence[Mapping[str, Any]] = (),
     speed: float = 1.0,
     size: tuple[int, int] | None = None,
 ) -> LoadedUi:
     """Build the whole interface. Call ``create_app`` first."""
-    config = config_for(ablation, *config_paths)
+    config = config_for(ablation, *config_paths, *config_overrides)
     templates = load_templates()
     live = LiveSession(config, Lexicon.load(), templates,
                        case=load_case(case) if case else None)  # fmt: skip
@@ -117,7 +120,30 @@ def load_ui(
         raise ChaukasError("the Chaukas interface failed to load (see the QML errors above)")
     if not headless:
         bridge.start()
-    return LoadedUi(engine=engine, bridge=bridge, main_window=roots[0])
+    return LoadedUi(engine=engine, bridge=bridge, main_window=roots[0], config=config)
+
+
+def run_live(
+    *,
+    ablation: str,
+    config_paths: Sequence[Path],
+    config_overrides: Sequence[Mapping[str, Any]],
+    audio: bool,
+    screen: bool,
+) -> int:
+    """``chaukas run``: the window, fed by real audio and the desktop monitor."""
+    from chaukas.ui.services import LiveServices
+
+    app = create_app(headless=False)
+    ui = load_ui(case=None, ablation=ablation, config_paths=config_paths,
+                 config_overrides=config_overrides)  # fmt: skip
+    services = LiveServices(ui.bridge, ui.config, audio=audio, screen=screen)
+    services.start()
+    app.aboutToQuit.connect(services.stop)
+    try:
+        return app.exec()
+    finally:
+        services.stop()
 
 
 def run(

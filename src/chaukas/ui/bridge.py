@@ -4,6 +4,10 @@ Ticks the session four times a second on real time (optionally sped up for demos
 turns its state into plain view data with the presenter, and exposes it as Qt
 properties. Signals fire only when a value actually changed, so QML re-renders only what
 moved. Every user action arrives here as a slot.
+
+Live mode: the audio pipeline and the desktop monitor run on their own threads and call
+``post_line`` / ``post_context`` / ``post_status``. Those emit queued signals, so the work
+happens on the UI thread, where the session lives; nothing else touches it.
 """
 
 from __future__ import annotations
@@ -14,10 +18,10 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Final
 
-from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
+from PySide6.QtCore import Property, QObject, Qt, QTimer, Signal, Slot
 from PySide6.QtGui import QWindow
 
-from chaukas.core.models import Stream
+from chaukas.core.models import ContextEvent, HeardLine, Stream
 from chaukas.engine.templates import ChainTemplate
 from chaukas.ui.capture_exclusion import set_capture_excluded
 from chaukas.ui.copy import Language, labels, text
@@ -36,7 +40,12 @@ class DashboardBridge(QObject):
     historyChanged = Signal()
     labelsChanged = Signal()
     settingsChanged = Signal()
+    liveStatusChanged = Signal()
     toast = Signal(str)
+    # Cross-thread hand-offs (queued, so they run on the UI thread)
+    lineHeard = Signal(object)
+    contextSeen = Signal(object)
+    statusPosted = Signal(str)
 
     def __init__(
         self,
@@ -62,6 +71,11 @@ class DashboardBridge(QObject):
         self._transcript: list[dict[str, Any]] = []
         self._history: dict[str, Any] = {}
         self._labels = labels(settings.language)
+        self._live_status = ""
+        queued = Qt.ConnectionType.QueuedConnection
+        self.lineHeard.connect(self._accept_line, queued)
+        self.contextSeen.connect(self._accept_context, queued)
+        self.statusPosted.connect(self._accept_status, queued)
         self._timer = QTimer(self)
         self._timer.setInterval(TICK_MS)
         self._timer.timeout.connect(self.tick)
@@ -78,8 +92,30 @@ class DashboardBridge(QObject):
 
     def tick(self) -> None:
         """Advance the session to the clock's current time (the timer calls this)."""
-        self._live.advance((self._clock() - self._origin) * self._speed)
+        if self._live.advance(self.session_time()):
+            self.toast.emit(text("wiped", self._settings.language))  # ended after long silence
         self._refresh()
+
+    def session_time(self) -> float:
+        """Seconds on the session clock. Safe to call from any thread."""
+        return (self._clock() - self._origin) * self._speed
+
+    @property
+    def paused(self) -> bool:
+        """Safe to read from any thread (audio capture drops chunks while paused)."""
+        return self._live.paused
+
+    def post_line(self, line: HeardLine) -> None:
+        """From the audio pipeline's thread: a transcribed line."""
+        self.lineHeard.emit(line)
+
+    def post_context(self, event: ContextEvent) -> None:
+        """From the desktop monitor's thread: something seen on screen."""
+        self.contextSeen.emit(event)
+
+    def post_status(self, message: str) -> None:
+        """From any thread: what the live services are doing ("Listening: ...")."""
+        self.statusPosted.emit(message)
 
     def jump(self, t: float) -> None:
         """Advance the session straight to ``t`` (screenshots, tests, scrubbing)."""
@@ -116,6 +152,9 @@ class DashboardBridge(QObject):
     def _get_history_window(self) -> int:
         return self._window_s
 
+    def _get_live_status(self) -> str:
+        return self._live_status
+
     view = Property(dict, _get_view, notify=viewChanged)
     transcript = Property(list, _get_transcript, notify=transcriptChanged)
     history = Property(dict, _get_history, notify=historyChanged)
@@ -125,6 +164,7 @@ class DashboardBridge(QObject):
     contactNumber = Property(str, _get_contact_number, notify=settingsChanged)
     captureExclusion = Property(bool, _get_capture_exclusion, notify=settingsChanged)
     historyWindow = Property(int, _get_history_window, notify=historyChanged)
+    liveStatus = Property(str, _get_live_status, notify=liveStatusChanged)
 
     # ---------------------------------------------------------------- slots
 
@@ -180,6 +220,22 @@ class DashboardBridge(QObject):
         """Called by alert windows when shown; applies capture exclusion if enabled."""
         if self._settings.capture_exclusion and isinstance(window, QWindow):
             set_capture_excluded(int(window.winId()), True)
+
+    @Slot(object)
+    def _accept_line(self, line: HeardLine) -> None:
+        if self._live.hear(line):
+            self._refresh()
+
+    @Slot(object)
+    def _accept_context(self, event: ContextEvent) -> None:
+        self._live.observe(event)
+        self._refresh()
+
+    @Slot(str)
+    def _accept_status(self, message: str) -> None:
+        if message != self._live_status:
+            self._live_status = message
+            self.liveStatusChanged.emit()
 
     # -------------------------------------------------------------- helpers
 
