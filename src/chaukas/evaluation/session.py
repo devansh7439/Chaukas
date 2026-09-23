@@ -9,6 +9,7 @@ can run a two-hour call in milliseconds while the live app passes its monotonic 
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from chaukas.core.models import ContextEvent, Level, LLMAssessment, RiskState, Segment, Signal
@@ -39,9 +40,11 @@ class Session:
         "_engine",
         "_extractor",
         "_last_level",
+        "_last_signals",
         "_now",
         "_seg_id",
         "_session_id",
+        "_state",
         "_tick_s",
     )
 
@@ -62,10 +65,22 @@ class Session:
         self._now = 0.0
         self._seg_id = 0
         self._last_level = Level.QUIET
+        self._last_signals: tuple[Signal, ...] = ()
+        self._state = RiskState.quiet()
 
     @property
     def now(self) -> float:
         return self._now
+
+    @property
+    def state(self) -> RiskState:
+        """The most recent evaluation."""
+        return self._state
+
+    @property
+    def last_signals(self) -> tuple[Signal, ...]:
+        """Signals the extractor produced for the most recent segment."""
+        return self._last_signals
 
     @property
     def session_id(self) -> str:
@@ -81,7 +96,8 @@ class Session:
         """Extract signals from a transcript segment and evaluate."""
         snapshots = self.advance_to(segment.t_start)
         self._engine.on_segment(segment)
-        for signal in self._extractor.extract(segment):
+        self._last_signals = tuple(self._extractor.extract(segment))
+        for signal in self._last_signals:
             self._engine.on_signal(signal)
         snapshots.append(self._evaluate(max(segment.t_end, self._now)))
         return snapshots
@@ -97,6 +113,19 @@ class Session:
         self._extractor.observe(signal)
         self._engine.on_signal(signal)
         return [self._evaluate(self._now)]
+
+    def feed_llm(
+        self, t: float, signals: Iterable[Signal], assessment: LLMAssessment | None
+    ) -> list[Snapshot]:
+        """An LLM answer that became available at ``t``: its guarded signals and verdict."""
+        snapshots = self.advance_to(t)
+        for signal in signals:
+            self._extractor.observe(signal)
+            self._engine.on_signal(signal)
+        if assessment is not None:
+            self._engine.on_assessment(assessment)
+        snapshots.append(self._evaluate(max(t, self._now)))
+        return snapshots
 
     def feed_assessment(self, assessment: LLMAssessment) -> list[Snapshot]:
         snapshots = self.advance_to(assessment.t)
@@ -121,10 +150,13 @@ class Session:
         self._engine.reset()
         self._extractor.reset()
         self._last_level = Level.QUIET
+        self._last_signals = ()
+        self._state = RiskState.quiet(self._now)
 
     def _evaluate(self, t: float) -> Snapshot:
         self._now = max(self._now, t)
         state = self._engine.evaluate(self._now)
+        self._state = state
         changed = state.level is not self._last_level
         self._last_level = state.level
         return Snapshot(state=state, changed=changed)

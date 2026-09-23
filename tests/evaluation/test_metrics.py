@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -14,8 +16,15 @@ from chaukas.evaluation.metrics import (
     summarise,
     wilson_interval,
 )
-from chaukas.evaluation.report import format_ablation, format_outcomes, format_run
+from chaukas.evaluation.report import (
+    format_ablation,
+    format_outcomes,
+    format_run,
+    format_summary,
+)
 from chaukas.evaluation.runner import run_case
+from chaukas.llm.client import ChatResult
+from chaukas.llm.reasoner import Reasoner
 from chaukas.signals.lexicon import Lexicon
 
 
@@ -126,3 +135,58 @@ class TestReports:
         table = format_ablation({name: summarise(outcomes) for name in sorted(ABLATIONS)})
         assert table.count("\n") == len(ABLATIONS) + 1
         assert "false alarms" in table
+
+
+class _AlternatingChat:
+    """Every other answer is unusable; usable answers quote one real and one invented line."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def chat(self, messages: Sequence[Mapping[str, str]]) -> ChatResult:
+        self.calls += 1
+        if self.calls % 2 == 0:
+            return ChatResult(content="I think this is a scam.", latency_s=1.0)
+        caller_line = next(
+            line for line in messages[1]["content"].splitlines() if "][CALLER] " in line
+        )
+        line_id = int(caller_line.split("[L", 1)[1].split(" ", 1)[0])
+        quote = " ".join(caller_line.split("][CALLER] ", 1)[1].split()[:3])
+        reply = {
+            "addressed_to_user": True,
+            "suspected_objective": "unclear",
+            "tactics": [
+                {"name": "authority", "line": line_id, "evidence": quote, "confidence": 0.6},
+                {"name": "threat", "line": line_id, "evidence": "zzz qqq", "confidence": 0.6},
+            ],
+        }
+        return ChatResult(content=json.dumps(reply), latency_s=1.0)
+
+
+class TestLLMMetrics:
+    def test_validity_rejections_and_call_rate(self, cases_dir: Path) -> None:
+        config = config_for("D")
+        lexicon = Lexicon.load()
+        reasoner = Reasoner(_AlternatingChat(), config)
+        outcomes = [
+            score_case(run_case(case, config=config, lexicon=lexicon, reasoner=reasoner))
+            for case in load_cases(cases_dir)
+        ]
+        calls = sum(outcome.llm_calls for outcome in outcomes)
+        valid = sum(outcome.llm_valid for outcome in outcomes)
+        assert calls > 0
+        assert 0 < valid < calls
+        summary = summarise(outcomes)
+        assert summary.llm_json_validity == Proportion(valid, calls)
+        assert summary.llm_evidence_rejected.total == 2 * valid
+        assert summary.llm_evidence_rejected.hits == valid  # the invented quote, every time
+        assert summary.llm_calls_per_minute_benign is not None
+        text = format_summary(summary)
+        assert "LLM JSON validity" in text
+        assert "LLM evidence rejected" in text
+
+    def test_no_llm_rows_without_llm_calls(self, outcomes: list[CaseOutcome]) -> None:
+        summary = summarise(outcomes)
+        assert summary.llm_json_validity == Proportion(0, 0)
+        assert summary.llm_calls_per_minute_benign is None
+        assert "LLM" not in format_summary(summary)

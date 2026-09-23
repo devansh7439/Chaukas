@@ -56,6 +56,11 @@ class CaseOutcome:
     false_alarm: bool | None  # benign only: reached warning or above
     warning_latency: float | None  # first warning minus the expected_warning mark
     objective_correct: bool | None
+    duration_s: float = 0.0
+    llm_calls: int = 0  # model calls, retries included
+    llm_valid: int = 0  # calls that returned a usable JSON object
+    llm_items: int = 0  # tactics and requested actions in usable replies
+    llm_rejected: int = 0  # items the evidence guard dropped
 
 
 def score_case(run: CaseRun) -> CaseOutcome:
@@ -78,6 +83,9 @@ def score_case(run: CaseRun) -> CaseOutcome:
         reached = run.objective_when(max(Level.WARNING, case.expectation.max_level))
         objective_correct = reached is case.expectation.objective
 
+    calls = sum(outcome.call.attempts for outcome in run.llm_outcomes)
+    valid = sum(outcome.call.reply is not None for outcome in run.llm_outcomes)
+    guards = [outcome.guard for outcome in run.llm_outcomes if outcome.guard is not None]
     return CaseOutcome(
         case_id=case.case_id,
         category=case.category,
@@ -89,6 +97,11 @@ def score_case(run: CaseRun) -> CaseOutcome:
         false_alarm=(first_warning is not None) if not is_attack else None,
         warning_latency=latency,
         objective_correct=objective_correct,
+        duration_s=case.end_time,
+        llm_calls=calls,
+        llm_valid=valid,
+        llm_items=sum(guard.accepted + guard.rejected for guard in guards),
+        llm_rejected=sum(guard.rejected for guard in guards),
     )
 
 
@@ -107,6 +120,9 @@ class Summary:
     within_acceptable: Proportion
     warning_latency_median: float | None
     warning_latency_p90: float | None
+    llm_json_validity: Proportion = Proportion(0, 0)
+    llm_evidence_rejected: Proportion = Proportion(0, 0)
+    llm_calls_per_minute_benign: float | None = None  # None when the LLM was never called
 
 
 def summarise(outcomes: Sequence[CaseOutcome]) -> Summary:
@@ -127,7 +143,23 @@ def summarise(outcomes: Sequence[CaseOutcome]) -> Summary:
         within_acceptable=_count(o.within_acceptable for o in outcomes),
         warning_latency_median=median(latencies) if latencies else None,
         warning_latency_p90=_percentile(latencies, 0.9),
+        llm_json_validity=Proportion(
+            hits=sum(o.llm_valid for o in outcomes), total=sum(o.llm_calls for o in outcomes)
+        ),
+        llm_evidence_rejected=Proportion(
+            hits=sum(o.llm_rejected for o in outcomes), total=sum(o.llm_items for o in outcomes)
+        ),
+        llm_calls_per_minute_benign=_calls_per_minute(benign, outcomes),
     )
+
+
+def _calls_per_minute(
+    benign: Sequence[CaseOutcome], outcomes: Sequence[CaseOutcome]
+) -> float | None:
+    if not any(o.llm_calls for o in outcomes):
+        return None
+    minutes = sum(o.duration_s for o in benign) / 60.0
+    return sum(o.llm_calls for o in benign) / minutes if minutes > 0 else None
 
 
 def wilson_interval(hits: int, total: int, z: float = Z_95) -> tuple[float, float]:

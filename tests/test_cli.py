@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import json
+import threading
+from collections.abc import Iterator
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -106,3 +110,72 @@ def test_no_note_when_no_case_scripts_the_llm(
     (tmp_path / "BNX.yaml").write_text(CASE_WITHOUT_LLM, encoding="utf-8")
     assert main(["ablate", str(tmp_path)]) == EXIT_OK
     assert SCRIPTED_NOTE not in capsys.readouterr().out
+
+
+class _ModelHandler(BaseHTTPRequestHandler):
+    """A stand-in OpenAI-compatible server that says every call is addressed to the user."""
+
+    def do_POST(self) -> None:
+        self.rfile.read(int(self.headers["Content-Length"]))
+        content = json.dumps({"addressed_to_user": True, "suspected_objective": "unclear"})
+        data = json.dumps({"choices": [{"message": {"content": content}}]}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def log_message(self, format: str, *args: Any) -> None:
+        pass
+
+
+@pytest.fixture
+def model_config(tmp_path: Path) -> Iterator[Path]:
+    httpd = HTTPServer(("127.0.0.1", 0), _ModelHandler)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    override = tmp_path / "llm.yaml"
+    override.write_text(
+        f"llm:\n  base_url: http://127.0.0.1:{httpd.server_address[1]}/v1\n", encoding="utf-8"
+    )
+    yield override
+    httpd.shutdown()
+    httpd.server_close()
+
+
+def test_eval_with_a_real_model_reports_llm_metrics(
+    model_config: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    args = ["eval", str(CASES_DIR), "--ablation", "D", "--llm", "--config", str(model_config)]
+    assert main(args) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "LLM JSON validity" in out
+    assert SCRIPTED_NOTE not in out  # scripted verdicts are ignored with a real model
+
+
+def test_replay_lists_llm_calls(model_config: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    args = ["replay", str(CASES_DIR / "DA01.yaml"), "--ablation", "D", "--llm",
+            "--config", str(model_config)]  # fmt: skip
+    assert main(args) == EXIT_OK
+    assert "LLM call at" in capsys.readouterr().out
+
+
+def test_a_cached_perception_pass_replays_offline(
+    model_config: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    cache = tmp_path / "cache"
+    common = ["eval", str(CASES_DIR), "--ablation", "D", "--llm", "--llm-cache", str(cache)]
+    assert main([*common, "--config", str(model_config)]) == EXIT_OK
+    online = capsys.readouterr().out
+    assert any(cache.glob("*.json"))
+    # No server this time: every answer must come from the cache.
+    offline_config = tmp_path / "offline.yaml"
+    offline_config.write_text("llm:\n  base_url: http://127.0.0.1:9/v1\n", encoding="utf-8")
+    assert main([*common, "--llm-offline", "--config", str(offline_config)]) == EXIT_OK
+    assert capsys.readouterr().out == online
+
+
+def test_offline_needs_a_cache(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        main(["eval", str(CASES_DIR), "--llm", "--llm-offline"])
+    assert "--llm-cache" in capsys.readouterr().err

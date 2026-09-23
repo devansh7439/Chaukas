@@ -7,6 +7,7 @@ from collections.abc import Mapping, Sequence
 from chaukas.core.models import Level, Objective, RiskState
 from chaukas.evaluation.metrics import CaseOutcome, Summary
 from chaukas.evaluation.runner import CaseRun
+from chaukas.llm.reasoner import LLMOutcome
 
 _OBJECTIVE_TEXT: Mapping[Objective, str] = {
     Objective.MONEY_TRANSFER: "transfer money",
@@ -36,6 +37,11 @@ def format_run(run: CaseRun, *, max_reasons: int = 4) -> str:
             lines.append(f"{'':11}  {reason.t:7.1f}s  {reason.label}: {reason.detail}")
     if not run.transitions:
         lines.append("(stayed quiet)")
+    for outcome in run.llm_outcomes:
+        lines.append(
+            f"LLM call at {outcome.t_request:.1f}s, answer at {outcome.t_available:.1f}s: "
+            f"{_describe_outcome(outcome)}"
+        )
     lines.extend(["", f"max level reached: {run.max_level.label}"])
     for name, t in [
         ("first warning", run.first_time_at_least(Level.WARNING)),
@@ -82,6 +88,13 @@ def format_summary(summary: Summary) -> str:
         ("within acceptable", str(summary.within_acceptable)),
         ("warning latency", _latency(summary)),
     ]
+    if summary.llm_json_validity.total:
+        rate = summary.llm_calls_per_minute_benign
+        rows += [
+            ("LLM JSON validity", str(summary.llm_json_validity)),
+            ("LLM evidence rejected", str(summary.llm_evidence_rejected)),
+            ("LLM calls/min, benign", "-" if rate is None else f"{rate:.2f}"),
+        ]
     return "\n".join(f"{name:>21}: {value}" for name, value in rows)
 
 
@@ -107,6 +120,18 @@ def format_scripted_llm_note(scripted: Sequence[str], total: int, configs: Seque
     return (
         f"note: {len(scripted)} of {total} cases script the LLM's verdict"
         f" ({', '.join(scripted)}); results for {names} reflect those scripts, not a real model."
+    )
+
+
+def _describe_outcome(outcome: LLMOutcome) -> str:
+    guard = outcome.guard
+    if guard is None:
+        return f"failed ({outcome.call.error})"
+    assessment = guard.assessment
+    addressed = "addressed to user" if assessment.addressed_to_user else "NOT addressed to user"
+    return (
+        f"{addressed}, objective {assessment.suspected_objective.value}, "
+        f"{guard.accepted} item(s) kept, {guard.rejected} rejected"
     )
 
 

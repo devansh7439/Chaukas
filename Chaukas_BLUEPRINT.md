@@ -150,7 +150,7 @@ WASAPI loopback                WASAPI mic                 processes, window titl
 | Language | Python 3.11/3.12 (**ARM64 build** on Snapdragon) | Confirm the version works with `onnxruntime-qnn` on Day 2 |
 | ASR runtime | `onnxruntime-qnn` (Snapdragon), `onnxruntime` (dev CPU) | Same ONNX model family |
 | Model sourcing | `qai-hub`, `qai-hub-models` | Compile/profile on hosted devices |
-| LLM | GenieX serve (developer preview, pin the version) → `openai` Python client | Dev fallback: any local OpenAI-compatible server via `base_url`. No documented JSON-schema mode, so validate + retry |
+| LLM | GenieX serve (developer preview, pin the version) → standard-library HTTP client (`llm/client.py`) | Dev fallback: any local OpenAI-compatible server via `base_url`. No documented JSON-schema mode, so validate + retry. The `openai` package was dropped: one JSON POST doesn't need it, and its native dependency (`jiter`) is an ARM64 wheel risk |
 | Audio | `PyAudioWPatch` (WASAPI loopback + mic), `numpy`, `soxr` or `scipy` resampling | 16 kHz mono. Check for an ARM64 wheel on Day 2; fallback `soundcard` (`include_loopback=True`), verify |
 | VAD | Silero VAD `.onnx` + onnxruntime | **Don't** `pip install silero-vad`; it pulls in torch |
 | Context | `psutil`, `pywin32`, `watchdog`, `mss` | |

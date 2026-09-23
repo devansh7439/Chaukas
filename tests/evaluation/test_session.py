@@ -3,7 +3,16 @@ from __future__ import annotations
 import pytest
 
 from chaukas.core.config import load_config
-from chaukas.core.models import ContextEvent, ContextKind, Level, Segment, Stream
+from chaukas.core.models import (
+    ContextEvent,
+    ContextKind,
+    Level,
+    LLMAssessment,
+    Objective,
+    Segment,
+    SignalKind,
+    Stream,
+)
 from chaukas.engine.risk import RiskEngine
 from chaukas.evaluation.ablation import config_for
 from chaukas.evaluation.session import Session
@@ -105,3 +114,15 @@ def test_tick_must_be_positive(lexicon: Lexicon) -> None:
             RiskEngine.from_config(config),
             tick_s=0.0,
         )
+
+
+def test_llm_results_reach_the_engine(lexicon: Lexicon) -> None:
+    session = make_session(lexicon, ablation="D")
+    session.feed_segment(caller_segment(session, "CBI se bol raha hoon, arrest warrant hai", 0.0))
+    assert session.state.level is Level.QUIET  # capped until the first LLM answer
+    assert {s.kind for s in session.last_signals} == {SignalKind.AUTHORITY, SignalKind.THREAT}
+    assessment = LLMAssessment(t=5.0, addressed_to_user=True, suspected_objective=Objective.NONE)
+    snapshots = session.feed_llm(5.0, (), assessment)
+    assert snapshots[-1].t == 5.0
+    assert snapshots[-1].level is Level.NOTICE
+    assert session.state.llm_assessed

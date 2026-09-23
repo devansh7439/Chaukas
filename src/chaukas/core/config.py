@@ -71,6 +71,7 @@ class LLMConfig(_Section):
     max_tokens: PositiveInt
     temperature: Annotated[float, Field(ge=0.0, le=2.0)]
     can_discount: bool
+    evidence_min_overlap: UnitFloat
 
 
 class ThresholdsConfig(_Section):

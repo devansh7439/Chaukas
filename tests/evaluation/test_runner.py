@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import itertools
+import json
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -10,6 +13,8 @@ from chaukas.core.models import Level, Objective
 from chaukas.evaluation.ablation import config_for
 from chaukas.evaluation.cases import Case, load_case
 from chaukas.evaluation.runner import CaseRun, run_case
+from chaukas.llm.client import ChatResult
+from chaukas.llm.reasoner import Reasoner
 from chaukas.signals.lexicon import Lexicon
 
 
@@ -81,3 +86,57 @@ def test_snapshots_cover_the_settle_period(cases: dict[str, Case], lexicon: Lexi
     run = replay(cases["DA01"], lexicon)
     assert run.snapshots[-1].t >= run.case.end_time
     assert run.final_state is not None
+
+
+class FixedChat:
+    """A stand-in model that always gives the same answer after a fixed latency."""
+
+    def __init__(self, reply: dict[str, object], latency_s: float = 3.0) -> None:
+        self.content = json.dumps(reply)
+        self.latency_s = latency_s
+        self.calls = 0
+
+    def chat(self, messages: Sequence[Mapping[str, str]]) -> ChatResult:
+        self.calls += 1
+        return ChatResult(content=self.content, latency_s=self.latency_s)
+
+
+ADDRESSED = {"addressed_to_user": True, "suspected_objective": "money_transfer"}
+
+
+def with_model(case: Case, lexicon: Lexicon, chat: FixedChat, ablation: str = "D") -> CaseRun:
+    config = config_for(ablation)
+    return run_case(case, config=config, lexicon=lexicon, reasoner=Reasoner(chat, config))
+
+
+def test_a_real_model_replaces_scripted_verdicts(cases: dict[str, Case], lexicon: Lexicon) -> None:
+    # BN01 scripts "not addressed to the user"; this model disagrees, so the news escalates.
+    run = with_model(cases["BN01"], lexicon, FixedChat(ADDRESSED))
+    assert run.max_level >= Level.NOTICE
+    assert run.llm_outcomes
+
+
+def test_llm_answers_land_after_their_measured_latency(
+    cases: dict[str, Case], lexicon: Lexicon
+) -> None:
+    run = with_model(cases["DA01"], lexicon, FixedChat(ADDRESSED, latency_s=4.0))
+    first = run.llm_outcomes[0]
+    assert first.t_available == pytest.approx(first.t_request + 4.0)
+    assessed = [s.t for s in run.snapshots if s.state.llm_assessed]
+    assert min(assessed) == pytest.approx(first.t_available)
+    assert run.first_time_at_least(Level.CRITICAL) is not None
+
+
+def test_configurations_without_the_llm_never_call_it(
+    cases: dict[str, Case], lexicon: Lexicon
+) -> None:
+    chat = FixedChat(ADDRESSED)
+    run = with_model(cases["DA01"], lexicon, chat, ablation="E")
+    assert chat.calls == 0
+    assert run.llm_outcomes == ()
+
+
+def test_calls_are_debounced(cases: dict[str, Case], lexicon: Lexicon) -> None:
+    run = with_model(cases["DA01"], lexicon, FixedChat(ADDRESSED, latency_s=1.0))
+    starts = [outcome.t_request for outcome in run.llm_outcomes]
+    assert all(b - a >= 8.0 for a, b in itertools.pairwise(starts))

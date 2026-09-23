@@ -34,6 +34,7 @@ llm:
   max_tokens: 300
   temperature: 0.0
   can_discount: true           # bounded LLM discount of authority/threat/urgency keywords
+  evidence_min_overlap: 0.6    # a quote must share this much of its tokens with the cited line
 
 engine:
   weights:

@@ -20,6 +20,9 @@ from chaukas.evaluation.report import (
     format_scripted_llm_note,
 )
 from chaukas.evaluation.runner import run_case
+from chaukas.llm.cache import CachedChat
+from chaukas.llm.client import Chat, ChatClient
+from chaukas.llm.reasoner import Reasoner
 from chaukas.signals.lexicon import Lexicon
 
 EXIT_OK = 0
@@ -50,24 +53,32 @@ def build_parser() -> argparse.ArgumentParser:
     replay.add_argument("case", type=Path, help="case script (YAML)")
     _add_config_option(replay)
     _add_ablation_option(replay)
+    _add_llm_options(replay)
     replay.add_argument("--tick", type=float, default=1.0, metavar="SECONDS")
 
     evaluate = commands.add_parser("eval", help="score every case in a directory")
     evaluate.add_argument("cases", type=Path, help="directory of case scripts")
     _add_config_option(evaluate)
     _add_ablation_option(evaluate)
+    _add_llm_options(evaluate)
     evaluate.add_argument("--split", choices=[split.value for split in Split])
 
     ablate = commands.add_parser("ablate", help="run every ablation configuration and compare")
     ablate.add_argument("cases", type=Path, help="directory of case scripts")
     _add_config_option(ablate)
+    _add_llm_options(ablate)
     ablate.add_argument("--split", choices=[split.value for split in Split])
 
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if getattr(args, "llm_offline", False) and args.llm_cache is None:
+        parser.error("--llm-offline needs --llm-cache")
+    if getattr(args, "llm_cache", None) is not None and not args.llm:
+        parser.error("--llm-cache needs --llm")
     try:
         if args.command == "check-config":
             print(load_config(*args.config).model_dump_json(indent=2))
@@ -105,17 +116,52 @@ def _add_ablation_option(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_llm_options(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_argument_group("LLM")
+    group.add_argument(
+        "--llm",
+        action="store_true",
+        help="call the model at llm.base_url instead of using the cases' scripted verdicts",
+    )
+    group.add_argument(
+        "--llm-cache",
+        type=Path,
+        metavar="DIR",
+        help="record every answer (with its latency) here and reuse it on later runs",
+    )
+    group.add_argument(
+        "--llm-offline",
+        action="store_true",
+        help="answer only from --llm-cache; never call the model",
+    )
+
+
+def _reasoner(args: argparse.Namespace, config: ChaukasConfig) -> Reasoner | None:
+    if not args.llm:
+        return None
+    chat: Chat = ChatClient.from_config(config.llm)
+    if args.llm_cache is not None:
+        chat = CachedChat(chat, args.llm_cache, model=config.llm.model, offline=args.llm_offline)
+    return Reasoner(chat, config)
+
+
 def _replay(args: argparse.Namespace) -> str:
     config = config_for(args.ablation, *args.config)
-    run = run_case(load_case(args.case), config=config, lexicon=Lexicon.load(), tick_s=args.tick)
+    run = run_case(
+        load_case(args.case),
+        config=config,
+        lexicon=Lexicon.load(),
+        tick_s=args.tick,
+        reasoner=_reasoner(args, config),
+    )
     return format_run(run)
 
 
 def _evaluate(args: argparse.Namespace) -> str:
     config = config_for(args.ablation, *args.config)
     cases = _load_cases(args)
-    outcomes = _score_all(cases, config)
-    llm_configs = [args.ablation] if config.ablation.use_llm else []
+    outcomes = _score_all(cases, config, _reasoner(args, config))
+    llm_configs = [args.ablation] if config.ablation.use_llm and not args.llm else []
     return _with_llm_note(format_outcomes(outcomes, summarise(outcomes)), cases, llm_configs)
 
 
@@ -125,8 +171,8 @@ def _ablate(args: argparse.Namespace) -> str:
     llm_configs: list[str] = []
     for name in sorted(ABLATIONS):
         config = config_for(name, *args.config)
-        summaries[name] = summarise(_score_all(cases, config))
-        if config.ablation.use_llm:
+        summaries[name] = summarise(_score_all(cases, config, _reasoner(args, config)))
+        if config.ablation.use_llm and not args.llm:
             llm_configs.append(name)
     return _with_llm_note(format_ablation(summaries), cases, llm_configs)
 
@@ -135,9 +181,14 @@ def _load_cases(args: argparse.Namespace) -> tuple[Case, ...]:
     return load_cases(args.cases, split=Split(args.split) if args.split else None)
 
 
-def _score_all(cases: Sequence[Case], config: ChaukasConfig) -> list[CaseOutcome]:
+def _score_all(
+    cases: Sequence[Case], config: ChaukasConfig, reasoner: Reasoner | None
+) -> list[CaseOutcome]:
     lexicon = Lexicon.load()
-    return [score_case(run_case(case, config=config, lexicon=lexicon)) for case in cases]
+    return [
+        score_case(run_case(case, config=config, lexicon=lexicon, reasoner=reasoner))
+        for case in cases
+    ]
 
 
 def _with_llm_note(text: str, cases: Sequence[Case], llm_configs: Sequence[str]) -> str:
