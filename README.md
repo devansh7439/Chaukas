@@ -16,4 +16,8 @@ uv run ruff check .          # lint
 uv run ruff format --check . # formatting
 uv run mypy                  # strict type check
 uv run chaukas check-config  # validate the default configuration
+uv run chaukas ablate eval/cases  # replay the sample cases under ablations A-E
 ```
+
+If `uv run pytest` fails with "uv trampoline failed to canonicalize script path", the
+virtual environment's launchers are stale: run `uv sync --reinstall`.
