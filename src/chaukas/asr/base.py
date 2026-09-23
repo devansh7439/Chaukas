@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from chaukas.audio.convert import Samples
+from chaukas.core.errors import ChaukasError
+
+
+class ModelMissingError(ChaukasError):
+    """A model is not on this PC yet."""
 
 
 @dataclass(frozen=True, slots=True)

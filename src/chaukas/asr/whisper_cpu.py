@@ -21,15 +21,12 @@ import time
 from pathlib import Path
 from typing import Any, Final, Protocol
 
-from chaukas.asr.base import Transcript
+from chaukas.asr.base import ModelMissingError, Transcript
 from chaukas.audio.convert import Samples
-from chaukas.core.errors import ChaukasError
 
 _RETRY_AS_HINDI: Final = frozenset({"ur"})
 
-
-class ModelMissingError(ChaukasError):
-    """A model is not on this PC yet."""
+__all__ = ["ModelMissingError", "WhisperCpu", "download"]
 
 
 class _Model(Protocol):

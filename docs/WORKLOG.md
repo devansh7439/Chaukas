@@ -432,3 +432,50 @@ the OTP sentence ends. The earlier "critical 35 s" was partly a measurement erro
 script sampled the level only once, 20 s after playback ended.
 
 Gates: ruff, ruff format, mypy strict, 630 tests passing.
+
+### 2026-09-23 - Review fixes, part 2: speech-to-text on ONNX Runtime (runs on ARM64)
+
+The last x64-only piece of live protection was faster-whisper (CTranslate2 has no Windows
+ARM64 build). Whisper now also runs on ONNX Runtime, which has ARM64 wheels and the QNN
+provider for the Snapdragon NPU, and that backend is the default.
+
+- `asr/features.py`: Whisper's log-mel input (80 bands x 3000 frames) in plain numpy; matches
+  the reference implementation to within 0.001.
+- `asr/whisper_onnx.py`: `WhisperOnnx`, the Hugging Face ONNX export of Whisper
+  (`onnx-community/whisper-small`, int8 encoder 92 MB + decoder 157 MB) with a key/value
+  cache; greedy decoding. The first decoder step gives both the language and the
+  no-speech probability, so detecting the language costs nothing extra. Guards: special
+  tokens and non-speech symbols never produced, at most 8 tokens per second of audio,
+  repetitive output (compression ratio > 2.4) dropped, "Urdu" re-run as Hindi.
+- `asr/loader.py`: `asr.backend: onnx | ctranslate2` (default `onnx`) picks the engine for
+  live mode and `chaukas setup`; `--asr-backend` on `run` and `setup`. Asking for
+  ctranslate2 where faster-whisper is missing says to use onnx.
+- Voice detection no longer depends on faster-whisper: `chaukas setup` downloads the Silero
+  VAD model into `%LOCALAPPDATA%\Chaukas\models` (or `CHAUKAS_MODELS`) from a pinned
+  release tag and refuses it unless the SHA-256 matches. Model files are still never
+  committed.
+- `pyproject.toml`: the `asr` extra is onnxruntime + tokenizers + huggingface_hub (all have
+  ARM64 wheels), with faster-whisper kept as the optional second backend on x64.
+
+**Measured, same 48 synthetic clips (4 voices/speeds, 24 scam + 24 innocent, 143 s),
+Whisper small int8, greedy, 8 threads, i7-1360P:**
+
+| Backend | Language | Key word heard | Invented | WER | Per clip |
+|---|---|---|---|---|---|
+| faster-whisper | detected | 24/24 | 0/24 | 1.4 % | 4578 ms |
+| faster-whisper | hinted | 24/24 | 0/24 | 1.4 % | 2242 ms |
+| ONNX Runtime | detected | 24/24 | 0/24 | 1.4 % | 2060 ms |
+| ONNX Runtime | hinted | 24/24 | 0/24 | 1.4 % | 2117 ms |
+
+Same accuracy; with language detection ONNX is 2.2x faster.
+
+**Live end-to-end on the ONNX backend** (same synthetic call, silent loopback method):
+all four caller sentences heard and tagged; notice 10.1 s, warning 13.4 s, **critical
+16.9 s**, about 1 s after the OTP sentence ends (faster-whisper run earlier today: 12.6 /
+15.1 / 22.2 s; that run also had room speech on the mic, this one had none, so not all of
+the difference is the backend).
+
+Not measured yet: the ONNX backend on an actual Snapdragon laptop (CPU or NPU), and
+Hinglish accuracy.
+
+Gates: ruff, ruff format, mypy strict, 650 tests passing, none skipped on this PC.

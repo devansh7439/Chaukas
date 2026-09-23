@@ -22,9 +22,11 @@ dependencies = [
 [project.optional-dependencies]
 asr = [
     "numpy>=1.26",
+    # The default backend: Whisper on ONNX Runtime. All three have Windows ARM64 wheels.
     "onnxruntime>=1.18",
-    # CPU Whisper for development PCs. CTranslate2 has no Windows-on-ARM64 wheel; on
-    # Snapdragon, Whisper runs on the NPU through ONNX Runtime instead.
+    "tokenizers>=0.15",
+    "huggingface_hub>=0.23",  # model download (chaukas setup) and the local model cache
+    # Optional second backend (asr: backend: ctranslate2). CTranslate2 has no ARM64 wheel.
     "faster-whisper>=1.1; platform_machine != 'ARM64'",
 ]
 audio = [
@@ -84,7 +86,7 @@ files = ["src"]
 
 [[tool.mypy.overrides]]
 # These ship no type information.
-module = ["faster_whisper", "faster_whisper.*", "soundcard", "onnxruntime"]
+module = ["faster_whisper", "faster_whisper.*", "soundcard", "onnxruntime", "tokenizers"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

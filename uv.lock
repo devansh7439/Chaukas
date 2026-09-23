@@ -127,9 +127,11 @@ dependencies = [
 [package.optional-dependencies]
 asr = [
     { name = "faster-whisper", marker = "platform_machine != 'ARM64'" },
+    { name = "huggingface-hub" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "onnxruntime" },
+    { name = "tokenizers" },
 ]
 audio = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -158,6 +160,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "faster-whisper", marker = "platform_machine != 'ARM64' and extra == 'asr'", specifier = ">=1.1" },
+    { name = "huggingface-hub", marker = "extra == 'asr'", specifier = ">=0.23" },
     { name = "mss", marker = "extra == 'context'", specifier = ">=9.0" },
     { name = "numpy", marker = "extra == 'asr'", specifier = ">=1.26" },
     { name = "numpy", marker = "extra == 'audio'", specifier = ">=1.26" },
@@ -167,6 +170,7 @@ requires-dist = [
     { name = "pyside6", marker = "extra == 'ui'", specifier = ">=6.7" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "soundcard", marker = "sys_platform == 'win32' and extra == 'audio'", specifier = ">=0.4.3" },
+    { name = "tokenizers", marker = "extra == 'asr'", specifier = ">=0.15" },
 ]
 provides-extras = ["asr", "audio", "context", "ui"]
 

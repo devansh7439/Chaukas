@@ -206,18 +206,25 @@ def test_devices_lists_what_chaukas_would_listen_to(capsys: pytest.CaptureFixtur
     assert "You (microphone):" in out
 
 
-def test_setup_reports_models_already_present(capsys: pytest.CaptureFixture[str]) -> None:
-    pytest.importorskip("faster_whisper")
-    from chaukas.asr.whisper_cpu import ModelMissingError, WhisperCpu
+def test_setup_reports_models_already_present(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    pytest.importorskip("tokenizers")
+    pytest.importorskip("soundcard")
+    from chaukas.asr.whisper_onnx import find_model
+    from chaukas.audio.vad import MODEL_NAME, find_vad_model
 
-    try:
-        WhisperCpu("base", language="auto", cpu_threads=1, beam_size=1, no_speech_threshold=0.6)
-    except ModelMissingError:
-        pytest.skip("Whisper base is not downloaded")
-    assert main(["setup", "--asr-model", "base"]) == EXIT_OK
+    vad_model = find_vad_model()
+    if find_model("small") is None or vad_model is None:
+        pytest.skip("the models are not downloaded")
+    models = tmp_path / "models"
+    models.mkdir()
+    (models / MODEL_NAME).write_bytes(vad_model.read_bytes())
+    monkeypatch.setenv("CHAUKAS_MODELS", str(models))  # nothing to download: no network
+    assert main(["setup", "--asr-model", "small", "--asr-backend", "onnx"]) == EXIT_OK
     out = capsys.readouterr().out
-    assert "Whisper base: already on this PC" in out
-    assert "Voice detection model: ready" in out
+    assert "Whisper small (onnx): already on this PC" in out
+    assert "Voice detection model: already on this PC" in out
 
 
 def test_run_opens_the_live_window(

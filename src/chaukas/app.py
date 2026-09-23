@@ -87,12 +87,14 @@ def build_parser() -> argparse.ArgumentParser:
     _add_ablation_option(run)
     run.add_argument("--no-audio", action="store_true", help="don't listen (screen only)")
     run.add_argument("--no-screen", action="store_true", help="don't watch apps and pages")
-    run.add_argument("--asr-model", metavar="SIZE", help="Whisper size: tiny, base, small, medium")
+    run.add_argument("--asr-model", metavar="SIZE", help="Whisper size: tiny, base, small")
+    run.add_argument("--asr-backend", choices=["onnx", "ctranslate2"], help="speech-to-text engine")
     run.add_argument("--language", choices=["auto", "en", "hi"], help="speech language")
 
     setup = commands.add_parser("setup", help="download the speech model (one time)")
     _add_config_option(setup)
     setup.add_argument("--asr-model", metavar="SIZE", help="Whisper size to download")
+    setup.add_argument("--asr-backend", choices=["onnx", "ctranslate2"], help="for which engine")
 
     commands.add_parser("devices", help="list the audio devices Chaukas would use")
 
@@ -245,6 +247,8 @@ def _run(args: argparse.Namespace) -> int:
     asr: dict[str, str] = {}
     if args.asr_model:
         asr["model"] = args.asr_model
+    if args.asr_backend:
+        asr["backend"] = args.asr_backend
     if args.language:
         asr["language"] = args.language
     return run_live(
@@ -259,21 +263,31 @@ def _run(args: argparse.Namespace) -> int:
 def _setup(args: argparse.Namespace) -> None:
     """Download what live protection needs. The only command that uses the network."""
     try:
-        from chaukas.asr.whisper_cpu import ModelMissingError, WhisperCpu, download
-        from chaukas.audio.vad import find_vad_model
+        from chaukas.asr.loader import download, model_ready
+        from chaukas.audio.vad import MODEL_NAME, download_vad_model
+        from chaukas.core.paths import models_dir
     except ImportError as exc:
         raise ChaukasError(
             f"speech recognition is not installed: uv sync --extra audio --extra asr ({exc})"
         ) from exc
     config = load_config(*args.config)
-    model = args.asr_model or config.asr.model
-    try:
-        WhisperCpu(model, language="auto", cpu_threads=1, beam_size=1, no_speech_threshold=0.6)
-        print(f"Whisper {model}: already on this PC")
-    except ModelMissingError:
-        print(f"Whisper {model}: downloading (one time)...")
-        print(f"  saved to {download(model)}")
-    print("Voice detection model: " + ("ready" if find_vad_model() else "MISSING"))
+    asr = config.asr.model_copy(
+        update={
+            "model": args.asr_model or config.asr.model,
+            "backend": args.asr_backend or config.asr.backend,
+        }
+    )
+    name = f"Whisper {asr.model} ({asr.backend})"
+    if model_ready(asr):
+        print(f"{name}: already on this PC")
+    else:
+        print(f"{name}: downloading (one time)...")
+        print(f"  saved to {download(asr)}")
+    if (models_dir() / MODEL_NAME).is_file():
+        print("Voice detection model: already on this PC")
+    else:
+        print("Voice detection model: downloading (one time, checked by SHA-256)...")
+        print(f"  saved to {download_vad_model()}")
     _devices()
 
 

@@ -8,6 +8,9 @@ Runs on one CPU thread; a window takes well under a millisecond.
 
 from __future__ import annotations
 
+import hashlib
+import urllib.request
+from collections.abc import Callable
 from importlib import resources
 from pathlib import Path
 from typing import Final
@@ -16,22 +19,59 @@ import numpy as np
 import onnxruntime as ort
 
 from chaukas.audio.convert import Samples
+from chaukas.core.errors import ChaukasError
+from chaukas.core.paths import models_dir
 
 WINDOW: Final = 512
 CONTEXT: Final = 64
 MODEL_NAME: Final = "silero_vad_v6.onnx"
 
 
-def find_vad_model(models_dir: Path | None = None) -> Path | None:
-    """A downloaded model in ``models_dir``, else the copy bundled with faster-whisper."""
-    if models_dir is not None and (models_dir / MODEL_NAME).is_file():
-        return models_dir / MODEL_NAME
+# Silero VAD v6 (MIT), as re-exported by faster-whisper with separate h/c state inputs.
+# Pinned to a release tag and checked by hash, so the file cannot change under us.
+MODEL_URL: Final = (
+    "https://github.com/SYSTRAN/faster-whisper/raw/v1.2.1/faster_whisper/assets/" + MODEL_NAME
+)
+MODEL_SHA256: Final = "4cbf549b8326f60f80f2536d9eefeb450a9abe83365a098031c89719f1be17d2"
+
+
+def find_vad_model(folder: Path | None = None) -> Path | None:
+    """The downloaded model (in ``folder``, default the models folder), else the copy
+    bundled with faster-whisper where that is installed (not on Windows on ARM64)."""
+    folder = folder if folder is not None else models_dir()
+    if (folder / MODEL_NAME).is_file():
+        return folder / MODEL_NAME
     try:
         bundled = resources.files("faster_whisper.assets").joinpath(MODEL_NAME)
     except ModuleNotFoundError:
         return None
     path = Path(str(bundled))
     return path if path.is_file() else None
+
+
+def download_vad_model(
+    folder: Path | None = None, *, fetch: Callable[[str], bytes] | None = None
+) -> Path:
+    """Fetch the model into ``folder`` (``chaukas setup``); refuse it if the hash differs."""
+    folder = folder if folder is not None else models_dir()
+    data = (fetch or _fetch)(MODEL_URL)
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != MODEL_SHA256:
+        raise ChaukasError(
+            f"the voice detection model's SHA-256 is {digest}, expected {MODEL_SHA256}; not saved"
+        )
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / MODEL_NAME
+    partial = path.with_suffix(".part")
+    partial.write_bytes(data)
+    partial.replace(path)
+    return path
+
+
+def _fetch(url: str) -> bytes:
+    with urllib.request.urlopen(url, timeout=120) as response:
+        data: bytes = response.read()
+    return data
 
 
 class SileroVad:

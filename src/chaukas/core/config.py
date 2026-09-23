@@ -43,6 +43,7 @@ class AudioConfig(_Section):
 
 
 class ASRConfig(_Section):
+    backend: Literal["onnx", "ctranslate2"]
     model: str = Field(min_length=1)
     language: Literal["auto", "en", "hi"]
     cpu_threads: PositiveInt

@@ -111,20 +111,14 @@ class LiveServices:
         post = self._bridge.post_status
         post("Starting speech recognition…")
         try:
-            from chaukas.asr.whisper_cpu import ModelMissingError, WhisperCpu
+            from chaukas.asr.base import ModelMissingError
+            from chaukas.asr.loader import load_transcriber
             from chaukas.audio.capture import AudioSystem
             from chaukas.audio.pipeline import AudioPipeline
             from chaukas.audio.vad import find_vad_model
 
             asr = self._config.asr
-            transcriber = WhisperCpu(
-                asr.model,
-                language=asr.language,
-                cpu_threads=asr.cpu_threads,
-                beam_size=asr.beam_size,
-                no_speech_threshold=asr.no_speech_threshold,
-                hotwords=asr.hotwords,
-            )
+            transcriber = load_transcriber(asr)
             vad_model = find_vad_model()
             if vad_model is None:
                 raise ModelMissingError("the voice detection model is missing; run: chaukas setup")

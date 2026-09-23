@@ -105,17 +105,14 @@ class TestLiveServices:
 
     def test_real_audio_starts_listening(self, app: QGuiApplication, tmp_path: Path) -> None:
         pytest.importorskip("soundcard")
-        pytest.importorskip("faster_whisper")
-        from chaukas.asr.whisper_cpu import ModelMissingError, WhisperCpu
+        pytest.importorskip("tokenizers")
+        from chaukas.asr.loader import model_ready
         from chaukas.ui.services import LiveServices
 
-        try:
-            WhisperCpu("base", language="auto", cpu_threads=2, beam_size=1,
-                       no_speech_threshold=0.6)  # fmt: skip
-        except ModelMissingError:
-            pytest.skip("Whisper base is not downloaded")
-        ui = load_ui(case=None, settings_file=tmp_path / "s.json", headless=True,
-                     config_overrides=[{"asr": {"model": "base"}}])  # fmt: skip
+        ui = load_ui(case=None, settings_file=tmp_path / "s.json", headless=True)
+        if not model_ready(ui.config.asr):
+            ui.close()
+            pytest.skip("the configured Whisper model is not downloaded")
         ui.bridge.start()
         services = LiveServices(ui.bridge, ui.config, audio=True, screen=False)
         services.start()
