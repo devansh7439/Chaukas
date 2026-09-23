@@ -10,7 +10,6 @@ import pytest
 
 np = pytest.importorskip("numpy")
 pytest.importorskip("onnxruntime")
-pytest.importorskip("soxr")
 
 from chaukas.asr.base import Transcript  # noqa: E402
 from chaukas.audio.pipeline import AudioPipeline, StreamProcessor  # noqa: E402
@@ -81,6 +80,23 @@ class TestStreamProcessor:
         segments = first + later
         assert len(segments) == 2
         assert segments[1].t_start == pytest.approx(end_of_first + 20.0, abs=0.5)
+
+    def test_a_burst_of_backlog_does_not_push_the_stream_clock_ahead(
+        self, vad_model: object, speech: Callable[[str], object]
+    ) -> None:
+        """After the PC wakes from sleep, capture hands over the gap as silence all at once.
+
+        Those chunks all arrive at about the same moment; counting them as audio would put
+        the stream clock (and every later line) up to a minute ahead of the session clock.
+        """
+        proc = processor(vad_model)
+        play(proc, np.zeros(RATE, dtype=np.float32), start=0.0)  # 1 s of normal audio
+        for _ in range(100):  # 10 s of silence, delivered in one burst at t = 1.05
+            proc.process(np.zeros(RATE // 10, dtype=np.float32), arrived=1.05)
+        sentence = trimmed(speech("Tell me the code."))
+        audio = np.concatenate([sentence, np.zeros(RATE, dtype=np.float32)])
+        (segment,) = play(proc, audio, start=1.05)
+        assert segment.t_start == pytest.approx(1.05, abs=0.5)
 
     def test_idle_closes_speech_when_audio_stops_arriving(
         self, vad_model: object, speech: Callable[[str], object]
@@ -299,4 +315,42 @@ class TestEchoSkipping:
         transcriber = ScriptedTranscriber("four five six seven")
         heard = self.run_both(vad_model, speech, user_delay_s=3.0, transcriber=transcriber)
         assert transcriber.calls == 2
+        assert [line.stream for line in heard] == [Stream.CALLER, Stream.USER]
+
+
+class TestTurnOrder:
+    def test_the_user_waits_for_caller_speech_that_began_before_they_stopped(
+        self, vad_model: object, speech: Callable[[str], object]
+    ) -> None:
+        """The caller starts talking just before the user stops and goes on for seconds.
+
+        The user's segment closes while the caller is still mid-sentence. It must wait for
+        that sentence (which overlaps it) rather than go to Whisper first.
+        """
+        heard: list[HeardLine] = []
+        pipeline = AudioPipeline(AUDIO, vad_model=vad_model,  # type: ignore[arg-type]
+                                 transcriber=RecordingTranscriber(),
+                                 on_line=heard.append)  # fmt: skip
+        pipeline.add_stream(Stream.CALLER, in_rate=RATE, channels=1)
+        pipeline.add_stream(Stream.USER, in_rate=RATE, channels=1)
+        pipeline.start()
+        try:
+            said = trimmed(speech("Four five six seven."))
+            long = trimmed(speech("Stay on the line and do not disconnect this call, "
+                                  "whatever happens, until the officer joins you."))  # fmt: skip
+            lead = np.zeros(int(RATE * 0.5), dtype=np.float32)
+            overlap = int(RATE * 0.3)
+            caller_start = len(lead) + len(said) - overlap  # type: ignore[arg-type]
+            tail = np.zeros(RATE * 2, dtype=np.float32)
+            user = np.concatenate([lead, said, np.zeros(len(long) + RATE * 2, np.float32)])  # type: ignore[arg-type]
+            caller = np.concatenate([np.zeros(caller_start, np.float32), long, tail])
+            t = 0.0
+            for c_chunk, u_chunk in zip(chunks(caller), chunks(user), strict=False):
+                t += 0.1
+                pipeline.feed(Stream.CALLER, c_chunk, arrived=t)
+                pipeline.feed(Stream.USER, u_chunk, arrived=t)
+                time.sleep(0.03)  # about 3x real time: the caller is mid-sentence for a while
+            assert pipeline.drain(20.0)
+        finally:
+            pipeline.stop()
         assert [line.stream for line in heard] == [Stream.CALLER, Stream.USER]

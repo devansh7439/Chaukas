@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import threading
 from pathlib import Path
 
 import pytest
 
-from chaukas.context.downloads import DownloadClassifier, DownloadWatcher
+from chaukas.context.downloads import DownloadClassifier, DownloadPoller
 from chaukas.context.processes import ProcessInfo, ProcessWatcher
 from chaukas.context.rules import ContextRules
 from chaukas.context.windows import WindowWatcher
-from chaukas.core.clock import VirtualClock
-from chaukas.core.models import ContextEvent, ContextKind
+from chaukas.core.models import ContextKind
 
 C = ContextKind
 
@@ -110,24 +108,37 @@ class TestDownloadClassifier:
         assert DownloadClassifier(rules).created(1.0, Path("C:/d/report.pdf")) is None
 
 
-def test_the_real_folder_watcher_sees_a_finished_download(
-    rules: ContextRules, tmp_path: Path
-) -> None:
-    pytest.importorskip("watchdog")
-    seen: list[ContextEvent] = []
-    arrived = threading.Event()
+class TestDownloadPoller:
+    """The Downloads folder, checked once a second by the context monitor."""
 
-    def publish(event: ContextEvent) -> None:
-        seen.append(event)
-        arrived.set()
+    def test_files_already_there_are_the_baseline(
+        self, rules: ContextRules, tmp_path: Path
+    ) -> None:
+        (tmp_path / "old_setup.exe").write_bytes(b"MZ")
+        poller = DownloadPoller(tmp_path, DownloadClassifier(rules))
+        assert poller.poll(1.0) == []
+        assert poller.poll(2.0) == []
 
-    watcher = DownloadWatcher(tmp_path, DownloadClassifier(rules), VirtualClock(7.0), publish)
-    watcher.start()
-    try:
+    def test_a_new_executable_is_reported_once(self, rules: ContextRules, tmp_path: Path) -> None:
+        poller = DownloadPoller(tmp_path, DownloadClassifier(rules))
+        poller.poll(1.0)
+        (tmp_path / "AnyDesk.exe").write_bytes(b"MZ")
+        (tmp_path / "notes.pdf").write_bytes(b"%PDF")
+        (event,) = poller.poll(2.0)
+        assert (event.t, event.kind, event.detail) == (2.0, C.DOWNLOAD_EXECUTABLE, "AnyDesk.exe")
+        assert poller.poll(3.0) == []
+
+    def test_the_browsers_rename_at_the_end_of_a_download(
+        self, rules: ContextRules, tmp_path: Path
+    ) -> None:
+        poller = DownloadPoller(tmp_path, DownloadClassifier(rules))
         partial = tmp_path / "AnyDesk.exe.crdownload"
         partial.write_bytes(b"MZ")
-        partial.rename(tmp_path / "AnyDesk.exe")  # what a browser does at the end
-        assert arrived.wait(5.0)
-    finally:
-        watcher.stop()
-    assert [(e.t, e.kind, e.detail) for e in seen] == [(7.0, C.DOWNLOAD_EXECUTABLE, "AnyDesk.exe")]
+        poller.poll(1.0)
+        assert poller.poll(2.0) == []  # still downloading
+        partial.rename(tmp_path / "AnyDesk.exe")
+        assert [e.detail for e in poller.poll(3.0)] == ["AnyDesk.exe"]
+
+    def test_a_missing_folder_is_not_an_error(self, rules: ContextRules, tmp_path: Path) -> None:
+        poller = DownloadPoller(tmp_path / "nope", DownloadClassifier(rules))
+        assert poller.poll(1.0) == []

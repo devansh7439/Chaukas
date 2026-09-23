@@ -29,12 +29,11 @@ asr = [
 ]
 audio = [
     "numpy>=1.26",
-    "soxr>=0.3",
-    "PyAudioWPatch>=0.2.12; sys_platform == 'win32'",
+    # WASAPI capture incl. loopback; pure Python over cffi, so it also installs on ARM64
+    "soundcard>=0.4.3; sys_platform == 'win32'",
 ]
 context = [
     "psutil>=5.9",
-    "watchdog>=4.0",
     "mss>=9.0",
 ]
 ui = ["PySide6>=6.7"]
@@ -85,7 +84,7 @@ files = ["src"]
 
 [[tool.mypy.overrides]]
 # These ship no type information.
-module = ["faster_whisper", "faster_whisper.*", "pyaudiowpatch", "soxr", "onnxruntime"]
+module = ["faster_whisper", "faster_whisper.*", "soundcard", "onnxruntime"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

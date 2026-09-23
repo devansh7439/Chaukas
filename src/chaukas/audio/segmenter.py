@@ -88,6 +88,11 @@ class Segmenter:
         return bool(self._buffer)
 
     @property
+    def speech_start(self) -> float | None:
+        """Session time at which the speech in progress began; None between segments."""
+        return self._offset + self._start_index * self._window_s if self._buffer else None
+
+    @property
     def now(self) -> float:
         """Session time at the end of the last window pushed."""
         return self._offset + self._windows_seen * self._window_s

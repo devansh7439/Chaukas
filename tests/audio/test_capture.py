@@ -10,7 +10,7 @@ import pytest
 pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="WASAPI capture is Windows-only")
 
 np = pytest.importorskip("numpy")
-pytest.importorskip("pyaudiowpatch")
+pytest.importorskip("soundcard")
 
 from chaukas.audio.capture import AudioSystem, Device  # noqa: E402
 
@@ -30,8 +30,7 @@ def test_default_devices_are_found(system: AudioSystem) -> None:
     assert loopback.loopback
     assert not microphone.loopback
     for device in (loopback, microphone):
-        assert device.rate > 0
-        assert 1 <= device.channels <= 2
+        assert (device.rate, device.channels) == (16_000, 1)  # Windows converts for us
     names = [d.name for d in system.devices()]
     assert loopback.name in names
     assert microphone.name in names
@@ -59,7 +58,8 @@ def test_the_microphone_delivers_float_chunks(system: AudioSystem) -> None:
         capture.stop()
     first = chunks[0]
     assert first.dtype == np.float32  # type: ignore[attr-defined]
-    assert len(first) % microphone.channels == 0  # type: ignore[arg-type]
+    assert first.ndim == 1  # type: ignore[attr-defined]  # mono, ready for the pipeline
+    assert len(first) == 1600  # type: ignore[arg-type]  # 100 ms at 16 kHz
 
 
 def test_a_callback_error_does_not_stop_capture(system: AudioSystem) -> None:
@@ -86,6 +86,27 @@ def test_a_callback_error_does_not_stop_capture(system: AudioSystem) -> None:
         capture.stop()
 
 
+def test_the_loopback_keeps_delivering_while_nothing_plays(system: AudioSystem) -> None:
+    loopback = system.default_loopback()
+    if loopback is None:
+        pytest.skip("no output device")
+    count = {"n": 0}
+    three = threading.Event()
+
+    def on_chunk(samples: object, at: float) -> None:
+        count["n"] += 1
+        if count["n"] >= 3:
+            three.set()
+
+    capture = system.open(loopback, on_chunk, clock=lambda: 1.0)
+    capture.start()
+    try:
+        assert three.wait(3.0)  # silence still arrives, so the session clock never stalls
+    finally:
+        capture.stop()
+
+
 def test_devices_describe_themselves() -> None:
-    device = Device(index=3, name="Headset", rate=48_000, channels=2, loopback=True)
-    assert str(device) == "Headset (loopback, 48000 Hz, 2 ch)"
+    device = Device(id="{0.0.0.00000000}.{abc}", name="Headset", rate=16_000, channels=1,
+                    loopback=True)  # fmt: skip
+    assert str(device) == "Headset (loopback)"

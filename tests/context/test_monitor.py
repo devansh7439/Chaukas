@@ -52,6 +52,26 @@ class TestMonitor:
             (1.0, C.TRANSFER_PAGE),
         ]
 
+    def test_downloads_are_part_of_each_poll(self, rules: ContextRules, tmp_path: Path) -> None:
+        from chaukas.context.downloads import DownloadClassifier, DownloadPoller
+
+        published: list[ContextEvent] = []
+        clock = VirtualClock()
+        monitor = ContextMonitor(
+            clock=clock,
+            publish=published.append,
+            processes=ProcessWatcher(rules, list),
+            windows=WindowWatcher(rules),
+            read_foreground=lambda: None,
+            poll_s=1.0,
+            downloads=DownloadPoller(tmp_path, DownloadClassifier(rules)),
+        )
+        monitor.poll_once()
+        (tmp_path / "TeamViewer_Setup.exe").write_bytes(b"MZ")
+        clock.advance_to(1.0)
+        monitor.poll_once()
+        assert [(e.t, e.kind) for e in published] == [(1.0, C.DOWNLOAD_EXECUTABLE)]
+
     def test_background_thread_starts_and_stops(self, rules: ContextRules) -> None:
         polled = threading.Event()
 

@@ -1,137 +1,139 @@
-"""Two-stream capture through WASAPI (blueprint 6.1), via PyAudioWPatch.
+"""Two-stream capture through WASAPI (blueprint 6.1), via SoundCard.
 
 * The **caller** is whatever the PC plays: a *loopback* recording of the default output
   device, which is where call apps (WhatsApp, Zoom, Teams, Meet) send the other person's
   voice.
 * The **user** is the default microphone.
 
-Each stream is opened in its device's own format (usually 48 kHz stereo, 16-bit) and
-delivered as interleaved float32 chunks of about 100 ms, stamped with the session clock.
-The callback runs on PortAudio's thread and does nothing else: it converts and hands the
-chunk on. Errors in the handler are logged, never raised into PortAudio.
+Windows converts both to 16 kHz mono float32 in shared mode, so chunks are ready for voice
+detection as they arrive. SoundCard is pure Python over WASAPI (through cffi), so the same
+code runs on x64 and on Windows on ARM64 (Snapdragon), and a loopback keeps delivering
+silence while nothing plays, so the session clock never stalls.
+
+Each capture runs one thread that reads 100 ms blocks and hands them on, stamped with the
+session clock. Errors in the handler are logged, never raised into the capture thread.
 """
 
 from __future__ import annotations
 
 import logging
+import threading
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Final
 
-from chaukas.audio.convert import Samples, pcm16_to_float
+import numpy as np
+
+from chaukas.audio.convert import TARGET_RATE, Samples
 
 logger = logging.getLogger(__name__)
 
 CHUNK_S: Final = 0.1
-MAX_CHANNELS: Final = 2
+_CHUNK_FRAMES: Final = int(TARGET_RATE * CHUNK_S)
 
 ChunkHandler = Callable[[Samples, float], None]
 
 
 @dataclass(frozen=True, slots=True)
 class Device:
-    index: int
+    id: str
     name: str
     rate: int
     channels: int
     loopback: bool
 
     def __str__(self) -> str:
-        kind = "loopback" if self.loopback else "microphone"
-        return f"{self.name} ({kind}, {self.rate} Hz, {self.channels} ch)"
+        return f"{self.name} ({'loopback' if self.loopback else 'microphone'})"
 
 
 class Capture:
-    """One open input stream. ``start``, then ``stop`` (which also closes it)."""
+    """One input stream on its own thread. ``start``, then ``stop``."""
 
-    def __init__(self, stream: Any) -> None:
-        self._stream = stream
+    def __init__(self, source: Any, on_chunk: ChunkHandler, clock: Callable[[], float],
+                 name: str) -> None:  # fmt: skip
+        self._source = source
+        self._on_chunk = on_chunk
+        self._clock = clock
+        self._name = name
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+        self._error: BaseException | None = None
+
+    @property
+    def running(self) -> bool:
+        return self._thread is not None and self._thread.is_alive()
 
     def start(self) -> None:
-        self._stream.start_stream()
+        self._stop.clear()
+        self._thread = threading.Thread(target=self._run, name=f"chaukas-capture-{self._name}",
+                                        daemon=True)  # fmt: skip
+        self._thread.start()
 
-    def stop(self) -> None:
+    def stop(self, timeout: float = 5.0) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout)
+            self._thread = None
+
+    def _run(self) -> None:
         try:
-            if self._stream.is_active():
-                self._stream.stop_stream()
-        finally:
-            self._stream.close()
+            with warnings.catch_warnings():
+                # "data discontinuity" at start-up and after a device hiccup is harmless
+                warnings.simplefilter("ignore")
+                with self._source.recorder(samplerate=TARGET_RATE, channels=1,
+                                           blocksize=_CHUNK_FRAMES) as recorder:  # fmt: skip
+                    while not self._stop.is_set():
+                        block = recorder.record(numframes=_CHUNK_FRAMES)
+                        samples = np.ascontiguousarray(block[:, 0], dtype=np.float32)
+                        try:
+                            self._on_chunk(samples, self._clock())
+                        except Exception:
+                            logger.exception("audio chunk handler failed (%s)", self._name)
+        except Exception as exc:  # the device went away or could not be opened
+            self._error = exc
+            logger.exception("audio capture stopped (%s)", self._name)
 
 
 class AudioSystem:
-    """Owns the PortAudio session: lists devices and opens captures. Close it when done."""
+    """Lists devices and opens captures. ``close`` is kept for symmetry; nothing to free."""
 
     def __init__(self) -> None:
-        import pyaudiowpatch as pyaudio
+        import soundcard
 
-        self._pyaudio = pyaudio
-        self._pa = pyaudio.PyAudio()
+        self._sc = soundcard
 
     def close(self) -> None:
-        self._pa.terminate()
+        pass
 
     def devices(self) -> list[Device]:
-        """Every WASAPI microphone and loopback device."""
-        wasapi = self._pa.get_host_api_info_by_type(self._pyaudio.paWASAPI)["index"]
-        found = []
-        for i in range(self._pa.get_device_count()):
-            info = self._pa.get_device_info_by_index(i)
-            if info["hostApi"] == wasapi and info["maxInputChannels"] > 0:
-                found.append(self._device(info))
-        return found
+        """Every microphone and loopback device."""
+        return [self._device(mic) for mic in self._sc.all_microphones(include_loopback=True)]
 
     def default_loopback(self) -> Device | None:
         """The loopback of the default output device: the caller's voice."""
         try:
-            return self._device(self._pa.get_default_wasapi_loopback())
-        except (OSError, LookupError):
+            speaker = self._sc.default_speaker()
+            return self._device(self._sc.get_microphone(id=speaker.id, include_loopback=True))
+        except (RuntimeError, IndexError, OSError):
             return None
 
     def default_microphone(self) -> Device | None:
         """The default recording device: the user's voice."""
         try:
-            wasapi = self._pa.get_host_api_info_by_type(self._pyaudio.paWASAPI)
-            index = wasapi["defaultInputDevice"]
-            if index < 0:
-                return None
-            return self._device(self._pa.get_device_info_by_index(index))
-        except (OSError, LookupError):
+            return self._device(self._sc.default_microphone())
+        except (RuntimeError, IndexError, OSError):
             return None
 
     def open(
         self, device: Device, on_chunk: ChunkHandler, *, clock: Callable[[], float]
     ) -> Capture:
-        """Open (not start) a capture that calls ``on_chunk(samples, session_time)``."""
-        pyaudio = self._pyaudio
-
-        def callback(
-            in_data: bytes | None, frames: int, time_info: Any, status: int
-        ) -> tuple[None, int]:
-            if in_data:
-                try:
-                    on_chunk(pcm16_to_float(in_data), clock())
-                except Exception:
-                    logger.exception("audio chunk handler failed (%s)", device.name)
-            return None, pyaudio.paContinue
-
-        stream = self._pa.open(
-            format=pyaudio.paInt16,
-            channels=device.channels,
-            rate=device.rate,
-            input=True,
-            input_device_index=device.index,
-            frames_per_buffer=int(device.rate * CHUNK_S),
-            stream_callback=callback,
-            start=False,
-        )
-        return Capture(stream)
+        """A capture (not yet started) that calls ``on_chunk(samples, session_time)``."""
+        source = self._sc.get_microphone(id=device.id, include_loopback=device.loopback)
+        kind = "caller" if device.loopback else "user"
+        return Capture(source, on_chunk, clock, kind)
 
     @staticmethod
-    def _device(info: dict[str, Any]) -> Device:
-        return Device(
-            index=int(info["index"]),
-            name=str(info["name"]),
-            rate=int(info["defaultSampleRate"]),
-            channels=max(1, min(MAX_CHANNELS, int(info["maxInputChannels"]))),
-            loopback=bool(info.get("isLoopbackDevice", False)),
-        )
+    def _device(mic: Any) -> Device:
+        return Device(id=str(mic.id), name=str(mic.name), rate=TARGET_RATE, channels=1,
+                      loopback=bool(getattr(mic, "isloopback", False)))  # fmt: skip

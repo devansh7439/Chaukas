@@ -104,7 +104,7 @@ class TestLiveServices:
         ui.close()
 
     def test_real_audio_starts_listening(self, app: QGuiApplication, tmp_path: Path) -> None:
-        pytest.importorskip("pyaudiowpatch")
+        pytest.importorskip("soundcard")
         pytest.importorskip("faster_whisper")
         from chaukas.asr.whisper_cpu import ModelMissingError, WhisperCpu
         from chaukas.ui.services import LiveServices

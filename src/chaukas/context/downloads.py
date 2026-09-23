@@ -1,26 +1,28 @@
 """Executables arriving in the Downloads folder (blueprint 6.5).
 
-Browsers write ``.crdownload`` / ``.part`` files and rename them when the download
-finishes, so both "created" and "moved" events are classified, by the final name. The
-folder is the Downloads *known folder*, which OneDrive can redirect.
+The context monitor lists the folder once a second. Browsers write ``.crdownload`` /
+``.part`` files and rename them when the download finishes, so a finished executable shows
+up as a new name. Files present at the first look are the baseline and never reported.
+The folder is the Downloads *known folder*, which OneDrive can redirect.
+
+Polling (instead of a filesystem-events library) keeps this dependency-free, which matters
+on Windows on ARM64, and costs one directory listing per second.
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+import os
 from pathlib import Path
-from typing import Any
 
 from chaukas.context.rules import ContextRules
-from chaukas.core.clock import Clock
 from chaukas.core.models import ContextEvent, ContextKind
 
 logger = logging.getLogger(__name__)
 
 
 class DownloadClassifier:
-    """Pure part: filesystem events in, at most one ContextEvent per finished file."""
+    """Pure part: file names in, at most one ContextEvent per finished executable."""
 
     __slots__ = ("_rules", "_seen")
 
@@ -35,6 +37,10 @@ class DownloadClassifier:
         del source
         return self._classify(now, destination)
 
+    def remember(self, path: Path) -> None:
+        """Mark ``path`` as already seen (the baseline)."""
+        self._seen.add(str(path).casefold())
+
     def _classify(self, now: float, path: Path) -> ContextEvent | None:
         if not self._rules.is_executable(path):
             return None
@@ -45,46 +51,34 @@ class DownloadClassifier:
         return ContextEvent(t=now, kind=ContextKind.DOWNLOAD_EXECUTABLE, detail=path.name)
 
 
-class DownloadWatcher:
-    """watchdog observer on one folder (the ``context`` extra). Not recursive."""
+class DownloadPoller:
+    """Lists one folder (not recursively) on each ``poll``; reports new executables."""
 
-    def __init__(
-        self,
-        folder: Path,
-        classifier: DownloadClassifier,
-        clock: Clock,
-        publish: Callable[[ContextEvent], None],
-    ) -> None:
-        from watchdog.events import FileSystemEventHandler
-        from watchdog.observers import Observer
+    __slots__ = ("_classifier", "_folder", "_known")
 
-        watcher = self
+    def __init__(self, folder: Path, classifier: DownloadClassifier) -> None:
+        self._folder = folder
+        self._classifier = classifier
+        self._known: set[str] | None = None
 
-        class _Handler(FileSystemEventHandler):
-            def on_created(self, event: Any) -> None:
-                if not event.is_directory:
-                    watcher._emit(classifier.created(clock.now(), Path(event.src_path)))
+    def poll(self, now: float) -> list[ContextEvent]:
+        try:
+            with os.scandir(self._folder) as entries:
+                names = {entry.name for entry in entries if entry.is_file()}
+        except OSError:
+            return []  # missing or unreadable folder: nothing to report
+        known = self._known
+        self._known = names
+        if known is None:
+            for name in names:
+                self._classifier.remember(self._folder / name)
+            return []
+        events = []
+        for name in sorted(names - known):
+            event = self._classifier.created(now, self._folder / name)
+            if event is not None:
+                events.append(event)
+        return events
 
-            def on_moved(self, event: Any) -> None:
-                if not event.is_directory:
-                    watcher._emit(
-                        classifier.moved(clock.now(), Path(event.src_path), Path(event.dest_path))
-                    )
-
-        self._publish = publish
-        self._observer = Observer()
-        self._observer.schedule(_Handler(), str(folder), recursive=False)
-
-    def start(self) -> None:
-        self._observer.start()
-
-    def stop(self) -> None:
-        self._observer.stop()
-        self._observer.join(timeout=5.0)
-
-    def _emit(self, event: ContextEvent | None) -> None:
-        if event is not None:
-            try:
-                self._publish(event)
-            except Exception:
-                logger.exception("publishing a download event failed")
+    def reset(self) -> None:
+        self._known = None

@@ -52,6 +52,7 @@ _MERGE_GAP_S: Final = 0.25  # silence placed between merged segments
 _CALLER_SPAN_MEMORY_S: Final = 120.0
 _POLL_S: Final = 0.05
 _QUEUE_CHUNKS: Final = 600  # about a minute of 100 ms chunks per stream
+_MAX_LEAD_S: Final = 0.2  # stream clock ahead of arrivals by more: drop digital silence
 
 
 class StreamProcessor:
@@ -93,6 +94,11 @@ class StreamProcessor:
     def in_speech(self) -> bool:
         return self._segmenter is not None and self._segmenter.in_speech
 
+    @property
+    def speech_start(self) -> float | None:
+        """When the speech in progress began, on the session clock; None between segments."""
+        return self._segmenter.speech_start if self._segmenter is not None else None
+
     def process(self, interleaved: Samples, *, arrived: float) -> list[AudioSegment]:
         closed: list[AudioSegment] = []
         start = arrived - len(interleaved) / self._channels / self._in_rate
@@ -105,6 +111,14 @@ class StreamProcessor:
             self._vad.reset()
             if gap_closed is not None:
                 closed.append(gap_closed)
+        elif (segmenter.now - start > _MAX_LEAD_S and not segmenter.in_speech
+              and not np.any(interleaved)):  # fmt: skip
+            # Digital silence while this stream is already ahead of the clock: a backlog
+            # burst (after sleep the capture hands over the whole gap as zeros at once).
+            # Counting it would push the stream clock, and every later line, ahead of the
+            # session. Real audio is never exactly zero, so no speech is lost.
+            self._last_arrival = arrived
+            return closed
         for window, probability in self._vad.process(self._resampler.process(interleaved)):
             if self._guard is not None and self._guard.muted(segmenter.now):
                 window, probability = np.zeros(WINDOW, dtype=np.float32), 0.0
@@ -185,6 +199,9 @@ class _StreamWorker:
     # Audio fully processed *and* its segments submitted, on the session clock. Published
     # only after submission, so the ASR worker never sees progress ahead of the queue.
     progress: float = 0.0
+    # Start of the speech in progress at ``progress`` (None between segments). Published
+    # just before ``progress``, so whoever reads ``progress`` first sees a start as new.
+    speech_start: float | None = None
 
 
 class AudioPipeline:
@@ -288,6 +305,7 @@ class AudioPipeline:
             except queue.Empty:
                 if self._clock is not None:
                     self._submit(worker.processor.idle(now=self._clock()))
+                    worker.speech_start = worker.processor.speech_start
                 continue
             try:
                 if isinstance(item, tuple):
@@ -299,6 +317,7 @@ class AudioPipeline:
                 stream = worker.processor.stream.value
                 logger.exception("audio processing failed on the %s stream", stream)
             finally:
+                worker.speech_start = worker.processor.speech_start
                 worker.progress = worker.processor.now
                 worker.inbox.task_done()
 
@@ -391,17 +410,23 @@ class AudioPipeline:
 
         A caller segment closes only after ``vad_silence_ms`` of silence, so processing
         merely past the user's end time is not enough. No caller segment that started
-        before this one ended may still be waiting, and either the caller's audio has been
-        processed past that end plus the silence window, or the caller stream is idle and
-        not mid-sentence. All in stream time, so machine load cannot release a line early.
+        before this one ended may still be waiting or still be in progress, and either the
+        caller's audio has been processed past that end plus the silence window, or the
+        caller stream is idle and not mid-sentence. All in stream time, so machine load
+        cannot release a line early.
         """
         caller = self._workers.get(Stream.CALLER)
         if caller is None:
             return True
+        progress = caller.progress  # first: the start read next is at least as new
+        speech_start = caller.speech_start
+        # last: a segment closed after the reads above is here (added before publishing)
         if any(start < segment.t_end for start in self._pending_caller):
             return False
+        if speech_start is not None and speech_start < segment.t_end:
+            return False  # the caller began speaking before the user stopped, still going
         silence_s = self._config.vad_silence_ms / 1000
-        if caller.progress >= segment.t_end + silence_s:
+        if progress >= segment.t_end + silence_s:
             return True
         return caller.inbox.unfinished_tasks == 0 and not caller.processor.in_speech
 

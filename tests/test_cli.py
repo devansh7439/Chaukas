@@ -199,7 +199,7 @@ def test_ui_rejects_a_bad_size(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_devices_lists_what_chaukas_would_listen_to(capsys: pytest.CaptureFixture[str]) -> None:
-    pytest.importorskip("pyaudiowpatch")
+    pytest.importorskip("soundcard")
     assert main(["devices"]) == EXIT_OK
     out = capsys.readouterr().out
     assert "Caller (what this PC plays):" in out

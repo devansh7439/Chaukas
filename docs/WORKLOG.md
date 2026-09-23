@@ -378,3 +378,57 @@ Bugs found by live testing and fixed:
 
 Not yet: speech-to-text on Windows ARM64 / the NPU; Hinglish accuracy (only English
 synthetic speech has been tested); real-model LLM in live mode.
+
+### 2026-09-23 - Review fixes, part 1: prompt injection, Windows on ARM64, live timing
+
+Working through the risk review in order.
+
+**Prompt injection (commit f2e8882).** A caller could steer the LLM into "this speech is
+not addressed to the user" (for example by saying "this is a recorded announcement"), and
+that verdict used to switch the OTP rule off. Now it can only lower the alert to a warning,
+and a critical alert already raised stays held.
+
+**Windows on ARM64 (Snapdragon).** Checked PyPI for Windows ARM64 wheels of every
+dependency. soxr, PyAudioWPatch, watchdog, ctranslate2 (faster-whisper) and
+llama-cpp-python have none; numpy, onnxruntime (+ onnxruntime-qnn), PySide6, psutil,
+cffi, tokenizers and av do. Replaced the first three:
+- `audio/convert.py`: resampling in plain numpy (Kaiser-windowed low-pass, then linear
+  interpolation; filter state carried between chunks, so no clicks at chunk boundaries).
+- `context/downloads.py`: `DownloadPoller` lists the Downloads folder once a second as part
+  of the context monitor's poll, instead of a filesystem-events library.
+- `audio/capture.py`: SoundCard (pure Python over WASAPI through cffi) instead of
+  PyAudioWPatch. Windows delivers 16 kHz mono directly; the loopback delivers silence
+  while nothing plays, so the stream clock never stalls. `pyproject.toml` `audio` extra
+  now installs `soundcard`.
+Still x64-only: faster-whisper (ctranslate2). Next step: a speech-to-text backend on ONNX
+Runtime, which has ARM64 wheels and the QNN (NPU) provider.
+
+**Measured: loopback level vs the Windows volume slider** (speakers muted throughout, so
+nothing was audible). On this laptop the loopback copy of the caller follows the volume
+slider, but not mute. Voice detection still works at 2 % volume (peak -44 dBFS, VAD 0.99);
+only at 0 % (-54 dBFS) does it miss, and then the user cannot hear the caller either. No
+gain control needed. Muted + 100 % volume gives full-level loopback with no sound, which
+is now how live tests run without disturbing anyone.
+
+**Bugs found by live testing and fixed (test first, each seen failing):**
+- *A user line could jump ahead of the caller.* A held user segment was released once the
+  caller's audio was processed past its end, even while the caller was mid-sentence in
+  speech that had begun before the user stopped. Room speech on the mic (12 s, 13.5 s to
+  transcribe) then went to Whisper before the caller's "tell me the OTP", and the echo
+  check ran without that caller sentence. The stream worker now publishes the start of
+  speech in progress (`speech_start`), and a user segment waits for it.
+- *Stream clock pushed ahead after sleep.* After the PC slept for 30 minutes mid-test,
+  SoundCard handed over the whole gap as zeros at once (18,516 blocks). Counted as audio,
+  that pushes the stream clock (and every later line) up to a minute ahead of the session
+  clock. Digital silence arriving while the stream is already ahead is now dropped; real
+  audio is never exactly zero, so no speech can be lost. (This was also the "hang" seen
+  earlier: the machine suspended, not a deadlock.)
+
+**Live end-to-end, re-measured** (synthetic English scam call, 14.6 s, full app path:
+capture, VAD, Whisper small on CPU, engine, window; times from launching the player, which
+takes about 1.5 s to start): all four caller sentences heard and tagged (Authority, Threat,
+Isolation, OTP ask); **notice 12.6 s, warning 15.1 s, critical 22.2 s**, about 6 s after
+the OTP sentence ends. The earlier "critical 35 s" was partly a measurement error: the
+script sampled the level only once, 20 s after playback ended.
+
+Gates: ruff, ruff format, mypy strict, 630 tests passing.

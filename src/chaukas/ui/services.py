@@ -53,7 +53,6 @@ class LiveServices:
         self._pipeline: Any = None
         self._captures: list[Any] = []
         self._monitor: Any = None
-        self._downloads: Any = None
 
     @property
     def audio_running(self) -> bool:
@@ -82,14 +81,11 @@ class LiveServices:
         if self._monitor is not None:
             self._monitor.stop()
             self._monitor = None
-        if self._downloads is not None:
-            self._downloads.stop()
-            self._downloads = None
 
     # ---------------------------------------------------------------- screen
 
     def _start_screen(self) -> None:
-        from chaukas.context.downloads import DownloadClassifier, DownloadWatcher
+        from chaukas.context.downloads import DownloadClassifier, DownloadPoller
         from chaukas.context.monitor import ContextMonitor
         from chaukas.context.processes import ProcessWatcher, list_processes
         from chaukas.context.rules import ContextRules
@@ -105,15 +101,9 @@ class LiveServices:
             windows=WindowWatcher(rules),
             read_foreground=foreground_window,
             poll_s=1.0,
+            downloads=DownloadPoller(downloads_folder(), DownloadClassifier(rules)),
         )
         self._monitor.start()
-        try:
-            self._downloads = DownloadWatcher(downloads_folder(), DownloadClassifier(rules), clock,
-                                              self._bridge.post_context)  # fmt: skip
-            self._downloads.start()
-        except (OSError, ImportError) as exc:  # the monitor still runs without it
-            logger.warning("the Downloads folder is not being watched: %s", exc)
-            self._downloads = None
 
     # ----------------------------------------------------------------- audio
 

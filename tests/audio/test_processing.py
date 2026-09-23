@@ -7,7 +7,6 @@ from collections.abc import Callable
 import pytest
 
 np = pytest.importorskip("numpy")
-pytest.importorskip("soxr")
 
 from chaukas.audio.convert import StreamResampler, pcm16_to_float  # noqa: E402
 from chaukas.audio.guards import EchoGuard, PlaybackGuard  # noqa: E402
@@ -45,6 +44,27 @@ class TestConvert:
         assert out.dtype == np.float32
         assert abs(len(out) - RATE) < 64  # one second in, one second out
         assert dominant_frequency(out, RATE) == pytest.approx(440.0, abs=2.0)
+
+    @pytest.mark.parametrize("rate", [44_100, 48_000, 96_000])
+    def test_common_device_rates_become_16k_without_clicks_between_chunks(self, rate: int) -> None:
+        resampler = StreamResampler(in_rate=rate, channels=1)
+        signal = tone(1000.0, 2.0, rate)
+        size = int(rate * 0.1)
+        chunks = [resampler.process(signal[i : i + size]) for i in range(0, len(signal), size)]
+        out = np.concatenate([*chunks, resampler.flush()])
+        assert abs(len(out) - 2 * RATE) < 64
+        assert dominant_frequency(out, RATE) == pytest.approx(1000.0, abs=2.0)
+        reference = tone(1000.0, 2.0, RATE)
+        middle = slice(RATE // 2, RATE + RATE // 2)  # away from the filter's start-up
+        lag = int(np.argmax(np.correlate(out[middle], reference[middle][:800], "valid")))
+        aligned = out[middle][lag : lag + 8000]
+        error = np.abs(aligned - reference[middle][: len(aligned)])
+        assert error.max() < 0.05  # no clicks at 100 ms chunk boundaries
+
+    def test_frequencies_above_8khz_are_removed(self) -> None:
+        resampler = StreamResampler(in_rate=48_000, channels=1)
+        out = np.concatenate([resampler.process(tone(12_000.0, 1.0, 48_000)), resampler.flush()])
+        assert np.abs(out[2000:-2000]).max() < 0.05  # would alias to 4 kHz if not filtered
 
     def test_16k_mono_passes_through(self) -> None:
         resampler = StreamResampler(in_rate=RATE, channels=1)

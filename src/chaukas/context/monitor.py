@@ -1,4 +1,4 @@
-"""The context monitor: polls processes and the foreground window at 1 Hz (blueprint 6.5).
+"""The context monitor: polls processes, the foreground window and Downloads at 1 Hz (6.5).
 
 Runs on its own daemon thread and publishes ContextEvents stamped with session time. A
 reader that fails (access denied, a window closing mid-read) is logged and skipped for
@@ -12,6 +12,7 @@ import threading
 from collections.abc import Callable
 from typing import Self
 
+from chaukas.context.downloads import DownloadPoller
 from chaukas.context.processes import ProcessWatcher
 from chaukas.context.windows import WindowWatcher
 from chaukas.core.clock import Clock
@@ -32,6 +33,7 @@ class ContextMonitor:
         windows: WindowWatcher,
         read_foreground: ForegroundReader,
         poll_s: float,
+        downloads: DownloadPoller | None = None,
     ) -> None:
         if poll_s <= 0:
             raise ValueError(f"poll_s must be positive, got {poll_s}")
@@ -40,6 +42,7 @@ class ContextMonitor:
         self._processes = processes
         self._windows = windows
         self._read_foreground = read_foreground
+        self._downloads = downloads
         self._poll_s = poll_s
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -61,6 +64,11 @@ class ContextMonitor:
                 events.extend(self._windows.observe(now, *foreground))
         except Exception:
             logger.exception("foreground window poll failed")
+        if self._downloads is not None:
+            try:
+                events.extend(self._downloads.poll(now))
+            except Exception:
+                logger.exception("Downloads folder poll failed")
         for event in events:
             self._publish(event)
 
@@ -81,6 +89,8 @@ class ContextMonitor:
         """Session end: the next poll is a fresh baseline."""
         self._processes.reset()
         self._windows.reset()
+        if self._downloads is not None:
+            self._downloads.reset()
 
     def __enter__(self) -> Self:
         self.start()
