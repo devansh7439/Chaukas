@@ -533,3 +533,26 @@ Not done, deliberately: the LLM in live mode (`chaukas run`). With this model it
 false alarms to real calls; the reasoner's request/execute/finish split is ready for it.
 
 Gates: ruff, ruff format, mypy strict, 680 tests passing.
+
+### 2026-09-27 - Held-out evaluation: the first honest detection numbers
+
+16 new cases (8 attacks, 8 hard negatives) in the `test` split, written from common scam
+patterns without looking at the lexicon and committed (bdfd2c7) before their first run.
+Configuration E (default, no LLM), first and only run so far:
+
+| | 4 dev cases (seen while building) | 16 held-out cases |
+|---|---|---|
+| Attacks reaching warning or higher | 2/2 | **3/8 (38 %)** |
+| Critical before harm | 2/2 | **0/8** |
+| False alarms on benign calls | 0/2 | **0/8** |
+
+Chaukas is cautious (no false alarm on a delivery OTP, film dialogue, family rent money or
+a work screen share) but misses most scams it was not built around; the dev numbers were
+flattering. Failure modes seen in replays:
+1. Spoken numbers in English ("five one nine four two eight") are not recognised as the
+   user reading out a code, so the OTP rule never reaches critical (AT08).
+2. Paraphrased credential requests ("the code you got, read it out", "the 6-digit code in
+   the SMS") are not recognised as credential requests (AT02, AT06).
+3. Scams that use greed instead of fear (a refund plus AnyDesk) only reach notice, because
+   escalation needs authority, threat or isolation (AT03); several Hinglish threat
+   phrasings ("connection kaat diya jayega", "account frozen") are not in the lexicon.
