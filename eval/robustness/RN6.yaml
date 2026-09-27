@@ -1,0 +1,19 @@
+case_id: RN6
+category: benign
+scenario: police_found_phone
+split: test
+author: me
+language: hinglish
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: real police, no request.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Namaste, Sector 21 police station se bol raha hoon, aapka khoya hua phone mil gaya hai."}
+  - {after: 1.0, caller: "Kal subah ID proof lekar thane aa jaaiye, phone le jaaiye."}
+  - {after: 1.0, user: "Bahut shukriya, main kal aata hoon."}

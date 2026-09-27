@@ -1,0 +1,24 @@
+case_id: RB5
+category: attack
+scenario: arrest.reordered
+split: test
+author: me
+language: english
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: money first, threat later.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "You need to transfer fifty thousand rupees today as a security deposit."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, user: "Why should I do that?"}
+  - {after: 1.0, caller: "Because this is the Cyber Crime department and there is a case against you."}
+  - {after: 1.0, caller: "If you tell anyone, you will be arrested. Keep your camera on."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

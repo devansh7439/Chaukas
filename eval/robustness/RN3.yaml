@@ -1,0 +1,18 @@
+case_id: RN3
+category: benign
+scenario: news.devanagari
+split: test
+author: me
+language: hindi
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: a news bulletin.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "आज की खबर: डिजिटल अरेस्ट के नाम पर ठगी के मामले बढ़ रहे हैं।"}
+  - {after: 1.0, caller: "पुलिस ने कहा है कि कोई भी अधिकारी वीडियो कॉल पर गिरफ्तारी नहीं करता।"}

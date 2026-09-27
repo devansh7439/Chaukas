@@ -1,0 +1,20 @@
+case_id: RN7
+category: benign
+scenario: bank_call_back_user_initiated
+split: test
+author: me
+language: english
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: the user called the bank.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Hello, I called to report that my card was blocked by mistake."}
+  - {after: 1.0, caller: "I can help. For security I will send an OTP; please type it in the app, do not read it out."}
+  - {after: 2.0, user: "Done, I have entered it."}
+  - {after: 1.0, caller: "Thank you, your card is active again."}

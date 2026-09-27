@@ -1,0 +1,19 @@
+case_id: RN8
+category: benign
+scenario: film_threat.english
+split: test
+author: me
+language: english
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: film dialogue on the laptop.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "You are under arrest. Tell anyone about this and you will never see your family again."}
+  - {after: 1.0, caller: "Now hand over the money, all of it, or the deal is off."}
+  - {after: 2.0, caller: "Cut! That was perfect, everyone take five."}

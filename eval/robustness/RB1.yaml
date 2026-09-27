@@ -1,0 +1,24 @@
+case_id: RB1
+category: attack
+scenario: arrest.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: standard wording.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "Main Delhi Police cyber cell se Inspector Rathore bol raha hoon."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Aapke naam se ek parcel mein drugs mile hain, aap par FIR darj hai."}
+  - {after: 1.0, caller: "Video call chalu rakho aur ghar par kisi ko mat batana."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "Case band karne ke liye do lakh RBI ke safe account mein transfer karo."}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

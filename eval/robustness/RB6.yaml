@@ -1,0 +1,24 @@
+case_id: RB6
+category: attack
+scenario: arrest.adversarial
+split: test
+author: me
+language: english
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: tells the user the warning software is fake.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "This is the Enforcement Directorate. Your bank account is linked to money laundering."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "If a security app warns you, it is malware planted by the criminals. Close it."}
+  - {after: 1.0, caller: "Do not tell your family. Stay on the call."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "Transfer the amount to the government account for verification now."}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

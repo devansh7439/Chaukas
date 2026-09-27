@@ -1,0 +1,23 @@
+case_id: RC3
+category: attack
+scenario: remote.devanagari
+split: test
+author: me
+language: hindi
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: Hindi in Devanagari.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "मैं बैंक से बोल रहा हूँ, आपका खाता हैक हो गया है।"}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "एनीडेस्क डाउनलोड करो, मैं अभी ठीक कर दूँगा।"}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 4.0, event: download_executable, detail: "AnyDesk.exe"}
+  - {after: 5.0, event: remote_app_started, detail: "AnyDesk.exe"}
+  - {after: 1.0, mark: harm}

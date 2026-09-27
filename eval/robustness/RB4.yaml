@@ -1,0 +1,24 @@
+case_id: RB4
+category: attack
+scenario: arrest.indirect
+split: test
+author: me
+language: hinglish
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: indirect: 'verification', 'refundable'.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "Customs department se call hai, aapka courier Mumbai mein roka gaya hai."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Isme illegal saamaan mila hai, police ko case forward ho raha hai."}
+  - {after: 1.0, caller: "Yeh confidential hai, family ko involve mat kijiye."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "Ek refundable verification amount jama karna hoga, account details bhej raha hoon."}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

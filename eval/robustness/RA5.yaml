@@ -1,0 +1,23 @@
+case_id: RA5
+category: attack
+scenario: otp.reordered
+split: test
+author: me
+language: english
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: request first, authority later.
+expected:
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Please tell me the OTP you just got, quickly."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, user: "Who is this?"}
+  - {after: 1.0, caller: "This is the RBI fraud cell. Your account will be frozen if you delay."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "Okay, it is five five two one nine zero."}
+  - {after: 0.5, mark: harm}

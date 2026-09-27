@@ -1,0 +1,23 @@
+case_id: RC1
+category: attack
+scenario: remote.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: standard wording.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "Hello, Microsoft support se bol raha hoon, aapke computer mein virus hai."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Jaldi se AnyDesk download karo, main hata deta hoon."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 4.0, event: download_executable, detail: "AnyDesk.exe"}
+  - {after: 5.0, event: remote_app_started, detail: "AnyDesk.exe"}
+  - {after: 1.0, mark: harm}

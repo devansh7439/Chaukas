@@ -1,0 +1,19 @@
+case_id: RN4
+category: benign
+scenario: family_urgent_money
+split: test
+author: me
+language: hinglish
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: a real, urgent family request.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Papa, hostel ki fees aaj last date hai, bees hazaar bhej do please."}
+  - {after: 1.0, user: "Theek hai beta, abhi bhejta hoon."}
+  - {after: 3.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}

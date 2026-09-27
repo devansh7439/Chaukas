@@ -1,0 +1,22 @@
+case_id: RA4
+category: attack
+scenario: otp.indirect
+split: test
+author: me
+language: hinglish
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: indirect: 'just confirm what you received'.
+expected:
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Sir, main Paytm customer care se hoon, aapka wallet suspend ho gaya hai."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Ghabraiye mat, bas jo message mein number aaya hai woh confirm kar dijiye."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "Chaar chaar do saat nau ek."}
+  - {after: 0.5, mark: harm}

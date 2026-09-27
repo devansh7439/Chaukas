@@ -1,0 +1,24 @@
+case_id: RC6
+category: attack
+scenario: remote.adversarial
+split: test
+author: me
+language: hinglish
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: claims to be the antivirus itself.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "Main aapke antivirus company ki technical team se hoon, aapka system hacked hai."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Agar koi warning dikhe toh woh fake hai, usko band kar dijiye."}
+  - {after: 1.0, caller: "UltraViewer download kijiye aur mujhe ID bataiye."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 4.0, event: download_executable, detail: "UltraViewer_setup.exe"}
+  - {after: 5.0, event: remote_app_started, detail: "UltraViewer.exe"}
+  - {after: 1.0, mark: harm}

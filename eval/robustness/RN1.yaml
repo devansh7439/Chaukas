@@ -1,0 +1,18 @@
+case_id: RN1
+category: benign
+scenario: real_bank_advice.devanagari
+split: test
+author: me
+language: hindi
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "नमस्ते, मैं आपके बैंक से बोल रही हूँ, आपका नया डेबिट कार्ड भेज दिया गया है।"}
+  - {after: 1.0, caller: "याद रखिए, बैंक कभी ओटीपी या पिन नहीं माँगता, किसी को मत बताइए।"}
+  - {after: 1.0, user: "ठीक है, धन्यवाद।"}

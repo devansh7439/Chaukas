@@ -1,0 +1,20 @@
+case_id: RN5
+category: benign
+scenario: office_remote_it
+split: test
+author: me
+language: english
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: IT support the user asked for.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Hi, this is Neha, my Outlook keeps crashing, I raised a ticket."}
+  - {after: 1.0, caller: "Hi Neha, I will connect remotely, please accept the Quick Assist request."}
+  - {after: 4.0, event: remote_app_started, detail: "QuickAssist.exe"}
+  - {after: 2.0, caller: "Done, I repaired the Office install. Try it now."}

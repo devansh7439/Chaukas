@@ -1,0 +1,24 @@
+case_id: RC2
+category: attack
+scenario: remote.paraphrase_en
+split: test
+author: me
+language: english
+notes: >
+  Robustness matrix case, committed before its first run and run once. Synthetic,
+  written with AI assistance by the same assistant that developed the detector (not
+  blind to its vocabulary).
+  Variant: no tool name.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "This is the technical department of your internet provider."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Hackers are using your connection. I need to get onto your computer to fix it."}
+  - {after: 1.0, caller: "Please install the support program from the link and tell me the number it shows."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 4.0, event: download_executable, detail: "support_client.exe"}
+  - {after: 5.0, event: remote_app_started, detail: "TeamViewer.exe"}
+  - {after: 1.0, mark: harm}
