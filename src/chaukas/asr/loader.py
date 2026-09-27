@@ -25,6 +25,7 @@ def load_transcriber(asr: ASRConfig) -> Transcriber:
                 "download it with: chaukas setup"
             )
         return WhisperOnnx(folder, language=asr.language, cpu_threads=asr.cpu_threads,
+                           device=asr.device,
                            no_speech_threshold=asr.no_speech_threshold)  # fmt: skip
     try:
         import faster_whisper  # noqa: F401  (fail here, with a clear message)
@@ -41,7 +42,14 @@ def load_transcriber(asr: ASRConfig) -> Transcriber:
 
 
 def model_ready(asr: ASRConfig) -> bool:
-    """Is the configured model on this PC? (Never downloads.)"""
+    """Is the configured model on this PC? (Never downloads.) For the NPU that includes
+    the fp32 encoder: without it the model still loads, but on the CPU."""
+    if asr.backend == "onnx" and asr.device == "npu":
+        from chaukas.asr.whisper_onnx import ENCODER_NPU, find_model
+
+        folder = find_model(asr.model)
+        if folder is None or not (folder / ENCODER_NPU).is_file():
+            return False
     try:
         load_transcriber(asr)
     except ModelMissingError:
@@ -54,7 +62,7 @@ def download(asr: ASRConfig) -> Path:
     if asr.backend == "onnx":
         from chaukas.asr.whisper_onnx import download as download_onnx
 
-        return download_onnx(asr.model)
+        return download_onnx(asr.model, asr.device)
     from chaukas.asr.whisper_cpu import download as download_ctranslate2
 
     return download_ctranslate2(asr.model)

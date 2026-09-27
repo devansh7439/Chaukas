@@ -717,3 +717,46 @@ Snapdragon NPU run (needs the author's AI Hub token) remains the biggest gap.
 3. CI's first run passed (all nine steps).
 
 Dev set unchanged (9/9, 0/7 false alarms); the held-out set was not run. Tests: 726.
+
+### 2026-09-28 - Second code review: an NPU path with safe fallback; triggered OCR
+
+**Snapdragon NPU path (review: P0).** Only Whisper's encoder moves to the NPU (the fixed,
+heaviest cost per call); the decoder, the risk engine and everything else stay on the CPU.
+- `asr.device: cpu | npu` (`--asr-device` on `run`, `setup`, `benchmark`). With `npu`, the
+  fp32 encoder (`onnx/encoder_model.onnx`, downloaded by `setup --asr-device npu`) runs on
+  the NPU in fp16 through Qualcomm's QNN plugin for ONNX Runtime.
+- The plugin API was **probed on the real package, not written from memory**, which caught
+  two traps: `onnxruntime-qnn` 2.6.0 is a *plugin* beside onnxruntime (it never appears in
+  `get_available_providers()`; it is registered with `register_execution_provider_library`
+  and hardware is chosen from `get_ep_devices()`), and ONNX Runtime silently falls back to
+  the CPU if the chosen device can't run the model. So only a device of type NPU is used,
+  and the bound providers are checked afterwards.
+- **Safe degraded mode:** no plugin, no NPU, the fp32 file missing, or a session that won't
+  build: the CPU encoder is used, `runtime.note` says why, live mode's status line says
+  "speech on CPU (NPU unavailable)". Protection never stops. Tested for real on this x64 PC
+  (asking for the NPU falls back, says why, and still transcribes correctly).
+- `pyproject.toml`: `onnxruntime-qnn>=2.6` on Windows ARM64 only.
+- `chaukas benchmark [--asr-device npu] [--audio WAV] [--runs N] [--json FILE]`: median
+  encoder/decoder/total time, the providers actually bound, whether it fell back, the
+  real-time factor, the machine and **whether it ran on battery** (on battery this laptop
+  was 5-10x slower; such numbers are marked and not published).
+- **Not verified:** the NPU itself. That needs a Snapdragon laptop; the benchmark JSON is
+  the evidence to collect there.
+
+**Triggered OCR (review: P0).** A generic window title over an "Enter OTP" box used to be
+invisible. `context/ocr.py`: while the call's alert level is notice or higher (config
+`ocr.min_level`), at most every 3 s, the active window is captured (mss) and read by
+Windows' built-in OCR (`Windows.Media.Ocr` via `winrt`; x64 and ARM64 wheels, no model to
+download); the text goes through the existing `classify_screen_text` rules (OTP field,
+password field, transfer form) and becomes the same context events the engine already
+uses. Each (window, kind) is reported once. Never read: calm calls, Chaukas's own window.
+The image and text live in memory for one classification only, never written or logged.
+If OCR is missing or fails, titles, processes and Downloads keep working.
+- **Bug found and fixed on the way:** winrt bundles an older `msvcp140.dll`; if winrt loads
+  before Qt, importing Qt later crashes the process (access violation). Chaukas now loads
+  Qt's runtime first; a regression test does the dangerous order in a fresh process.
+- Tested with real pixels: Qt renders "Enter OTP 482913", Windows OCR reads it, the rules
+  classify it as an OTP field. OCR languages are the Windows ones installed (English here;
+  Hindi needs the Hindi language pack).
+
+Tests: 745 passing; ruff, mypy strict clean.

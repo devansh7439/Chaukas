@@ -44,6 +44,7 @@ class AudioConfig(_Section):
 
 class ASRConfig(_Section):
     backend: Literal["onnx", "ctranslate2"]
+    device: Literal["cpu", "npu"]  # npu: the encoder on the Snapdragon NPU (onnx backend only)
     model: str = Field(min_length=1)
     language: Literal["auto", "en", "hi"]
     cpu_threads: PositiveInt
@@ -192,6 +193,14 @@ class PrivacyConfig(_Section):
     debug_text_logs: bool
 
 
+class OcrConfig(_Section):
+    """Triggered OCR of the active window, only while a call is suspicious."""
+
+    enabled: bool
+    min_level: Literal["notice", "warning", "critical"]
+    interval_s: Seconds
+
+
 class ChaukasConfig(_Section):
     audio: AudioConfig
     asr: ASRConfig
@@ -201,6 +210,7 @@ class ChaukasConfig(_Section):
     ablation: AblationConfig
     ui: UIConfig
     privacy: PrivacyConfig
+    ocr: OcrConfig
 
 
 def load_config(*overrides: ConfigSource) -> ChaukasConfig:

@@ -21,7 +21,7 @@ from typing import Any, Final
 from PySide6.QtCore import Property, QObject, Qt, QTimer, Signal, Slot
 from PySide6.QtGui import QWindow
 
-from chaukas.core.models import ContextEvent, HeardLine, Stream
+from chaukas.core.models import ContextEvent, HeardLine, Level, Stream
 from chaukas.engine.templates import ChainTemplate
 from chaukas.ui.capture_exclusion import set_capture_excluded
 from chaukas.ui.copy import Language, labels, text
@@ -95,6 +95,11 @@ class DashboardBridge(QObject):
         if self._live.advance(self.session_time()):
             self.toast.emit(text("wiped", self._settings.language))  # ended after long silence
         self._refresh()
+
+    def current_level(self) -> Level:
+        """The level on screen now. Safe from other threads: the state is an immutable
+        object replaced whole."""
+        return self._live.state.level
 
     def session_time(self) -> float:
         """Seconds on the session clock. Safe to call from any thread."""

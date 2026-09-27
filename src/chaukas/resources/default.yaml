@@ -20,6 +20,9 @@ asr:
   # onnx: ONNX Runtime, runs on x64 and Windows on ARM64 (Snapdragon); detects the language in
   # the same pass. ctranslate2: faster-whisper, x64 only. Same accuracy on our clips.
   backend: onnx
+  # npu: Whisper's encoder on the Snapdragon NPU (QNN), the decoder on the CPU; needs Windows
+  # on ARM64 and `chaukas setup --asr-device npu`. Falls back to the CPU, never stops.
+  device: cpu
   model: small                 # Whisper size: tiny, base, small (small ~0.7x real time here)
   language: auto               # auto | en | hi  (auto re-runs "Urdu" as Hindi)
   cpu_threads: 8
@@ -122,3 +125,11 @@ privacy:
   transcript_horizon_s: 300
   session_idle_end_s: 1800
   debug_text_logs: false
+
+ocr:
+  # Read the text of the active window (e.g. an "Enter OTP" box under a generic title), but
+  # only while the call is already at this level or higher, and at most every interval_s.
+  # Windows' built-in OCR; the image and the text are never stored or logged.
+  enabled: true
+  min_level: notice
+  interval_s: 3

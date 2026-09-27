@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
@@ -93,12 +94,14 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--no-screen", action="store_true", help="don't watch apps and pages")
     run.add_argument("--asr-model", metavar="SIZE", help="Whisper size: tiny, base, small")
     run.add_argument("--asr-backend", choices=["onnx", "ctranslate2"], help="speech-to-text engine")
+    run.add_argument("--asr-device", choices=["cpu", "npu"], help="where Whisper's encoder runs")
     run.add_argument("--language", choices=["auto", "en", "hi"], help="speech language")
 
     setup = commands.add_parser("setup", help="download the speech model (one time)")
     _add_config_option(setup)
     setup.add_argument("--asr-model", metavar="SIZE", help="Whisper size to download")
     setup.add_argument("--asr-backend", choices=["onnx", "ctranslate2"], help="for which engine")
+    setup.add_argument("--asr-device", choices=["cpu", "npu"], help="npu: also the NPU encoder")
     setup.add_argument(
         "--llm",
         action="store_true",
@@ -106,6 +109,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     commands.add_parser("devices", help="list the audio devices Chaukas would use")
+
+    bench = commands.add_parser("benchmark", help="time speech-to-text on this PC (CPU or NPU)")
+    _add_config_option(bench)
+    bench.add_argument("--asr-device", choices=["cpu", "npu"], help="where the encoder runs")
+    bench.add_argument(
+        "--audio",
+        type=Path,
+        metavar="WAV",
+        help="16 kHz mono WAV to transcribe (default: built-in speech, ~10 s)",
+    )
+    bench.add_argument("--runs", type=int, default=3, help="timed runs after a warm-up")
+    bench.add_argument("--json", type=Path, metavar="FILE", help="also save the result as JSON")
 
     return parser
 
@@ -140,6 +155,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             _setup(args)
         elif args.command == "devices":
             _devices()
+        elif args.command == "benchmark":
+            _benchmark(args)
         else:  # pragma: no cover - argparse rejects anything else
             raise AssertionError(f"unhandled command {args.command!r}")
     except ChaukasError as exc:
@@ -288,6 +305,8 @@ def _run(args: argparse.Namespace) -> int:
         asr["model"] = args.asr_model
     if args.asr_backend:
         asr["backend"] = args.asr_backend
+    if args.asr_device:
+        asr["device"] = args.asr_device
     if args.language:
         asr["language"] = args.language
     return run_live(
@@ -314,9 +333,10 @@ def _setup(args: argparse.Namespace) -> None:
         update={
             "model": args.asr_model or config.asr.model,
             "backend": args.asr_backend or config.asr.backend,
+            "device": args.asr_device or config.asr.device,
         }
     )
-    name = f"Whisper {asr.model} ({asr.backend})"
+    name = f"Whisper {asr.model} ({asr.backend}, {asr.device})"
     if model_ready(asr):
         print(f"{name}: already on this PC")
     else:
@@ -352,6 +372,32 @@ def _setup_llm(llm: LLMConfig) -> None:
     else:
         print(f"LLM model {llm.gguf}: downloading (one time, about 1 GB, checked by SHA-256)...")
         print(f"  saved to {download_gguf(llm.gguf)}")
+
+
+def _benchmark(args: argparse.Namespace) -> None:
+    try:
+        from chaukas.asr.benchmark import benchmark, describe, load_wav, synthesize
+        from chaukas.asr.loader import load_transcriber
+        from chaukas.asr.whisper_onnx import WhisperOnnx
+    except ImportError as exc:
+        raise ChaukasError(
+            f"speech recognition is not installed: uv sync --extra asr ({exc})"
+        ) from exc
+    if args.runs < 1:
+        raise ChaukasError("--runs must be at least 1")
+    config = load_config(*args.config)
+    device = args.asr_device or config.asr.device
+    asr = config.asr.model_copy(update={"backend": "onnx", "device": device})
+    whisper = load_transcriber(asr)
+    if not isinstance(whisper, WhisperOnnx):  # load_transcriber honours backend="onnx"
+        raise ChaukasError("the benchmark needs the ONNX Runtime backend")
+    audio = load_wav(args.audio) if args.audio else synthesize()
+    result = benchmark(whisper, audio, runs=args.runs, model=f"whisper-{asr.model} int8")
+    print(describe(result))
+    if args.json:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        print(f"Saved {args.json}")
 
 
 def _devices() -> None:

@@ -21,7 +21,7 @@ from typing import Any
 
 from chaukas.core.config import ChaukasConfig
 from chaukas.core.errors import ChaukasError
-from chaukas.core.models import Stream
+from chaukas.core.models import Level, Stream
 from chaukas.ui.bridge import DashboardBridge
 
 logger = logging.getLogger(__name__)
@@ -102,8 +102,29 @@ class LiveServices:
             read_foreground=foreground_window,
             poll_s=1.0,
             downloads=DownloadPoller(downloads_folder(), DownloadClassifier(rules)),
+            screen=self._screen_reader(rules),
         )
         self._monitor.start()
+
+    def _screen_reader(self, rules: Any) -> Any:
+        """Triggered OCR, or None if switched off or Windows OCR isn't installed."""
+        settings = self._config.ocr
+        if not settings.enabled:
+            return None
+        try:
+            import winrt.windows.media.ocr  # noqa: F401
+
+            from chaukas.context.ocr import TriggeredOcr, WindowsOcr, capture_active_window
+        except ImportError:
+            return None  # titles, processes and Downloads still protect
+        threshold = Level.parse(settings.min_level)
+        return TriggeredOcr(
+            rules,
+            should_read=lambda: self._bridge.current_level() >= threshold,
+            capture=capture_active_window,
+            reader=WindowsOcr(),
+            interval_s=settings.interval_s,
+        )
 
     # ----------------------------------------------------------------- audio
 
@@ -151,7 +172,8 @@ class LiveServices:
                 return
             names = {stream: device.name for stream, device in found}
             post("Listening: caller = " + names.get(Stream.CALLER, "none")
-                 + " · you = " + names.get(Stream.USER, "none"))  # fmt: skip
+                 + " · you = " + names.get(Stream.USER, "none")
+                 + " · " + _speech_runs_on(transcriber))  # fmt: skip
         except (ChaukasError, ImportError, OSError) as exc:
             logger.warning("live audio is unavailable: %s", exc)
             post(f"Audio unavailable: {exc}")
@@ -175,3 +197,14 @@ class LiveServices:
         if self._system is not None:
             self._system.close()
             self._system = None
+
+
+def _speech_runs_on(transcriber: Any) -> str:
+    """Where Whisper runs, as the status line says it: "speech on NPU", "speech on CPU"
+    or, after a fallback, "speech on CPU (NPU unavailable)"."""
+    runtime = getattr(transcriber, "runtime", None)
+    if runtime is None:
+        return "speech on CPU"
+    if runtime.fallback:
+        return "speech on CPU (NPU unavailable)"
+    return f"speech on {runtime.device.upper()}"

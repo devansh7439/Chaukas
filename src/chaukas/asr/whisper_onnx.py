@@ -17,6 +17,12 @@ Decoding is greedy, the same as the CPU backend's ``beam_size=1``:
 Two guards against Whisper's habit of looping: at most ``_TOKENS_PER_S`` tokens per second
 of audio are generated, and text that compresses too well (the same words again and again)
 is dropped. Hindi labelled Urdu is transcribed again as Hindi, as in the CPU backend.
+
+Devices: with ``device="npu"`` the encoder (Whisper's fixed, heaviest cost: one pass over a
+30 s window per call) runs on the Snapdragon NPU through ONNX Runtime's QNN execution
+provider, from the fp32 encoder in fp16 on the NPU; the decoder stays on the CPU. If the NPU
+can't be used (no QNN provider, the fp32 file missing, a session that won't build), the
+CPU encoder is used instead and ``runtime.note`` says why: protection never depends on it.
 """
 
 from __future__ import annotations
@@ -26,9 +32,9 @@ import logging
 import os
 import time
 import zlib
-from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -45,8 +51,40 @@ REPO: Final = "onnx-community/whisper-{size}"
 REVISION: Final = "36050c46d777d46dc4b5f43f6d90574fc38f8732"  # whisper-small
 REVISIONS: Final = {"small": REVISION}
 ENCODER: Final = "onnx/encoder_model_int8.onnx"
+ENCODER_NPU: Final = "onnx/encoder_model.onnx"  # fp32: the NPU runs it in fp16
 DECODER: Final = "onnx/decoder_model_merged_int8.onnx"
 FILES: Final = (ENCODER, DECODER, "tokenizer.json", "config.json", "generation_config.json")
+CPU_PROVIDER: Final = "CPUExecutionProvider"
+
+Device = Literal["cpu", "npu"]
+
+
+@dataclass(frozen=True, slots=True)
+class Runtime:
+    """Where Whisper actually runs: the providers ONNX Runtime really bound."""
+
+    requested: Device
+    device: Device
+    encoder_providers: tuple[str, ...]
+    decoder_providers: tuple[str, ...]
+    note: str = ""  # why the requested device isn't used; empty if it is
+
+    @property
+    def fallback(self) -> bool:
+        return self.device != self.requested
+
+
+@dataclass(frozen=True, slots=True)
+class Timing:
+    """Where the last call's time went."""
+
+    encoder_ms: float
+    decoder_ms: float
+
+
+class NpuUnavailableError(RuntimeError):
+    """The NPU encoder can't be used here; the reason is the message."""
+
 
 _RETRY_AS_HINDI: Final = frozenset({"ur"})
 _TOKENS_PER_S: Final = 8  # fast speech is about 4; more than this is a loop
@@ -68,10 +106,12 @@ class WhisperOnnx:
         "_heads",
         "_language",
         "_languages",
+        "_last_timing",
         "_layers",
         "_no_speech",
         "_no_speech_id",
         "_no_timestamps",
+        "_runtime",
         "_sot",
         "_suppress",
         "_tokenizer",
@@ -85,7 +125,7 @@ class WhisperOnnx:
         language: str,
         cpu_threads: int,
         no_speech_threshold: float,
-        providers: Sequence[str] = ("CPUExecutionProvider",),
+        device: Device = "cpu",
     ) -> None:
         missing = [name for name in FILES if not (folder / name).is_file()]
         if missing:
@@ -96,12 +136,30 @@ class WhisperOnnx:
         import onnxruntime as ort
         from tokenizers import Tokenizer
 
-        options = ort.SessionOptions()
-        options.intra_op_num_threads = cpu_threads
-        options.inter_op_num_threads = 1
-        options.log_severity_level = 3  # errors only
-        self._encoder = ort.InferenceSession(str(folder / ENCODER), options, providers=providers)
-        self._decoder = ort.InferenceSession(str(folder / DECODER), options, providers=providers)
+        options = _session_options(ort, cpu_threads)
+        note = ""
+        encoder = None
+        if device == "npu":
+            try:
+                encoder = _npu_encoder(ort, folder / ENCODER_NPU, cpu_threads)
+            except NpuUnavailableError as exc:
+                note = f"NPU unavailable, the encoder runs on the CPU: {exc}"
+                logger.warning("%s", note)
+        on_npu = encoder is not None
+        if encoder is None:
+            encoder = ort.InferenceSession(str(folder / ENCODER), options,
+                                           providers=[CPU_PROVIDER])  # fmt: skip
+        self._encoder = encoder
+        self._decoder = ort.InferenceSession(str(folder / DECODER), options,
+                                             providers=[CPU_PROVIDER])  # fmt: skip
+        self._runtime = Runtime(
+            requested=device,
+            device="npu" if on_npu else "cpu",
+            encoder_providers=tuple(self._encoder.get_providers()),
+            decoder_providers=tuple(self._decoder.get_providers()),
+            note=note,
+        )
+        self._last_timing: Timing | None = None
         self._tokenizer = Tokenizer.from_file(str(folder / "tokenizer.json"))
 
         config = json.loads((folder / "config.json").read_text(encoding="utf-8"))
@@ -127,14 +185,29 @@ class WhisperOnnx:
         self._language = language
         self._no_speech = no_speech_threshold
 
+    @property
+    def runtime(self) -> Runtime:
+        return self._runtime
+
+    @property
+    def last_timing(self) -> Timing | None:
+        """Encoder and decoder time of the most recent call (None before the first)."""
+        return self._last_timing
+
     def transcribe(self, samples: Samples, *, language: str | None = None) -> Transcript:
         start = time.perf_counter()
         fixed = language if self._language == "auto" else self._language
-        encoded = self._encoder.run(None, {"input_features": log_mel(samples)[None]})[0]
+        features = log_mel(samples)[None]
+        encoder_start = time.perf_counter()
+        encoded = self._encoder.run(None, {"input_features": features})[0]
+        encoder_ms = (time.perf_counter() - encoder_start) * 1000
+        decoder_start = time.perf_counter()
         duration = len(samples) / TARGET_RATE
         text, detected = self._decode(encoded, fixed, duration)
         if fixed is None and detected in _RETRY_AS_HINDI:
             text, detected = self._decode(encoded, "hi", duration)
+        decoder_ms = (time.perf_counter() - decoder_start) * 1000
+        self._last_timing = Timing(encoder_ms=encoder_ms, decoder_ms=decoder_ms)
         return Transcript(text=text, language=detected, ms=(time.perf_counter() - start) * 1000)
 
     # ---------------------------------------------------------------- decoding
@@ -228,13 +301,70 @@ def find_model(size: str) -> Path | None:
     return folder if all((folder / name).is_file() for name in FILES) else None
 
 
-def download(size: str) -> Path:
-    """Fetch the model into the local cache (the one step that uses the network)."""
+def download(size: str, device: Device = "cpu") -> Path:
+    """Fetch the model into the local cache (the one step that uses the network); for the
+    NPU also the fp32 encoder."""
     os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
     from huggingface_hub import snapshot_download
 
     if size not in REVISIONS:
         raise ModelMissingError(f"no pinned ONNX Whisper revision for size {size!r}; "
                                 f"pinned: {sorted(REVISIONS)}")  # fmt: skip
-    return Path(snapshot_download(REPO.format(size=size), allow_patterns=list(FILES),
+    files = [*FILES, ENCODER_NPU] if device == "npu" else list(FILES)
+    return Path(snapshot_download(REPO.format(size=size), allow_patterns=files,
                                   revision=REVISIONS[size], max_workers=2))  # fmt: skip
+
+
+def _npu_encoder(ort: Any, path: Path, cpu_threads: int) -> Any:
+    """An encoder session bound to the Snapdragon NPU, or NpuUnavailableError saying why.
+
+    ``onnxruntime-qnn`` is a plugin execution provider: its library is registered with ONNX
+    Runtime, which then lists the hardware it can drive. Only a device of type NPU is used
+    (on other machines the plugin may offer a CPU device that can't run the model), and
+    the session is checked afterwards, because ONNX Runtime otherwise falls back to the CPU
+    silently.
+    """
+    try:
+        import onnxruntime_qnn as qnn
+    except ImportError:
+        raise NpuUnavailableError(
+            "the QNN plugin (onnxruntime-qnn) is not installed; it runs on Windows on ARM64"
+        ) from None
+    name = qnn.get_ep_name()
+    if not path.is_file():
+        raise NpuUnavailableError(
+            f"the fp32 encoder is not downloaded ({path.name}); run: chaukas setup --asr-device npu"
+        )
+    try:
+        if not any(device.ep_name == name for device in ort.get_ep_devices()):
+            ort.register_execution_provider_library(name, qnn.get_library_path())
+        npus = [
+            device
+            for device in ort.get_ep_devices()
+            if device.ep_name == name and device.device.type == ort.OrtHardwareDeviceType.NPU
+        ]
+    except Exception as exc:  # the plugin library could not be loaded
+        raise NpuUnavailableError(f"the QNN plugin could not be loaded: {exc}") from exc
+    if not npus:
+        raise NpuUnavailableError("the QNN plugin found no Qualcomm NPU on this PC")
+    errors = []
+    for provider_options in ({"enable_htp_fp16_precision": "1"}, {}):
+        options = _session_options(ort, cpu_threads)
+        options.add_provider_for_devices(npus, provider_options)
+        try:
+            session = ort.InferenceSession(str(path), sess_options=options)
+        except Exception as exc:  # the NPU backend refused the model or an option
+            errors.append(str(exc).splitlines()[0][:200])
+            continue
+        if name in session.get_providers():
+            return session
+        errors.append("ONNX Runtime fell back to the CPU")
+    raise NpuUnavailableError(f"the NPU session could not be created: {'; '.join(errors)}")
+
+
+def _session_options(ort: Any, cpu_threads: int) -> Any:
+    options = ort.SessionOptions()
+    options.intra_op_num_threads = cpu_threads
+    options.inter_op_num_threads = 1
+    options.log_severity_level = 3  # errors only
+    return options

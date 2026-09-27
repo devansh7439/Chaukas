@@ -68,3 +68,42 @@ class TestModelFiles:
     def test_a_missing_model_says_how_to_get_it(self, tmp_path: Path) -> None:
         with pytest.raises(ModelMissingError, match="chaukas setup"):
             WhisperOnnx(tmp_path, language="auto", cpu_threads=2, no_speech_threshold=0.6)
+
+
+class TestDevices:
+    """The encoder can run on the Snapdragon NPU; protection never depends on it."""
+
+    def test_the_cpu_runtime_reports_its_real_providers(self, whisper: WhisperOnnx) -> None:
+        runtime = whisper.runtime
+        assert runtime.device == "cpu"
+        assert runtime.encoder_providers[0] == "CPUExecutionProvider"
+        assert runtime.decoder_providers[0] == "CPUExecutionProvider"
+        assert runtime.note == ""
+
+    def test_asking_for_the_npu_without_it_falls_back_to_the_cpu_and_says_why(
+        self, speech: Callable[[str], object]
+    ) -> None:
+        import onnxruntime as ort
+
+        if "QNNExecutionProvider" in ort.get_available_providers():
+            pytest.skip("this machine has the QNN provider: the NPU path is used instead")
+        folder = find_model("small")
+        if folder is None:
+            pytest.skip("the ONNX Whisper model is not downloaded")
+        whisper = WhisperOnnx(folder, language="auto", cpu_threads=8, no_speech_threshold=0.6,
+                              device="npu")  # fmt: skip
+        assert whisper.runtime.device == "cpu"
+        assert whisper.runtime.requested == "npu"
+        assert "QNN" in whisper.runtime.note
+        transcript = whisper.transcribe(speech("Tell me the OTP."))  # type: ignore[arg-type]
+        assert "OTP" in transcript.text  # protection continues on the CPU
+
+    def test_each_call_times_the_encoder_and_the_decoder(
+        self, whisper: WhisperOnnx, speech: Callable[[str], object]
+    ) -> None:
+        transcript = whisper.transcribe(speech("Share the OTP now, sir."))  # type: ignore[arg-type]
+        timing = whisper.last_timing
+        assert timing is not None
+        assert timing.encoder_ms > 0
+        assert timing.decoder_ms > 0
+        assert timing.encoder_ms + timing.decoder_ms <= transcript.ms + 1.0

@@ -24,6 +24,9 @@ asr = [
     "numpy>=1.26",
     # The default backend: Whisper on ONNX Runtime. All three have Windows ARM64 wheels.
     "onnxruntime>=1.18",
+    # Qualcomm's QNN plugin for ONNX Runtime: runs Whisper's encoder on the Snapdragon NPU
+    # (asr.device: npu). A plugin beside onnxruntime, not a replacement for it.
+    "onnxruntime-qnn>=2.6; sys_platform == 'win32' and platform_machine == 'ARM64'",
     "tokenizers>=0.15",
     "huggingface_hub>=0.23",  # model download (chaukas setup) and the local model cache
     # Optional second backend (asr: backend: ctranslate2). CTranslate2 has no ARM64 wheel.
@@ -37,6 +40,14 @@ audio = [
 context = [
     "psutil>=5.9",
     "mss>=9.0",
+    # Windows' built-in OCR for the triggered screen reading (x64 and ARM64 wheels; no model)
+    "winrt-runtime>=3.2; sys_platform == 'win32'",
+    "winrt-Windows.Foundation>=3.2; sys_platform == 'win32'",
+    "winrt-Windows.Globalization>=3.2; sys_platform == 'win32'",
+    "winrt-Windows.Graphics.Imaging>=3.2; sys_platform == 'win32'",
+    "winrt-Windows.Media.Ocr>=3.2; sys_platform == 'win32'",
+    "winrt-Windows.Security.Cryptography>=3.2; sys_platform == 'win32'",
+    "winrt-Windows.Storage.Streams>=3.2; sys_platform == 'win32'",
 ]
 ui = ["PySide6>=6.7"]
 
@@ -86,7 +97,8 @@ files = ["src"]
 
 [[tool.mypy.overrides]]
 # These ship no type information.
-module = ["faster_whisper", "faster_whisper.*", "soundcard", "onnxruntime", "tokenizers"]
+module = ["faster_whisper", "faster_whisper.*", "soundcard", "onnxruntime", "onnxruntime_qnn",
+          "tokenizers", "mss", "winrt", "winrt.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

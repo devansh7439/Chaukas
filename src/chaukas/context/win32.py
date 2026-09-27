@@ -49,6 +49,27 @@ def foreground_window() -> tuple[int, str] | None:
     return int(hwnd), buffer.value
 
 
+def window_rect(hwnd: int) -> tuple[int, int, int, int] | None:
+    """(left, top, right, bottom) of a visible, non-minimised window in screen pixels, or
+    None. Uses the DWM frame bounds (without the invisible resize border) when available."""
+    if sys.platform != "win32":
+        return None
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.IsIconic.argtypes = (wintypes.HWND,)
+    user32.IsWindowVisible.argtypes = (wintypes.HWND,)
+    if user32.IsIconic(hwnd) or not user32.IsWindowVisible(hwnd):
+        return None
+    rect = wintypes.RECT()
+    dwmapi = ctypes.WinDLL("dwmapi")
+    extended_frame_bounds = 9  # DWMWA_EXTENDED_FRAME_BOUNDS
+    if dwmapi.DwmGetWindowAttribute(wintypes.HWND(hwnd), extended_frame_bounds,
+                                    ctypes.byref(rect), ctypes.sizeof(rect)) != 0:  # fmt: skip
+        user32.GetWindowRect.argtypes = (wintypes.HWND, ctypes.POINTER(wintypes.RECT))
+        if not user32.GetWindowRect(hwnd, ctypes.byref(rect)):
+            return None
+    return rect.left, rect.top, rect.right, rect.bottom
+
+
 def downloads_folder() -> Path:
     """The Downloads known folder; ``~/Downloads`` if the API is unavailable."""
     fallback = Path.home() / "Downloads"

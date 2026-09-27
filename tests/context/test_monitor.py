@@ -175,3 +175,40 @@ class TestWindowsReaders:
         from chaukas.context.processes import list_processes
 
         assert any(p.pid == os.getpid() for p in list_processes())
+
+
+class TestScreenReading:
+    def _monitor(self, rules: ContextRules, reader: object, published: list[ContextEvent],
+                 titles: list[tuple[int, str]]) -> ContextMonitor:  # fmt: skip
+        from chaukas.context.ocr import TriggeredOcr, WindowImage
+
+        screen = TriggeredOcr(rules, should_read=lambda: True, reader=reader,  # type: ignore[arg-type]
+                              capture=lambda: WindowImage(9, "Verify", 10, 10, bytes(400)),
+                              interval_s=0.0)  # fmt: skip
+        return ContextMonitor(clock=VirtualClock(), publish=published.append,
+                              processes=ProcessWatcher(rules, list), windows=WindowWatcher(rules),
+                              read_foreground=lambda: titles[0], poll_s=1.0,
+                              screen=screen)  # fmt: skip
+
+    def test_text_seen_on_screen_is_published(self, rules: ContextRules) -> None:
+        class Reader:
+            def read(self, image: object) -> str:
+                return "Enter the OTP sent to your phone"
+
+        published: list[ContextEvent] = []
+        self._monitor(rules, Reader(), published, [(9, "Verify")]).poll_once()
+        assert C.OTP_FIELD_VISIBLE in [event.kind for event in published]
+
+    def test_a_failing_ocr_does_not_stop_the_other_watchers(
+        self, rules: ContextRules, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        class Broken:
+            def read(self, image: object) -> str:
+                raise RuntimeError("no OCR language installed")
+
+        published: list[ContextEvent] = []
+        titles = [(1, "DemoBank (MOCK) - Transfer Funds")]
+        with caplog.at_level("ERROR"):
+            self._monitor(rules, Broken(), published, titles).poll_once()
+        assert C.TRANSFER_PAGE in [event.kind for event in published]  # from the title
+        assert "screen reading failed" in caplog.text

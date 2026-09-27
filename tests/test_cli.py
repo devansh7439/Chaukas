@@ -225,7 +225,7 @@ def test_setup_reports_models_already_present(
     monkeypatch.setenv("CHAUKAS_MODELS", str(models))  # nothing to download: no network
     assert main(["setup", "--asr-model", "small", "--asr-backend", "onnx"]) == EXIT_OK
     out = capsys.readouterr().out
-    assert "Whisper small (onnx): already on this PC" in out
+    assert "Whisper small (onnx, cpu): already on this PC" in out
     assert "Voice detection model: already on this PC" in out
 
 
@@ -295,3 +295,27 @@ def test_live_mode_refuses_configurations_that_wait_for_an_llm(
     # "waiting for the LLM". Refuse it instead of protecting less.
     assert main(["run", "--no-audio", "--no-screen", "--ablation", ablation]) == EXIT_ERROR
     assert "--ablation E" in capsys.readouterr().err
+
+
+def test_benchmark_reports_the_hardware_and_saves_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    pytest.importorskip("tokenizers")
+    from chaukas.asr.whisper_onnx import find_model
+
+    if find_model("small") is None:
+        pytest.skip("the ONNX Whisper model is not downloaded")
+    out = tmp_path / "bench.json"
+    assert main(["benchmark", "--runs", "1", "--json", str(out)]) == EXIT_OK
+    printed = capsys.readouterr().out
+    assert "Encoder runs on:" in printed
+    assert "Real-time factor:" in printed
+    result = json.loads(out.read_text(encoding="utf-8"))
+    assert result["device"] == "cpu"
+    assert result["encoder_ms"] > 0
+    assert "OTP" in result["text"]
+
+
+def test_benchmark_rejects_zero_runs(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["benchmark", "--runs", "0"]) == EXIT_ERROR
+    assert "--runs" in capsys.readouterr().err
