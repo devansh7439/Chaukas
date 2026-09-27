@@ -1,0 +1,20 @@
+case_id: DV11
+category: benign
+scenario: son_helps_mother_pay_bill
+split: dev
+author: me
+language: hinglish
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+  Family remote help: the son controls his mother's laptop and she opens her bank.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Maa, AnyDesk khol do, main bijli ka bill bhar deta hoon."}
+  - {after: 4.0, event: remote_app_started, detail: "AnyDesk.exe"}
+  - {after: 2.0, caller: "Haan dikh raha hai. Ab bank wali site kholo aur login kar lo."}
+  - {after: 4.0, event: bank_page, detail: "DemoBank (MOCK) - Login"}
+  - {after: 2.0, caller: "Ho gaya maa, bill bhar diya. Photo bhej deta hoon."}

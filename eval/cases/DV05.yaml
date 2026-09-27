@@ -1,0 +1,22 @@
+case_id: DV05
+category: attack
+scenario: gift_customs_duty
+split: dev
+author: me
+language: hinglish
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "Madam, Delhi airport customs office se bol rahi hoon. Aapke liye London se ek gift aaya hai."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Isme foreign currency hai, isliye customs duty lagegi, warna parcel zabt hoga aur aap par case chalega."}
+  - {after: 1.0, caller: "Yeh baat ghar mein kisi se discuss mat kijiye, varna maamla bigad jayega."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "Pachees hazaar rupaye is account mein turant transfer kijiye."}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

@@ -1,0 +1,20 @@
+case_id: DV09
+category: benign
+scenario: office_it_quick_assist
+split: dev
+author: me
+language: english
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+  Office IT helping with a VPN install the user asked for.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Hi, I raised a ticket because the VPN is not connecting."}
+  - {after: 1.0, caller: "Sure, I will connect through Quick Assist, please accept the prompt."}
+  - {after: 4.0, event: remote_app_started, detail: "QuickAssist.exe"}
+  - {after: 2.0, caller: "I have reinstalled the VPN client, please try connecting now."}
+  - {after: 1.0, user: "It works, thank you."}

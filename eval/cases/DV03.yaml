@@ -1,0 +1,22 @@
+case_id: DV03
+category: attack
+scenario: sim_deactivation_deposit
+split: dev
+author: me
+language: english
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "This call is from the cyber crime department. Your SIM card will be deactivated within 24 hours."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Your number was used to harass women, a police complaint has been filed against you."}
+  - {after: 1.0, caller: "Do not discuss this with anyone until the inquiry is over."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "To stop the case you need to transfer 25000 rupees as a refundable security deposit."}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

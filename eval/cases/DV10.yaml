@@ -1,0 +1,18 @@
+case_id: DV10
+category: benign
+scenario: news_otp_fraud
+split: dev
+author: me
+language: hinglish
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+  A news bulletin about OTP fraud, not addressed to the user.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Police ne logon ko savdhaan kiya hai ki fraudsters bank adhikari bankar OTP maang rahe hain."}
+  - {after: 1.0, caller: "Pichhle mahine sheher mein aise do sau maamle darj hue."}
+  - {after: 1.0, caller: "Yaad rakhiye, koi bhi bank phone par OTP nahi maangta."}

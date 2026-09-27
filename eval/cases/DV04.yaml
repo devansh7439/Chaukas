@@ -1,0 +1,24 @@
+case_id: DV04
+category: attack
+scenario: virus_ultraviewer
+split: dev
+author: me
+language: english
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "Hello, this is Microsoft technical support. Your computer is sending us virus signals."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Hackers are inside your system right now, we must act immediately."}
+  - {after: 1.0, caller: "Please download UltraViewer and read me the ID shown on the screen."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 5.0, event: download_executable, detail: "UltraViewer_setup.exe"}
+  - {after: 5.0, event: remote_app_started, detail: "UltraViewer.exe"}
+  - {after: 2.0, caller: "Now log in to your bank so I can check whether your money is safe."}
+  - {after: 4.0, event: bank_page, detail: "DemoBank (MOCK) - Login"}
+  - {after: 3.0, mark: harm}

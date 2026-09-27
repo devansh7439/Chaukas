@@ -1,0 +1,21 @@
+case_id: DV06
+category: attack
+scenario: meter_cut_code
+split: dev
+author: me
+language: hinglish
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Main bijli board ka officer bol raha hoon, aapka meter aaj shaam ko kaat denge."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, user: "Arre, kyun? Bill toh jama hai."}
+  - {after: 1.0, caller: "Record update karna padega. Aapke mobile par jo number aaya hai, woh padh kar sunaiye."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "Nau do saat ek chaar teen."}
+  - {after: 0.5, mark: harm}

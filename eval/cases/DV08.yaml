@@ -1,0 +1,18 @@
+case_id: DV08
+category: benign
+scenario: friend_small_loan
+split: dev
+author: me
+language: hinglish
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Bhai, do hazaar UPI kar de na, kal subah wapas kar dunga."}
+  - {after: 1.0, user: "Haan ruk, abhi bhejta hoon."}
+  - {after: 3.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 2.0, caller: "Thanks yaar, match dekhne aa raha hai na shaam ko?"}

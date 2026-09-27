@@ -1,0 +1,19 @@
+case_id: DV07
+category: benign
+scenario: own_bank_helpline
+split: dev
+author: me
+language: hinglish
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+  The user called their own bank; the agent tells them not to say the OTP aloud.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Mera net banking password reset karna hai."}
+  - {after: 1.0, caller: "Ji zaroor. Main ek OTP bhej rahi hoon, use app mein daal dijiye."}
+  - {after: 1.0, caller: "Please OTP mujhe mat bataiye, sirf app mein type kijiye."}
+  - {after: 2.0, user: "Ho gaya, naya password set ho gaya."}
