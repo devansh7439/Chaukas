@@ -153,7 +153,7 @@ def _sha256_file(path: Path) -> str:
 
 
 def _fetch(url: str) -> bytes:
-    # nosec B310: url is the pinned https release URL, and the bytes are SHA-256 checked
+    # Safe for bandit B310: url is the pinned https release URL, and the bytes are SHA-256 checked
     with urllib.request.urlopen(url, timeout=300) as response:  # nosec B310
         data: bytes = response.read()
     return data
@@ -320,7 +320,7 @@ def managed_server(config: LLMConfig) -> ServerProcess | None:
 
 def _healthy(url: str) -> bool:
     try:
-        # nosec B310: url is http://127.0.0.1:<port>/health, built by this module
+        # Safe for bandit B310: url is http://127.0.0.1:<port>/health, built by this module
         with urllib.request.urlopen(url, timeout=2) as response:  # nosec B310
             return bool(response.status == 200)
     except (urllib.error.URLError, OSError, ValueError):

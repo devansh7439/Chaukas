@@ -490,3 +490,19 @@ class TestRemoteBanking:
 
     def test_can_be_switched_off(self) -> None:
         assert self.run(authority=True, remote_banking_warning=False).level < Level.WARNING
+
+
+def test_the_why_panel_quotes_the_signal_that_justified_it_not_a_weaker_later_one() -> None:
+    def authority(t: float, confidence: float, words: str) -> Signal:
+        return Signal(t=t, kind=K.AUTHORITY, source=SignalSource.KEYWORD,
+                      tier=TIER_BY_CONFIDENCE[confidence], speaker=Stream.CALLER,
+                      confidence=confidence, evidence=words, seg_id=int(t))  # fmt: skip
+
+    engine = make_engine(use_llm=False)
+    engine.on_signal(authority(0.0, 0.5, "cbi"))
+    engine.on_segment(
+        Segment(session_id="s", seg_id=1, stream=Stream.CALLER, t_start=0.0, t_end=600.0, text="")
+    )  # ten minutes of speech
+    engine.on_signal(authority(600.0, 0.3, "officer"))  # weak, and now the larger value
+    (reason,) = [r for r in engine.evaluate(601.0).reasons if r.label == "authority"]
+    assert (reason.t, reason.detail) == (0.0, "cbi")

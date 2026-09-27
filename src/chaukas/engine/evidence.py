@@ -6,7 +6,8 @@ The evidence ``e_t`` for a kind is its strongest signal after decay:
 Entries are kept per kind rather than as a single running maximum, because the bounded
 LLM discount must be able to lower specific keyword signals after the fact. Entries that
 have decayed below ``floor`` are pruned, which bounds memory for long calls; their raw
-confidence is folded into a per-kind session peak first, so "seen this session" survives.
+confidence is folded into a per-kind session peak first, so "seen this session" survives,
+and the signal that set that peak is kept too, so the Why panel can still quote it.
 """
 
 from __future__ import annotations
@@ -32,7 +33,8 @@ class _Entry:
 class EvidenceStore:
     """Per-kind decaying evidence plus session peaks."""
 
-    __slots__ = ("_clock", "_entries", "_floor", "_half_life", "_pruned_peak")
+    __slots__ = ("_clock", "_entries", "_floor", "_half_life", "_pruned_peak",
+                 "_pruned_signal")  # fmt: skip
 
     def __init__(
         self, half_life_s: float, clock: ActivityClock, floor: float = DEFAULT_FLOOR
@@ -44,6 +46,7 @@ class EvidenceStore:
         self._floor = floor
         self._entries: defaultdict[SignalKind, list[_Entry]] = defaultdict(list)
         self._pruned_peak: dict[SignalKind, float] = {}
+        self._pruned_signal: dict[SignalKind, Signal] = {}  # the signal behind each peak
 
     def add(self, signal: Signal) -> None:
         entry = _Entry(signal, signal.confidence, self._clock.call_time(signal.t))
@@ -62,13 +65,28 @@ class EvidenceStore:
             default=0.0,
         )
 
-    def strongest(self, kind: SignalKind, now: float) -> Signal | None:
-        """The signal currently contributing ``level(kind, now)``."""
+    def strongest(
+        self, kind: SignalKind, now: float, *, min_confidence: float = 0.0
+    ) -> Signal | None:
+        """The signal currently contributing ``level(kind, now, min_confidence=...)``:
+        among signals at least ``min_confidence`` when heard, the strongest after decay."""
         now_call = self._clock.call_time(now)
-        entries = self._entries.get(kind)
-        if not entries:
+        qualifying = [e for e in self._entries.get(kind, ()) if e.confidence >= min_confidence]
+        if not qualifying:
             return None
-        return max(entries, key=lambda e: self._decayed(e, now_call)).signal
+        return max(qualifying, key=lambda e: self._decayed(e, now_call)).signal
+
+    def explanation(self, kind: SignalKind, now: float, *, min_confidence: float) -> Signal | None:
+        """The signal to show for ``kind`` in the Why panel: the strongest one that was at
+        least ``min_confidence`` when heard, even if it has since decayed and been pruned.
+        A weaker signal heard later never stands in for it."""
+        live = self.strongest(kind, now, min_confidence=min_confidence)
+        if live is not None:
+            return live
+        pruned = self._pruned_signal.get(kind)
+        if pruned is not None and self._pruned_peak.get(kind, 0.0) >= min_confidence:
+            return pruned
+        return None
 
     def peak(self, kind: SignalKind) -> float:
         """Highest undecayed confidence seen for ``kind`` this session, after discounts."""
@@ -98,14 +116,15 @@ class EvidenceStore:
             for entry in entries:
                 if self._decayed(entry, now_call) >= self._floor:
                     kept.append(entry)
-                else:
-                    peak = self._pruned_peak.get(kind, 0.0)
-                    self._pruned_peak[kind] = max(peak, entry.confidence)
+                elif entry.confidence >= self._pruned_peak.get(kind, 0.0):
+                    self._pruned_peak[kind] = entry.confidence
+                    self._pruned_signal[kind] = entry.signal
             entries[:] = kept
 
     def reset(self) -> None:
         self._entries.clear()
         self._pruned_peak.clear()
+        self._pruned_signal.clear()
 
     def _decayed(self, entry: _Entry, now_call: float) -> float:
         age = max(0.0, now_call - entry.call_t)

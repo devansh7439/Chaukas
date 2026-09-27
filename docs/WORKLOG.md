@@ -670,3 +670,25 @@ and refuses keyless requests; every download is pinned or hash-checked. The LLM 
 own log holds only timings, no prompt text.
 
 Gates: ruff, ruff format, mypy strict, bandit (0 medium/high), 705 tests passing.
+
+### 2026-09-28 - Code review follow-ups: Why-panel fidelity, CI
+
+An external code review (overall 8.7/10) raised two concrete issues, both fixed:
+
+1. **The Why panel could quote the wrong words** (review: medium). `_reasons()` decided
+   whether to explain a tactic from its session *peak* (e.g. "CBI" at 0.5), but displayed
+   `strongest()`, the highest *current* entry with no minimum: after a few minutes a weak
+   "officer" (0.3) heard later could stand in for the "CBI" that justified the alert.
+   Reproduced by a failing test (`(600.0, 'officer') != (0.0, 'cbi')`). Fixed:
+   `strongest(..., min_confidence=)` filters like `level()`, and a new
+   `EvidenceStore.explanation()` falls back to the signal behind the pruned peak (a gap
+   the review did not mention: after a long call the qualifying entry may have been
+   pruned, so a filtered lookup alone would find nothing).
+2. **No CI.** `.github/workflows/ci.yml` runs on every push and pull request, on Windows,
+   with the exact locked dependencies: ruff, ruff format, mypy strict, pytest with
+   coverage, bandit (medium and high). Read-only permissions.
+
+Also: bandit's explanation comments no longer start with `nosec` (bandit parsed every
+word as a test id). Not changed, as the review itself advised: the architecture. Noted
+from the review for later: triggered OCR of the active window only at elevated risk; the
+Snapdragon NPU run (needs the author's AI Hub token) remains the biggest gap.

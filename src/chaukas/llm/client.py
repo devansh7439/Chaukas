@@ -56,7 +56,7 @@ def http_transport(
         method="POST",
     )
     try:
-        # nosec B310: llm.base_url is validated as http(s) when the config loads
+        # Safe for bandit B310: llm.base_url is validated as http(s) when the config loads
         with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
             return json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:

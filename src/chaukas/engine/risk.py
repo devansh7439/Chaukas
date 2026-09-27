@@ -340,7 +340,9 @@ class RiskEngine:
         for kind in SignalKind:
             if self._evidence.peak(kind) < min_evidence:
                 continue
-            signal = self._evidence.strongest(kind, now)
+            # the signal that met the bar, not whatever is strongest now (a weak "officer"
+            # heard later must not stand in for the "CBI" that justified the alert)
+            signal = self._evidence.explanation(kind, now, min_confidence=min_evidence)
             if signal is not None:
                 reasons.append(Reason(t=signal.t, label=kind.value, detail=signal.evidence))
         reasons.extend(

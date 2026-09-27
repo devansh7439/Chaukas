@@ -94,3 +94,44 @@ def test_reset_and_validation() -> None:
     assert store.peak(K.THREAT) == 0.0
     with pytest.raises(ValueError, match="half_life_s"):
         EvidenceStore(0.0, ActivityClock())
+
+
+class TestExplainingEvidence:
+    """The Why panel must show the signal that justified an alert, not a weaker later one."""
+
+    def test_strongest_can_require_a_minimum_confidence(self) -> None:
+        clock = ActivityClock()
+        store = EvidenceStore(600.0, clock)
+        clock.add(0.0, 600.0)
+        strong = signal(K.AUTHORITY, 0.5, t=0.0)  # "CBI": decays to 0.25 by t=600
+        weak = signal(K.AUTHORITY, 0.3, t=600.0)  # "officer", heard just now
+        store.add(strong)
+        store.add(weak)
+        assert store.strongest(K.AUTHORITY, now=600.0) is weak  # the scoring view
+        assert store.strongest(K.AUTHORITY, now=600.0, min_confidence=0.5) is strong
+
+    def test_a_qualifying_signal_is_still_explained_after_it_is_pruned(self) -> None:
+        clock = ActivityClock()
+        store = EvidenceStore(600.0, clock)
+        strong = signal(K.AUTHORITY, 0.5, t=0.0)
+        store.add(strong)
+        clock.add(0.0, 6000.0)  # ten half-lives: below the floor
+        store.prune(6000.0)
+        store.add(signal(K.AUTHORITY, 0.3, t=6000.0))
+        assert store.peak(K.AUTHORITY) == 0.5
+        assert store.strongest(K.AUTHORITY, now=6000.0, min_confidence=0.5) is None
+        assert store.explanation(K.AUTHORITY, now=6000.0, min_confidence=0.5) is strong
+
+    def test_nothing_is_explained_below_the_bar(self) -> None:
+        store = EvidenceStore(600.0, ActivityClock())
+        store.add(signal(K.AUTHORITY, 0.3, t=0.0))
+        assert store.explanation(K.AUTHORITY, now=1.0, min_confidence=0.5) is None
+
+    def test_reset_forgets_pruned_signals(self) -> None:
+        clock = ActivityClock()
+        store = EvidenceStore(600.0, clock)
+        store.add(signal(K.AUTHORITY, 0.5, t=0.0))
+        clock.add(0.0, 6000.0)
+        store.prune(6000.0)
+        store.reset()
+        assert store.explanation(K.AUTHORITY, now=6000.0, min_confidence=0.5) is None

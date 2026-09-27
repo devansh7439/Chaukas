@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Read-only: CI checks code, it never writes to the repository.
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    # Windows: Chaukas reads Windows APIs (WASAPI audio, window titles, processes).
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: offscreen  # the window renders headless
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install (exact locked versions)
+        run: uv sync --locked --extra ui --extra context --extra audio --extra asr
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Formatting
+        run: uv run ruff format --check .
+
+      - name: Type check (strict)
+        run: uv run mypy
+
+      - name: Tests with coverage
+        # Tests that need downloaded models, speech voices or audio devices skip themselves
+        # where those are missing.
+        run: uv run pytest -q -rs --cov=chaukas --cov-report=term
+
+      - name: Security scan (medium and high)
+        run: uvx bandit -q -r src -ll
