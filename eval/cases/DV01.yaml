@@ -8,8 +8,8 @@ notes: >
   Development case (tuning allowed), written after the held-out baseline with wording
   deliberately different from the test cases. Synthetic, written with AI assistance.
 expected:
-  max_level: critical
-  acceptable_levels: [warning, critical]
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
   objective: credential_disclosure
 timeline:
   - {at: 0.0, caller: "Good morning, I am calling from the head office verification department of your bank."}

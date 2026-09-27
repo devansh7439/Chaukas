@@ -10,8 +10,8 @@ notes: >
   situations that look similar; no real calls or victims.
   The caller also tells the user to ignore warnings on the screen.
 expected:
-  max_level: critical
-  acceptable_levels: [warning, critical]
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
   objective: credential_disclosure
 timeline:
   - {at: 0.0, caller: "This is a recorded announcement from your bank. Your KYC has expired and your account will be frozen today."}

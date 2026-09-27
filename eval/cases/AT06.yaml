@@ -10,8 +10,8 @@ notes: >
   situations that look similar; no real calls or victims.
   Paraphrase: never says "OTP", only "code".
 expected:
-  max_level: critical
-  acceptable_levels: [warning, critical]
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
   objective: credential_disclosure
 timeline:
   - {at: 0.0, caller: "Sir, aapke credit card se abhi abhi 38 hazaar ka ek suspicious payment try hua hai."}

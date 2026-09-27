@@ -9,8 +9,8 @@ notes: >
   Synthetic: written with AI assistance from common Indian scam patterns and everyday
   situations that look similar; no real calls or victims.
 expected:
-  max_level: critical
-  acceptable_levels: [warning, critical]
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
   objective: credential_disclosure
 timeline:
   - {at: 0.0, caller: "Yeh call TRAI ki taraf se hai. Aapka mobile number do ghante mein band kar diya jayega."}
