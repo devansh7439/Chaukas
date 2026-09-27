@@ -610,3 +610,27 @@ The held-out set has now been seen twice; a fresh set is needed for any further 
   the two held-out runs; `default.yaml`'s header now points to them.
 
 Gates: ruff, ruff format, mypy strict, 687 tests passing, 95 % line coverage.
+
+### 2026-09-28 - Tools for the checks that need the author
+
+Three one-command tools (in `tools/`, listed in the README) for the checks only the author
+can run:
+- `offline_check.ps1` (Administrator): blocks all outbound traffic for Chaukas's Python
+  (the venv launcher and the base interpreter it starts), **proves the block works** (a
+  request to example.com must fail, or the test is declared invalid), runs
+  `offline_selfcheck.py` and the held-out eval, and always removes the rules. The
+  self-check (models from disk, a synthetic call through VAD + Whisper into transcript
+  lines, the engine reaching critical, 1 s of loopback capture; nothing played aloud)
+  passes 4/4 on this PC with the network available; the firewall run itself is pending.
+- `aihub_profile.py`: compiles Whisper small's fp32 encoder (pinned revision) for a
+  Snapdragon device on Qualcomm AI Hub (`--target_runtime onnx`, as Chaukas runs it),
+  profiles it there, times the same file on this CPU, and saves the profile JSON. Written
+  against qai-hub 0.55.0's actual signatures; without a token it stops with AI Hub's own
+  "configure your API key" message. The token is configured by the author, never read or
+  printed by the script. For reference: the int8 encoder takes 568 ms per 30 s window on
+  this i7-1360P.
+- `hinglish_clips.py`: records 10 lines (8 scam lines, 2 everyday lines) from the
+  microphone and scores whether the transcripts still produce the expected signals (a word
+  error rate would mislead: Whisper writes Hindi in either script). Recordings stay on the
+  PC (`*.wav` is git-ignored). Tested only with Windows' English voice, which mangles
+  Hinglish (3/9 signals): that tests the code path, not accuracy.

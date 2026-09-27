@@ -282,6 +282,14 @@ with its measured latency; `--llm-offline` replays them exactly with no model ru
 use a server you run yourself (e.g. GenieX on Snapdragon), set `llm.server: external` and
 `llm.base_url`.
 
+**Checks that need you** (each is one command; see the file's header for details):
+
+| Tool | What it proves | You need |
+|---|---|---|
+| `powershell -ExecutionPolicy Bypass -File tools\offline_check.ps1` | Chaukas works with all outbound network blocked (firewall rule on its Python, proven effective first, always removed) | An Administrator PowerShell |
+| `uv run --with qai-hub python tools/aihub_profile.py --device "Snapdragon X Elite CRD"` | Whisper's encoder compiled for and profiled on a real Snapdragon device, next to this PC's CPU | A Qualcomm AI Hub account; run `qai-hub configure --api_token ...` yourself |
+| `uv run python tools/hinglish_clips.py record`, then `bench` | How well real Hinglish speech is heard: signals found in your own recordings | A microphone and 2 minutes |
+
 ## Development
 
 ```powershell
