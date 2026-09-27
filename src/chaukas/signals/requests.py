@@ -7,7 +7,13 @@ verb wins, because missing a real request costs more than a spurious warning.
 
 If the chosen verb is negated ("we will never ask for your OTP", "OTP kisi ko mat
 batana"), the pair is protective advice, not a request. Its span is still returned so the
-extractor can ignore keyword hits inside it.
+extractor can ignore keyword hits inside it, and it stretches over every object in a list
+("OTP ya PIN ... mat bataiye").
+
+The caller is untrusted, so advice must not be usable as cover: if a non-negated verb of
+the same kind in the window is aimed at the speaker ("kisi ko mat batana, sirf *mujhe*
+batao", "never share it with anyone, just read it out *to me*"), the pair is a request and
+no advice span is returned (the "don't tell anyone" part is then isolation, not advice).
 
 Cost: one automaton scan, then O(objects * verbs) pairing; both are tiny per segment.
 """
@@ -54,21 +60,49 @@ def find_requests(
 
     hits: list[RequestHit] = []
     for obj in objects:
-        best: tuple[int, bool, Match[RequestWord]] | None = None
-        for verb in verbs:
-            if verb.payload.kind is not obj.payload.kind:
-                continue
-            distance = _gap(verb, obj)
-            if distance > window:
-                continue
-            negated = _is_negated(tokens, verb, lexicon)
-            if best is None or (distance, negated) < (best[0], best[1]):
-                best = (distance, negated, verb)
-        if best is not None:
-            _, negated, verb = best
-            start, end = min(verb.start, obj.start), max(verb.end, obj.end)
-            hits.append(RequestHit(obj.payload.kind, start, end, negated))
+        candidates = [
+            (_gap(verb, obj), _is_negated(tokens, verb, lexicon), verb)
+            for verb in verbs
+            if verb.payload.kind is obj.payload.kind and _gap(verb, obj) <= window
+        ]
+        if not candidates:
+            continue
+        _, negated, verb = min(candidates, key=lambda c: (c[0], c[1]))
+        if negated:
+            redirected = [
+                c for c in candidates if not c[1] and _aimed_at_speaker(tokens, c[2], lexicon)
+            ]
+            if redirected:
+                negated, verb = False, min(redirected, key=lambda c: c[0])[2]
+        start, end = min(verb.start, obj.start), max(verb.end, obj.end)
+        if negated:
+            start = _extend_over_list(tokens, objects, obj.payload.kind, start, lexicon)
+        hits.append(RequestHit(obj.payload.kind, start, end, negated))
     return hits
+
+
+def _aimed_at_speaker(tokens: Sequence[str], verb: Match[RequestWord], lexicon: Lexicon) -> bool:
+    """A first-person recipient ("mujhe", "me") near the verb: "mujhe batao", "tell me",
+    "read it out to me"."""
+    lo, hi = max(0, verb.start - 3), min(len(tokens), verb.end + 4)
+    return any(tokens[i] in lexicon.redirect_recipients for i in range(lo, hi))
+
+
+def _extend_over_list(
+    tokens: Sequence[str],
+    objects: Sequence[Match[RequestWord]],
+    kind: SignalKind,
+    start: int,
+    lexicon: Lexicon,
+) -> int:
+    """Move ``start`` back over objects joined by a connector: "OTP ya PIN ... mat batana"."""
+    starts_by_end = {o.end: o.start for o in objects if o.payload.kind is kind}
+    while start >= 2 and tokens[start - 1] in lexicon.negation_connectors:
+        previous = starts_by_end.get(start - 1)
+        if previous is None:
+            break
+        start = previous
+    return start
 
 
 def _gap(a: Match[RequestWord], b: Match[RequestWord]) -> int:

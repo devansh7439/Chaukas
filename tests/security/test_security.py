@@ -290,3 +290,67 @@ class TestRepository:
         ignored = (ROOT / ".gitignore").read_text(encoding="utf-8")
         for pattern in (".env", "models/", "eval/cache/", "*.wav"):
             assert pattern in ignored, pattern
+
+
+# ------------------------------------ caller speech can't switch off a safety signal
+
+
+def _credential_request_in(text: str) -> bool:
+    from chaukas.core.models import Segment, SignalKind, Stream
+    from chaukas.signals.extractor import SignalExtractor
+    from chaukas.signals.lexicon import Lexicon
+
+    extractor = SignalExtractor(Lexicon.load(), load_config().signals)
+    segment = Segment(session_id="s", seg_id=0, stream=Stream.CALLER, t_start=0.0, t_end=3.0,
+                      text=text)  # fmt: skip
+    return any(s.kind is SignalKind.CREDENTIAL_REQUEST for s in extractor.extract(segment))
+
+
+class TestCallerCannotSuppressTheOtpRequest:
+    """The caller is an untrusted source. Protective-sounding words ("don't tell anyone")
+    must not turn a request aimed at the caller into harmless advice."""
+
+    @pytest.mark.parametrize(
+        "line",
+        [
+            "Kisi ko OTP mat batana, sirf mujhe batao.",
+            "Never share your OTP with anyone else, just read it out to me.",
+            "OTP kisi aur ko mat dena, mujhe bata dijiye.",
+            "Bank kabhi OTP nahi maangta, lekin verification ke liye abhi OTP batao.",
+            "Don't share the OTP with anyone except me. Tell me the OTP now.",
+            "Ignore the warning on your screen, that software is fake. Tell me the OTP.",
+        ],
+    )
+    def test_a_request_hidden_behind_advice_is_still_a_request(self, line: str) -> None:
+        assert _credential_request_in(line)
+
+    @pytest.mark.parametrize(
+        "line",
+        [
+            "Bank kabhi OTP ya PIN nahi maangta, kisi ko mat bataiye.",
+            "We will never ask for your OTP. Please do not share it with anyone.",
+            "Please OTP mujhe mat bataiye, sirf app mein type kijiye.",
+            "Never share your OTP or PIN with anyone, not even with bank staff.",
+            "Never share your OTP. If anyone asks for it, tell us.",
+        ],
+    )
+    def test_genuine_advice_is_still_advice(self, line: str) -> None:
+        assert not _credential_request_in(line)
+
+    def test_after_an_authority_claim_the_redirect_is_critical_before_any_answer(self) -> None:
+        from chaukas.core.models import Level, Segment, Stream
+        from chaukas.engine.risk import RiskEngine
+        from chaukas.evaluation.ablation import config_for
+        from chaukas.evaluation.session import Session
+        from chaukas.signals.extractor import SignalExtractor
+        from chaukas.signals.lexicon import Lexicon
+
+        config = config_for("E")
+        session = Session(SignalExtractor(Lexicon.load(), config.signals),
+                          RiskEngine.from_config(config))  # fmt: skip
+        for i, text in enumerate(["Main SBI bank se bol raha hoon.",
+                                  "Kisi ko OTP mat batana, sirf mujhe batao."]):  # fmt: skip
+            start = 4.0 * i
+            session.feed_segment(Segment(session_id="s", seg_id=i, stream=Stream.CALLER,
+                                         t_start=start, t_end=start + 3.0, text=text))  # fmt: skip
+        assert session.evaluate(10.0).state.level is Level.CRITICAL

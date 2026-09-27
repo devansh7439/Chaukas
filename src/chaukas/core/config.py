@@ -151,6 +151,7 @@ class RulesConfig(_Section):
     hysteresis_hold_s: Seconds
     dismissal_s: Seconds
     remote_banking_warning: bool  # remote control, then banking, after an organisation claim
+    remote_banking_window_s: Seconds  # the bank must open this soon after the remote start
 
 
 class EngineConfig(_Section):

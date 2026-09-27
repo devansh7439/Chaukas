@@ -110,5 +110,10 @@ negation:
   gap: 1                                   # words allowed between a negator and its verb
   before: [not, never, "no", mat, nahi, nahin, na, मत, नहीं, न]   # quoted: bare no is a YAML boolean
   after: [nahi, nahin, नहीं]                # "batana nahi"
+  # "OTP ya PIN ... mat bataiye": advice covers every object in a list joined by these
+  connectors: [or, and, ya, aur, या, और]
+  # "kisi ko mat batana, sirf mujhe batao": a request aimed at the speaker is a request even
+  # beside "don't tell anyone" (singular only: a real bank says "tell us if anyone asks")
+  redirect: [me, mujhe, mujhko, मुझे, मुझको]
 
 suppress: [pin code, pincode, postal code, पिन कोड]

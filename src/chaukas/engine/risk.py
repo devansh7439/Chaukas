@@ -300,21 +300,26 @@ class RiskEngine:
         return level, rule_objective
 
     def _remote_banking(self) -> bool:
-        """A remote-control app is running and the bank opened after it, on a call where
-        the caller claimed to be from an organisation (even a weak "customer care").
+        """The causal order of a remote-control scam: the caller claims to be from an
+        organisation (even a weak "customer care"), *then* a remote-control app starts,
+        and the bank opens within ``remote_banking_window_s`` of that start.
 
         The tech-support and refund scam needs no threats, so the coercion rule alone
-        would stop it at a notice; family remote help makes no such claim.
+        would stop it at a notice. Family remote help makes no organisation claim, and a
+        remote session the user started before the claim (for their own reasons) does
+        not count. The claim may come minutes before the install request.
         """
-        if not self._config.rules.remote_banking_warning:
+        rules = self._config.rules
+        if not rules.remote_banking_warning:
             return False
-        if self._evidence.peak(SignalKind.AUTHORITY) <= 0.0:
+        claimed = self._evidence.first_seen(SignalKind.AUTHORITY)
+        if claimed is None:
             return False
-        remote = [e.t for e in self._context if e.kind is ContextKind.REMOTE_APP_STARTED]
-        if not remote:
-            return False
-        started = min(remote)
-        return any(e.kind in _BANKING and e.t >= started for e in self._context)
+        remote_starts = [e.t for e in self._context
+                         if e.kind is ContextKind.REMOTE_APP_STARTED and e.t > claimed]  # fmt: skip
+        banking = [e.t for e in self._context if e.kind in _BANKING]
+        window = rules.remote_banking_window_s
+        return any(start <= bank <= start + window for start in remote_starts for bank in banking)
 
     def _objective(
         self,

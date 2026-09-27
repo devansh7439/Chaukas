@@ -491,6 +491,42 @@ class TestRemoteBanking:
     def test_can_be_switched_off(self) -> None:
         assert self.run(authority=True, remote_banking_warning=False).level < Level.WARNING
 
+    @staticmethod
+    def timeline(events: list[tuple[float, str]], now: float) -> RiskState:
+        """``events``: (t, "claim" | "remote" | "bank"), fed in time order."""
+        engine = RiskEngine.from_config(load_config({"ablation": {"use_llm": False}}), TEMPLATES)
+        for t, what in sorted(events):
+            if what == "claim":
+                engine.on_signal(caller(K.AUTHORITY, 0.3, t))
+            elif what == "remote":
+                engine.on_context(ContextEvent(t=t, kind=C.REMOTE_APP_STARTED))
+            else:
+                engine.on_context(ContextEvent(t=t, kind=C.BANK_PAGE))
+        return engine.evaluate(now)
+
+    def test_a_remote_session_that_began_before_the_claim_does_not_count(self) -> None:
+        # The user started AnyDesk for their own reasons; then a call begins, the caller
+        # claims to be the bank, and the user opens their bank. No remote-control scam here.
+        state = self.timeline([(0.0, "remote"), (60.0, "claim"), (120.0, "bank")], 121.0)
+        assert state.level < Level.WARNING
+
+    def test_the_bank_must_open_soon_after_the_remote_session_starts(self) -> None:
+        late = self.timeline([(0.0, "claim"), (10.0, "remote"), (250.0, "bank")], 251.0)
+        soon = self.timeline([(0.0, "claim"), (10.0, "remote"), (150.0, "bank")], 151.0)
+        assert late.level < Level.WARNING
+        assert soon.level is Level.WARNING
+
+    def test_a_new_remote_session_after_the_claim_still_counts(self) -> None:
+        # An old session from before the call doesn't count, but the caller asking for a
+        # fresh one does, even though the old one is also in the window.
+        events = [(0.0, "remote"), (30.0, "claim"), (60.0, "remote"), (90.0, "bank")]
+        assert self.timeline(events, 91.0).level is Level.WARNING
+
+    def test_the_claim_may_come_minutes_before_the_remote_request(self) -> None:
+        # Scammers establish authority first and ask for the install much later.
+        events = [(0.0, "claim"), (240.0, "remote"), (270.0, "bank")]
+        assert self.timeline(events, 271.0).level is Level.WARNING
+
 
 def test_the_why_panel_quotes_the_signal_that_justified_it_not_a_weaker_later_one() -> None:
     def authority(t: float, confidence: float, words: str) -> Signal:

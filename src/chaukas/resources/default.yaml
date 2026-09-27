@@ -106,6 +106,8 @@ engine:
     dismissal_s: 180
     remote_banking_warning: true  # a remote-control app is running, the bank opens after it, and
                                   # the caller claimed to be from an organisation: at least a warning
+    remote_banking_window_s: 180  # ...in that order: claim, then remote start, then the bank
+                                  # within this many seconds of that start
 
 ablation:
   use_llm: true

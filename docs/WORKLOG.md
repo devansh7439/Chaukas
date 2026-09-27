@@ -692,3 +692,28 @@ Also: bandit's explanation comments no longer start with `nosec` (bandit parsed 
 word as a test id). Not changed, as the review itself advised: the architecture. Noted
 from the review for later: triggered OCR of the active window only at elevated risk; the
 Snapdragon NPU run (needs the author's AI Hub token) remains the biggest gap.
+
+### 2026-09-28 - Second code review: causal remote-banking rule; caller can't suppress the OTP request
+
+1. **Remote-banking rule, causal order** (review: P0). It linked a bank page to the
+   *earliest* remote-app start, even one from before the call ("I started AnyDesk for my
+   own reasons at 10:00; a 'bank' calls at 10:30; I open my bank at 10:33" raised a
+   warning). Now the order must be claim → remote start → bank, with the bank within
+   `rules.remote_banking_window_s` (180 s) of that start; the claim may come minutes
+   earlier (scammers establish authority first). `EvidenceStore.first_seen()` records when
+   a tactic was first heard. The reviewer's extra claim→remote cap was not adopted: real
+   scams ask for the install long after the authority claim.
+2. **The caller could switch off the OTP request with protective-sounding words** (review:
+   "never let caller speech suppress a safety signal"). Probing found two real attacks
+   missed: "Kisi ko OTP mat batana, sirf mujhe batao" (a common scam line) and "Never
+   share your OTP with anyone else, just read it out to me": the "don't tell anyone" half
+   turned the whole sentence into advice. Now a non-negated request verb aimed at the
+   speaker (singular only: "mujhe", "me"; a real bank says "tell *us* if anyone asks")
+   makes it a request, and the "don't tell anyone" part then counts as isolation. Also
+   fixed a false positive on genuine advice: "OTP ya PIN ... mat bataiye" now covers every
+   object in the list. The words live in `lexicon.yaml` (`negation.redirect`,
+   `negation.connectors`). With an authority claim first, the redirect line is critical
+   before the user answers.
+3. CI's first run passed (all nine steps).
+
+Dev set unchanged (9/9, 0/7 false alarms); the held-out set was not run. Tests: 726.

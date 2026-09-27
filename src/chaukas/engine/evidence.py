@@ -33,7 +33,7 @@ class _Entry:
 class EvidenceStore:
     """Per-kind decaying evidence plus session peaks."""
 
-    __slots__ = ("_clock", "_entries", "_floor", "_half_life", "_pruned_peak",
+    __slots__ = ("_clock", "_entries", "_first_seen", "_floor", "_half_life", "_pruned_peak",
                  "_pruned_signal")  # fmt: skip
 
     def __init__(
@@ -47,10 +47,18 @@ class EvidenceStore:
         self._entries: defaultdict[SignalKind, list[_Entry]] = defaultdict(list)
         self._pruned_peak: dict[SignalKind, float] = {}
         self._pruned_signal: dict[SignalKind, Signal] = {}  # the signal behind each peak
+        self._first_seen: dict[SignalKind, float] = {}  # session time, survives pruning
 
     def add(self, signal: Signal) -> None:
         entry = _Entry(signal, signal.confidence, self._clock.call_time(signal.t))
         self._entries[signal.kind].append(entry)
+        first = self._first_seen.get(signal.kind)
+        if first is None or signal.t < first:
+            self._first_seen[signal.kind] = signal.t
+
+    def first_seen(self, kind: SignalKind) -> float | None:
+        """Session time of the earliest ``kind`` signal this session, or None."""
+        return self._first_seen.get(kind)
 
     def level(self, kind: SignalKind, now: float, *, min_confidence: float = 0.0) -> float:
         """Decayed evidence for ``kind`` at session time ``now``, counting only signals that
@@ -125,6 +133,7 @@ class EvidenceStore:
         self._entries.clear()
         self._pruned_peak.clear()
         self._pruned_signal.clear()
+        self._first_seen.clear()
 
     def _decayed(self, entry: _Entry, now_call: float) -> float:
         age = max(0.0, now_call - entry.call_t)

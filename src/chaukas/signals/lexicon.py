@@ -48,6 +48,8 @@ class NegationSpec(_Strict):
     gap: int = Field(ge=0)
     before: list[str]
     after: list[str]
+    connectors: list[str] = []  # join objects into one list ("OTP ya PIN")
+    redirect: list[str] = []  # first-person recipients ("mujhe", "me")
 
 
 class LexiconSpec(_Strict):
@@ -90,9 +92,11 @@ class Lexicon:
     """Compiled vocabulary: automata ready to scan token lists."""
 
     __slots__ = (
+        "negation_connectors",
         "negation_gap",
         "negators_after",
         "negators_before",
+        "redirect_recipients",
         "request_words",
         "suppressions",
         "terms",
@@ -127,6 +131,8 @@ class Lexicon:
         self.negators_before: frozenset[str] = _single_tokens(spec.negation.before)
         self.negators_after: frozenset[str] = _single_tokens(spec.negation.after)
         self.negation_gap: int = spec.negation.gap
+        self.negation_connectors: frozenset[str] = _single_tokens(spec.negation.connectors)
+        self.redirect_recipients: frozenset[str] = _single_tokens(spec.negation.redirect)
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> Lexicon:
