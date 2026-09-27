@@ -46,7 +46,7 @@ order scams use them, and ideally matched by something happening on screen.
 | `signals/` | Transcript line → typed evidence: normalisation, Aho-Corasick lexicon scan in English / romanised Hindi / Devanagari, request fast path, negation and protective-advice suppression, digit rule |
 | `engine/` | Evidence → risk: decaying evidence, three attack-chain templates, gates, levels, hysteresis, dismissal, OTP rules, the remote-banking rule |
 | `llm/` | Optional: when to ask the local LLM, the prompt, a standard-library client, the reply schema (sent as a JSON Schema), the quote-checking evidence guard, an answer cache, the managed llama.cpp server |
-| `context/` | 1 Hz desktop monitor: remote-access tools starting, bank / transfer / OTP pages by window title, executables appearing in Downloads |
+| `context/` | 1 Hz desktop monitor: remote-access tools starting, bank / transfer / OTP pages by window title, executables appearing in Downloads; triggered OCR of the active window while a call is suspicious (Windows OCR; never stored) |
 | `evaluation/` | Case scripts, the `Session` pipeline, replay on a virtual clock, metrics with confidence intervals, ablations A-E |
 | `ui/` | PySide6 / Qt Quick window: dashboard, three escalating alert windows, Why / Privacy / Settings pages, English and Hindi; the live session and the services that feed it |
 
@@ -230,7 +230,7 @@ engine many times on a virtual clock).
 
 | Component | On this dev PC (x64, measured) | On a Snapdragon PC (target, not yet measured) |
 |---|---|---|
-| Speech-to-text (Whisper small int8) | CPU, ONNX Runtime: about 2 s per sentence | CPU (ARM64 build), then the NPU via ONNX Runtime QNN / AI Hub |
+| Speech-to-text (Whisper small) | CPU, ONNX Runtime: about 2 s per sentence (on mains power) | Encoder on the NPU (fp16, Qualcomm's QNN plugin, `asr.device: npu`), decoder on the CPU; falls back to the CPU if the NPU can't be used. Built, not yet measured |
 | Voice activity detection | CPU (Silero VAD, ONNX), well under 1 ms per window | CPU |
 | Optional LLM (Qwen2.5-1.5B Q4) | CPU, llama.cpp: 7.1 s median per call | CPU (llama.cpp ARM64 build) or NPU via GenieX |
 | Signals, guard, chains, risk engine | CPU, pure Python | CPU |
@@ -269,11 +269,16 @@ Only `chaukas setup` downloads anything. Everything lands in `%LOCALAPPDATA%\Cha
 
 ## 12. Known gaps
 
-- Not yet run on a Snapdragon laptop; Whisper is not yet on the NPU.
+- Not yet run on a Snapdragon laptop: the NPU encoder path is written against the real
+  QNN plugin and its fallback is tested on x64, but the NPU itself is unmeasured
+  (`chaukas benchmark --asr-device npu` is the measurement to take).
+- Paraphrase: the keyword layer missed all three English paraphrases in the robustness
+  test, and two OTP phrasings raise false alarms (see the README's Results).
 - The LLM is not wired into live mode (and is off by default; see section 6).
 - Speech recognition is measured on synthetic English speech only; real Hinglish is
   unmeasured.
 - The loopback hears everything the PC plays, and capture follows the default devices
   chosen at start.
-- Not yet built: system tray icon, spoken alerts, onboarding / consent screen, triggered
-  OCR, a firewall test proving offline operation.
+- Not yet built: system tray icon, spoken alerts, onboarding / consent screen. The
+  firewall test proving offline operation is written (`tools/offline_check.ps1`) but not
+  yet run.

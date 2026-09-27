@@ -760,3 +760,25 @@ If OCR is missing or fails, titles, processes and Downloads keep working.
   Hindi needs the Hindi language pack).
 
 Tests: 745 passing; ruff, mypy strict clean.
+
+### 2026-09-28 - Robustness matrix: 26 new cases, one run
+
+The review asked for a robustness matrix instead of another model. 26 cases in
+`eval/robustness/` (tag `eval-robust-1`), committed before their only run: three scam
+intents (OTP theft, digital-arrest money transfer, remote access) x six variants
+(Hinglish, English paraphrase, Hindi in Devanagari, indirect request, reordered tactics,
+adversarial wording) plus eight legitimate look-alikes. **Not blind**: written by the same
+assistant that developed the detector.
+
+Result (configuration E): **10/18 scams detected** (7/18 critical before harm), **2/8 false
+alarms**. By variant: Devanagari 3/3, Hinglish 2/3, reordered 2/3, adversarial 2/3,
+indirect 1/3, **English paraphrase 0/3**. By intent: digital arrest 5/6, remote access 3/6,
+OTP theft 2/6. False alarms: a bank saying "I will *send* an OTP" ("send" is a request
+verb) and an English-speaking delivery agent asking for the order OTP (by design any OTP
+request without an authority claim is a warning). Also seen: "bata dijiye" and "confirm kar
+dijiye" are not recognised as request verbs.
+
+Per the protocol this set is now spent: nothing will be tuned against it and no
+improvement on it will be claimed. The honest conclusion for the README: the keyword
+layer does not survive paraphrase, which is the job the LLM layer was designed for and why
+a stronger on-device model (on the NPU) is the next step.

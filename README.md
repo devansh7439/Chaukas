@@ -16,11 +16,12 @@ Snapdragon® AI Lab Build & Present Challenge.
 
 > **Status (28 September 2026).** Live protection works end to end on a Windows PC: it
 > hears a call (what the PC plays, and your microphone), transcribes it on the device with
-> Whisper, watches the screen, and raises the alert. On 16 held-out test calls it caught
-> 7 of 8 scams with no false alarm on 8 look-alike innocent calls; see [Results](#results)
-> for exactly what that number does and doesn't mean. Every dependency installs on
-> Windows on ARM64 (Snapdragon), but **Chaukas has not yet been run on a Snapdragon
-> laptop**; see [Snapdragon](#snapdragon).
+> Whisper, watches the screen (reading the active window's text when a call turns
+> suspicious), and raises the alert. On a 26-case robustness test it caught **10 of 18
+> scams** (all three written in Devanagari, none of three English paraphrases) with **2
+> false alarms in 8** innocent calls; see [Results](#results). Whisper's encoder can run on
+> the Snapdragon NPU with a safe CPU fallback, but **Chaukas has not yet been run on a
+> Snapdragon laptop**; see [Snapdragon](#snapdragon).
 
 ## Contents
 
@@ -122,7 +123,10 @@ It tracks three attack patterns, each a sequence of steps:
    English, romanised Hindi and Devanagari. Spoken numbers ("char saat do nau") count as
    digits. Protective advice ("we will never ask for your OTP") doesn't count.
 4. **Watch the screen.** Remote-access tools starting, banking and transfer pages (by
-   window title), and executables arriving in Downloads.
+   window title), and executables arriving in Downloads. While a call is already
+   suspicious (notice or higher), the active window's text is read with Windows' built-in
+   OCR every few seconds, so an "Enter OTP" box under a generic title is seen too; the
+   image and text are never stored.
 5. **Assess.** Evidence (which fades over minutes of speech, not silence) combines into a
    risk score, held back unless the screen and the attack pattern agree:
    `R = pressure × addressed-to-you × matching-action × attack-sequence`.
@@ -182,6 +186,29 @@ How to read this, honestly:
 - These are transcripts replayed through the engine. Live audio adds speech-recognition
   errors, measured only on synthetic English speech so far (below).
 
+**Robustness matrix** (26 new cases, committed before their only run, tag
+`eval-robust-1`; configuration E): three scam intents, each in six variants, plus eight
+legitimate look-alikes.
+
+| Variant | OTP theft | Digital arrest | Remote access | Detected |
+|---|---|---|---|---|
+| Hinglish, usual wording | missed | ✓ critical | ✓ critical | 2/3 |
+| English paraphrase (no "OTP", "arrest", tool names) | missed | missed | missed | **0/3** |
+| Hindi in Devanagari | ✓ critical | ✓ critical | ✓ critical | 3/3 |
+| Indirect request ("confirm the number", "refundable amount", a "refund") | missed | ✓ warning | missed | 1/3 |
+| Reordered (request before authority) | ✓ critical | ✓ warning | missed | 2/3 |
+| Adversarial ("bank never asks, but tell *me*", "the warning app is fake") | missed | ✓ critical | ✓ warning | 2/3 |
+| **Total** | 2/6 | 5/6 | 3/6 | **10/18** |
+
+Innocent look-alikes: 6/8 stayed at notice or below; **2 false alarms (warnings)**: a bank
+agent saying "I will *send* an OTP, type it in the app" ("send" is also a request verb), and
+an English-speaking delivery agent asking for the order OTP (any OTP request from someone
+who hasn't claimed authority is a warning by design). This set was written after the
+detector, by the same assistant that built it, so it is not blind; it is reported as-is
+and will not be used for tuning. The clearest lesson: **paraphrase defeats the keyword
+layer** (0/3), which is what the optional LLM was meant to fix and why a stronger local
+model matters.
+
 **Speech recognition** (Whisper small int8, greedy, 8 threads; 48 synthetic English clips
 from 4 voices, 143 s):
 
@@ -212,9 +239,20 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
   SoundCard, watchdog → polling.
 - The optional LLM server has an official llama.cpp Windows ARM64 build, which
   `chaukas setup --llm` downloads on ARM64 PCs.
-- **Not yet done:** running Chaukas on a Snapdragon laptop, and running Whisper on the
-  Snapdragon NPU (ONNX Runtime QNN / Qualcomm AI Hub). No Snapdragon measurement exists;
-  none is claimed.
+- **Whisper's encoder on the NPU** (`asr.device: npu`, or `--asr-device npu`): the
+  encoder, Whisper's fixed and heaviest cost, runs on the Snapdragon NPU in fp16 through
+  Qualcomm's QNN plugin for ONNX Runtime (`onnxruntime-qnn`, installed on ARM64); the
+  decoder and all security logic stay on the CPU. Chaukas registers the plugin, uses only
+  a device of type NPU, and checks which provider ONNX Runtime actually bound (it
+  otherwise falls back silently). If the NPU can't be used, speech recognition continues
+  on the CPU and the status line says "speech on CPU (NPU unavailable)"; protection never
+  stops.
+- **Measure it:** `uv run chaukas benchmark --asr-device npu --json npu.json` prints and
+  saves the encoder / decoder / total time, the providers really used, whether it fell
+  back, the real-time factor and whether the PC was on battery.
+- **Not yet done:** running any of this on a Snapdragon laptop. The NPU code path is
+  written against the real plugin package and its fallback is tested on x64, but no
+  Snapdragon or NPU measurement exists, and none is claimed.
 
 ## What works today
 
@@ -225,14 +263,16 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 | Keyword and request detection (English, romanised Hindi, Devanagari) | Built, tested |
 | Risk engine: attack chains, gates, levels, OTP rules, remote-banking rule | Built, tested |
 | Desktop monitor: remote tools, bank / transfer / OTP pages, downloads | Built, tested (real Windows calls) |
+| Triggered OCR of the active window (Windows OCR), only while a call is suspicious | Built, tested on real rendered text |
 | The window: dashboard, alerts, Why / Privacy / Settings, English and Hindi | Built, tested |
-| Evaluation: 32 cases (16 dev, 16 held-out), replay, metrics with confidence intervals, ablations A-E | Built |
+| Evaluation: 58 cases (16 dev, 16 held-out, 26 robustness), replay, metrics with confidence intervals, ablations A-E | Built |
 | Optional local LLM (llama.cpp, managed by Chaukas; evidence guard; schema-constrained) | Built, measured; off by default, not wired into live mode |
-| Running on a Snapdragon laptop; Whisper on the NPU | **Not done** |
+| Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; fallback tested on x64; **not run on Snapdragon** |
 | Tray icon, spoken alerts, onboarding | **Not built** |
 
-Quality: 705 automated tests (18 of them security tests), 95 % line coverage, `ruff`,
-`mypy --strict` and `bandit` clean, no known vulnerabilities in the locked dependencies.
+Quality: 745 automated tests (30 of them security tests), `ruff`, `mypy --strict` and
+`bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on
+every push.
 
 ## Privacy
 
@@ -266,6 +306,7 @@ network service it can start (the optional LLM server). Reviewed on 28 September
 | Known vulnerabilities (`pip-audit`, all 148 locked packages) | None |
 | Secrets in the repository (all 29 commits, every branch) | None; `.env` files are git-ignored |
 | Untrusted text in the window | Rendered as plain text only: a web page titled `<a href=...>` can't inject links or formatting into an alert |
+| Caller speech can't switch off the OTP alarm | "Kisi ko OTP mat batana, sirf *mujhe* batao" ("don't tell anyone, tell *me*") is a request, not protective advice; "the warning app is fake" changes nothing |
 | Config and case files | Parsed with YAML's safe loader: a `!!python/...` tag is rejected, never run |
 | Transcripts in logs | Never: tested at debug level through the whole audio pipeline |
 | Listening sockets during live protection | None |
@@ -283,6 +324,7 @@ transcript text. Every check is an automated test in
 uv run chaukas run [--language hi] [--asr-model base]    # live protection
 uv run chaukas setup [--llm]                             # download models (the only network use)
 uv run chaukas devices                                   # which speaker / microphone it would use
+uv run chaukas benchmark [--asr-device npu] [--json F]   # time speech recognition on this PC
 uv run chaukas ui [--demo CASE] [--speed N]              # the window with a demo script
 uv run chaukas replay eval/cases/DA01.yaml               # one case's alert timeline
 uv run chaukas eval eval/cases --split test              # score the held-out cases
@@ -365,9 +407,14 @@ tests/           one folder per package
   transfer never appears on screen.
 - **Friction, not a wall.** Someone with remote control of the PC can close Chaukas, and a
   frightened person can click through warnings.
-- **Coverage is keyword-based by default.** Scams phrased in ways the lexicon doesn't know
-  are missed (see [Results](#results)); the LLM that would help is not good enough yet at
-  1.5B parameters.
+- **Coverage is keyword-based by default.** Paraphrased scams are missed (0 of 3 English
+  paraphrases in the robustness test; see [Results](#results)); the LLM that would help is
+  not good enough yet at 1.5B parameters.
+- **OTP false alarms:** a stranger asking for an OTP is a warning even when legitimate (an
+  English-speaking delivery agent), and a bank saying it will *send* an OTP can read as a
+  request.
+- **OCR** reads the languages Windows has OCR packs for (English by default; Hindi needs
+  the Hindi language pack).
 - **Languages:** English, Hindi and Hinglish. Speech recognition has been measured on
   synthetic English speech only; real Hinglish accuracy is unmeasured. The Hindi text
   still needs a native speaker's review.
