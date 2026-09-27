@@ -143,6 +143,7 @@ class RulesConfig(_Section):
     hysteresis_margin: UnitFloat
     hysteresis_hold_s: Seconds
     dismissal_s: Seconds
+    remote_banking_warning: bool  # remote control, then banking, after an organisation claim
 
 
 class EngineConfig(_Section):

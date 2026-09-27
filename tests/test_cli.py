@@ -90,7 +90,8 @@ timeline:
 def test_ablate_flags_cases_that_script_the_llm(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["ablate", str(CASES_DIR)]) == EXIT_OK
     out = capsys.readouterr().out
-    assert f"4 of 4 cases {SCRIPTED_NOTE}" in out
+    total = len(list(CASES_DIR.glob("*.yaml")))
+    assert f"4 of {total} cases {SCRIPTED_NOTE}" in out  # only the smoke cases script it
     assert "BN01, BN07, CT01, DA01" in out
     assert "B, C and D" in out
 

@@ -454,3 +454,39 @@ class TestCoercionLasts:
             )
         )
         assert not engine.evaluate(2.0).coercion
+
+
+class TestRemoteBanking:
+    """Someone who claimed to be from an organisation controls the PC, then the bank opens.
+
+    The classic tech-support and refund scam needs no threats, so the coercion rule alone
+    would stop it at a notice. Family remote help has no organisation claim.
+    """
+
+    @staticmethod
+    def run(*, authority: bool, bank_first: bool = False, **rules: Any) -> RiskState:
+        overrides: dict[str, Any] = {"ablation": {"use_llm": False}}
+        if rules:
+            overrides["engine"] = {"rules": rules}
+        engine = RiskEngine.from_config(load_config(overrides), TEMPLATES)
+        if authority:
+            engine.on_signal(caller(K.AUTHORITY, 0.3, 0.0))  # a weak claim: "customer care"
+        engine.on_signal(caller(K.REMOTE_ACCESS_REQUEST, 0.75, 1.0))
+        remote_at, bank_at = (8.0, 5.0) if bank_first else (5.0, 8.0)
+        engine.on_context(ContextEvent(t=remote_at, kind=C.REMOTE_APP_STARTED))
+        engine.on_context(ContextEvent(t=bank_at, kind=C.BANK_PAGE))
+        return engine.evaluate(10.0)
+
+    def test_after_an_organisation_claim_it_is_a_warning(self) -> None:
+        state = self.run(authority=True)
+        assert state.level is Level.WARNING
+        assert state.objective is Objective.REMOTE_CONTROL
+
+    def test_family_help_without_any_claim_stays_below_a_warning(self) -> None:
+        assert self.run(authority=False).level < Level.WARNING
+
+    def test_a_bank_page_opened_before_the_remote_session_does_not_count(self) -> None:
+        assert self.run(authority=True, bank_first=True).level < Level.WARNING
+
+    def test_can_be_switched_off(self) -> None:
+        assert self.run(authority=True, remote_banking_warning=False).level < Level.WARNING

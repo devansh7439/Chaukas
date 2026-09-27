@@ -57,8 +57,13 @@ class TestPackagedCases:
     def test_load_cases_filters_and_sorts(self, cases_dir: Path) -> None:
         ids = [case.case_id for case in load_cases(cases_dir)]
         assert ids == sorted(ids)
-        assert set(ids) == {"BN01", "BN07", "CT01", "DA01"}
-        assert load_cases(cases_dir, split=Split.TEST) == ()
+        assert {"BN01", "BN07", "CT01", "DA01"} <= set(ids)  # the build-time smoke cases
+        dev = load_cases(cases_dir, split=Split.DEV)
+        test = load_cases(cases_dir, split=Split.TEST)
+        assert dev
+        assert test
+        assert all(case.split is Split.TEST for case in test)
+        assert {c.case_id for c in dev} | {c.case_id for c in test} == set(ids)
 
 
 class TestTimelineResolution:

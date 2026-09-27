@@ -1,0 +1,24 @@
+case_id: DV12
+category: attack
+scenario: cashback_teamviewer
+split: dev
+author: me
+language: english
+notes: >
+  Development case (tuning allowed), written after the held-out baseline with wording
+  deliberately different from the test cases. Synthetic, written with AI assistance.
+  Greed, not fear: a "cashback" and remote control, then the bank.
+expected:
+  max_level: warning
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "Hi, this is Flipkart customer care. You are eligible for a cashback of 2400 rupees."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, user: "Oh nice, how do I get it?"}
+  - {after: 1.0, caller: "I will credit it from my side. Please install TeamViewer so I can guide you."}
+  - {after: 5.0, event: remote_app_started, detail: "TeamViewer.exe"}
+  - {after: 2.0, caller: "Great. Now open your net banking so the cashback can be credited."}
+  - {after: 3.0, event: bank_page, detail: "DemoBank (MOCK) - Login"}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 5.0, mark: harm}

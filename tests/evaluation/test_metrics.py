@@ -27,13 +27,18 @@ from chaukas.llm.client import ChatResult
 from chaukas.llm.reasoner import Reasoner
 from chaukas.signals.lexicon import Lexicon
 
+# The four build-time smoke cases these tests describe (the dataset has more).
+SMOKE_CASES = frozenset({"BN01", "BN07", "CT01", "DA01"})
+
 
 @pytest.fixture(scope="module")
 def outcomes(cases_dir: Path) -> list[CaseOutcome]:
     config = config_for("D")
     lexicon = Lexicon.load()
     return [
-        score_case(run_case(case, config=config, lexicon=lexicon)) for case in load_cases(cases_dir)
+        score_case(run_case(case, config=config, lexicon=lexicon))
+        for case in load_cases(cases_dir)
+        if case.case_id in SMOKE_CASES
     ]
 
 
@@ -121,8 +126,8 @@ class TestAblationConfigs:
 
 class TestReports:
     def test_run_report(self, cases_dir: Path) -> None:
-        cases = load_cases(cases_dir)
-        run = run_case(cases[3], config=config_for("D"), lexicon=Lexicon.load())
+        case = next(case for case in load_cases(cases_dir) if case.case_id == "DA01")
+        run = run_case(case, config=config_for("D"), lexicon=Lexicon.load())
         text = format_run(run)
         assert "DA01" in text
         assert "CRITICAL" in text

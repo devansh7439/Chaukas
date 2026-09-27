@@ -103,6 +103,8 @@ engine:
     hysteresis_margin: 0.10
     hysteresis_hold_s: 30
     dismissal_s: 180
+    remote_banking_warning: true  # a remote-control app is running, the bank opens after it, and
+                                  # the caller claimed to be from an organisation: at least a warning
 
 ablation:
   use_llm: true

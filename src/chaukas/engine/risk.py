@@ -32,6 +32,7 @@ from chaukas.core.config import AblationConfig, ChaukasConfig, EngineConfig, LLM
 from chaukas.core.models import (
     ChainState,
     ContextEvent,
+    ContextKind,
     Level,
     LLMAssessment,
     Objective,
@@ -55,6 +56,7 @@ _DISCOUNTABLE: Final = frozenset({SignalKind.AUTHORITY, SignalKind.THREAT, Signa
 _DISCOUNT_FACTOR: Final = 0.5
 _LLM_TRIGGER_TIERS: Final = frozenset({Tier.STRONG, Tier.PHRASE, Tier.FAST_PATH, Tier.LLM})
 _COERCIVE: Final = tuple(kind for kind in SignalKind if kind.is_coercive)
+_BANKING: Final = frozenset({ContextKind.BANK_PAGE, ContextKind.TRANSFER_PAGE})
 
 
 class RiskEngine:
@@ -289,10 +291,30 @@ class RiskEngine:
                 self._held = Level.CRITICAL_RECOVERY
             else:
                 level = max(level, Level.WARNING)
+        if self._remote_banking():
+            level = max(level, Level.WARNING)
+            rule_objective = rule_objective or Objective.REMOTE_CONTROL
         if self._held > level:
             level = self._held
             rule_objective = Objective.CREDENTIAL_DISCLOSURE
         return level, rule_objective
+
+    def _remote_banking(self) -> bool:
+        """A remote-control app is running and the bank opened after it, on a call where
+        the caller claimed to be from an organisation (even a weak "customer care").
+
+        The tech-support and refund scam needs no threats, so the coercion rule alone
+        would stop it at a notice; family remote help makes no such claim.
+        """
+        if not self._config.rules.remote_banking_warning:
+            return False
+        if self._evidence.peak(SignalKind.AUTHORITY) <= 0.0:
+            return False
+        remote = [e.t for e in self._context if e.kind is ContextKind.REMOTE_APP_STARTED]
+        if not remote:
+            return False
+        started = min(remote)
+        return any(e.kind in _BANKING and e.t >= started for e in self._context)
 
     def _objective(
         self,

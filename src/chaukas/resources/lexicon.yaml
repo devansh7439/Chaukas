@@ -21,6 +21,10 @@ tactics:
     terms: [cbi, police, cyber cell, cybercell, crime branch, trai, rbi, customs, narcotics,
             enforcement directorate, microsoft support, bank manager,
             police se, cbi se, bank se bol raha,
+            inspector, sub inspector, police station, thana, thane, cyber crime,
+            crime department, head office, verification department, kyc department,
+            kyc officer, customs office, technical support, electricity department,
+            electricity board, bijli vibhag, bijli board,
             पुलिस, सीबीआई, साइबर सेल, क्राइम ब्रांच, बैंक से बोल रहा]
     weak: [officer, customer care, अधिकारी]
 
@@ -28,15 +32,22 @@ tactics:
     terms: [arrest, warrant, fir, case registered, money laundering, account blocked,
             account frozen, virus, hacked, illegal,
             giraftar, case darj, account band, jail,
+            suspended, deactivated, frozen, freeze, hackers, custody, seized,
+            police complaint, complaint has been filed, legal action, case chalega,
+            police case, zabt, band ho jayega, band ho jayegi, band kar diya jayega,
+            kaat diya jayega, kaat denge, kat jayega, connection kaat,
             गिरफ्तार, वारंट, केस दर्ज, मनी लॉन्ड्रिंग, खाता बंद, जेल, वायरस, हैक]
 
   urgency:
     weak: [immediately, right now, within one hour, last chance, urgent,
+           within 24 hours, act immediately, aaj hi, 24 ghante, jaldi kijiye,
            turant, abhi, jaldi, तुरंत, अभी, जल्दी]
 
   isolation:
     terms: [don't tell anyone, don't inform your family, keep this confidential,
             secret investigation, kisi ko mat batana, ghar walon ko mat batana,
+            do not discuss this with anyone, do not tell your family, discuss mat,
+            kisi se discuss mat, kisi aur ko phone mat, kisi ko phone mat,
             किसी को मत बताना, परिवार को मत बताना, गोपनीय]
 
   surveillance:
@@ -46,6 +57,8 @@ tactics:
 
   money_request:
     terms: [rtgs, neft, verification amount, safe account, rbi account, break your fd,
+            security deposit, refundable deposit, customs duty, processing fee,
+            verification fee, clearance fee,
             paise bhejo, amount transfer karo, पैसे भेजो, ट्रांसफर करें, सुरक्षित खाता]
     weak: [transfer, upi]
 
@@ -66,22 +79,31 @@ requests:
     verbs: [tell, share, send, read, give, say, ask,
             batao, bataiye, bataye, batayein, bata do, batana, bataana, bolo, bol do,
             bhejo, bhej do, share karo,
+            padh, padhiye, padh kar sunaiye, sunaiye, bol dijiye, confirm,
             बताओ, बताइए, बताएं, बता दो, बताना, बोलो, भेजो, भेज दो]
     objects: [otp, one time password, cvv, password, pin, atm pin, upi pin,
-              verification code, code you received, ओटीपी, पासवर्ड, पिन]
+              verification code, code you received, digit number, six digit, 6 digit, chhe ank,
+              code you got, code we sent, code sent to, sms code, code aaya, code aayega,
+              jo code aaya, code jo aaya,
+              jo number aaya, number jo aaya, sms mein aaya, by sms, on sms, via sms,
+              ओटीपी, पासवर्ड, पिन]
 
   remote_access_request:
     verbs: [install, download, run, share, install karo, download karo, share karo,
+            install kijiye, install kariye, download kijiye, daal dijiye, daaliye,
             इंस्टॉल करो, डाउनलोड करो, शेयर करो]
     objects: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
               any desk, team viewer, rust desk, ultra viewer,
               app, application, software, screen, code on screen, code on your screen,
+              id shown on the screen, id on the screen, id on screen,
               एनीडेस्क, टीमव्यूअर, ऐप, स्क्रीन]
 
   money_request:
     verbs: [transfer, send, pay, deposit, transfer karo, bhejo, bhej do, jama karo, daalo,
+            transfer kijiye, bhej dijiye, bhejiye, jama kijiye, jama karni,
             ट्रांसफर करो, भेजो, भेज दो, जमा करो, डालो]
     objects: [money, amount, funds, payment, paise, paisa, rupees, rupaye, rs, ₹,
+              hazaar, hazar, lakh, deposit, duty, fee,
               पैसे, रकम, रुपये]
 
 negation:
