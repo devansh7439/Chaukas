@@ -270,6 +270,13 @@ def _ui(args: argparse.Namespace) -> int:
 
 
 def _run(args: argparse.Namespace) -> int:
+    if ABLATIONS[args.ablation]["use_llm"]:
+        # The engine would hold alerts back while waiting for an LLM that live mode never
+        # calls. Refuse rather than protect less.
+        raise ChaukasError(
+            f"live mode has no LLM yet, so --ablation {args.ablation} would delay alerts; "
+            "use --ablation E (the default) or A"
+        )
     try:
         from chaukas.ui.app import run_live
     except ImportError as exc:  # pragma: no cover - depends on the environment

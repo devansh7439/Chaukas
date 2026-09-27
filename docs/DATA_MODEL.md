@@ -110,7 +110,7 @@ Times are always **seconds since the session started**.
 | `objective` | `Objective` | What the caller seems to want, or `unclear` / `none` |
 | `components` | RiskComponents | `pressure` (P), `addressed` (G), `action` (A), `sequence` (S), each 0..1 |
 | `chain` | ChainState or null | The best-matching attack chain |
-| `coercion` | bool | Threat, isolation or surveillance evidence ≥ 0.5 |
+| `coercion` | bool | A threat, isolation or surveillance signal heard at ≥ 0.5 whose faded value is still ≥ 0.35 (`coercion_floor`) |
 | `llm_assessed` | bool | The session's first LLM answer has arrived |
 | `dismissed` | bool | The user acknowledged this level |
 | `reasons` | list of Reason | `(t, label, detail)`: the evidence timeline, oldest first |
@@ -148,9 +148,11 @@ remote control; OTP / password field → credentials; `window_changed` → none.
 | `eval/cases/*.yaml` | Developers | Case scripts and their hand-written labels | In the repo |
 | `eval/events/*.jsonl` | Developers | Screen events for replay | Format defined; no files yet |
 | `--config FILE.yaml` | Developers | Overrides, deep-merged over the defaults in order | Optional |
-| `%APPDATA%\Chaukas\settings.json` | The window | Language, trusted contact, capture exclusion | The only file a normal user's session writes |
+| `%APPDATA%\Chaukas\settings.json` | The window | Language, trusted contact, capture exclusion | The only file a live session writes |
 | `eval/cache/**/*.json` | `eval --llm --llm-cache` | LLM answers with measured latency | Contains transcript-derived text: synthetic evaluation data only; git-ignored |
-| `models/` | Model download | Model files | Git-ignored; never committed |
+| `%LOCALAPPDATA%\Chaukas\models\` (or `CHAUKAS_MODELS`) | `chaukas setup` | Silero VAD; optional llama.cpp build and Qwen GGUF | Pinned, SHA-256 checked; never committed |
+| `~\.cache\huggingface\hub\` | `chaukas setup` | Whisper (ONNX or CTranslate2) | Loaded from disk only during a call |
+| `...\models\llama.cpp\<build>\server.log` | The managed LLM server | Its start-up and request log | Only during `--llm` evaluation runs; not in live mode |
 
 ## 6. File schemas
 
@@ -171,11 +173,14 @@ are no defaults in code: a key missing from the merged result is an error.
 | | `digit_lookback_s` | 90 | Digits count only this soon after a credential request |
 | | `digit_request_min_confidence` | 0.6 | ...and only if that request was this confident |
 | | `digit_confidence` | 0.9 | Confidence of `user_digits_spoken` |
-| `llm` | `base_url`, `model` | `http://127.0.0.1:8080/v1`, `""` | OpenAI-compatible endpoint and model name |
+| `llm` | `server` | `managed` | `managed`: Chaukas starts llama.cpp on 127.0.0.1; `external`: you run the server |
+| | `base_url`, `model` | `http://127.0.0.1:8080/v1`, `""` | OpenAI-compatible endpoint and model name |
+| | `gguf`, `threads`, `ctx_size`, `startup_timeout_s` | `qwen2.5-1.5b-instruct-q4_k_m.gguf`, 8, 4096, 120 | Managed server: model file (in `<models>/llm` or absolute), threads, context, load timeout |
+| | `json_schema` | true | Send the reply schema as `response_format` (grammar-constrained output) |
 | | `window_s`, `context_lookback_s` | 90, 300 | Transcript and screen history in the prompt |
 | | `heartbeat_s`, `heartbeat_min_speech_s` | 45, 10 | Heartbeat call, if enough new caller speech |
 | | `debounce_s` | 8 | Minimum gap between calls |
-| | `timeout_s` | 10 | Per request |
+| | `timeout_s` | 15 | Per request (2 × the measured median) |
 | | `failure_grace_s` | 20 | Lift the "wait for the LLM" cap after this long |
 | | `max_tokens`, `temperature` | 300, 0.0 | Generation settings |
 | | `can_discount` | true | Allow halving unconfirmed authority / threat / urgency keywords |
@@ -196,10 +201,17 @@ are no defaults in code: a key missing from the merged result is an error.
 | | `rules.pre_disclosure_min_confidence` | 0.7 | OTP request strength for the pre-disclosure rule |
 | | `rules.hysteresis_margin`, `rules.hysteresis_hold_s` | 0.10, 30 | De-escalate after R < threshold − margin for this long |
 | | `rules.dismissal_s` | 180 | How long "I understand" quiets a level |
+| | `rules.coercion_floor` | 0.35 | A confident coercive signal keeps counting while its faded value stays above this |
+| | `rules.remote_banking_warning` | true | Remote-control app, then a bank page, after an organisation claim: at least a warning |
 | `ablation` | `use_llm`, `use_action_gate`, `use_sequence` | all true | Switch layers off for configurations A-E |
-| `audio` | `sample_rate`, `vad_silence_ms`, `max_segment_s`, `playback_guard_tail_ms`, `echo_similarity` | 16000, 600, 12, 300, 0.6 | **Reserved**: audio capture is not built |
+| `audio` | `sample_rate`, `vad_threshold`, `vad_silence_ms`, `min_speech_ms`, `speech_pad_ms`, `max_segment_s` | 16000, 0.5, 600, 250, 200, 12 | Voice detection and sentence cutting |
+| | `echo_similarity`, `echo_overlap_skip` | 0.6, 0.8 | Text echo check; mic speech this much inside the caller's is skipped |
+| | `playback_guard_tail_ms`, `gap_reset_s` | 300, 0.5 | Alert-clip guard; an audio gap this long closes speech |
+| `asr` | `backend`, `model`, `language` | `onnx`, `small`, `auto` | Speech-to-text engine (`onnx` or `ctranslate2`), Whisper size, language |
+| | `cpu_threads`, `beam_size`, `no_speech_threshold` | 8, 1, 0.6 | Decoding; segments above the no-speech probability are dropped |
+| | `redetect_every`, `merge_max_s`, `hotwords` | 6, 20, `""` | Reuse a speaker's language for N lines; merge a backlog up to this long; optional hotwords |
 | `ui` | `capture_exclusion`, `language` | false, en | **Reserved**: the window reads `settings.json` |
-| `privacy` | `transcript_horizon_s`, `session_idle_end_s`, `debug_text_logs` | 300, 1800, false | **Reserved**: the privacy module is not built |
+| `privacy` | `transcript_horizon_s`, `session_idle_end_s`, `debug_text_logs` | 300, 1800, false | Transcript lines older than this are dropped; the session ends after this long without speech |
 
 ### 6.2 `lexicon.yaml`
 
@@ -288,8 +300,10 @@ One JSON object per line, in any order (read back sorted by time):
 
 ### 6.7 LLM reply
 
-What the model must return. Parsing finds the object inside chatter or code fences,
-accepts `"0.7"` and `"true"`, and drops invalid items one by one.
+What the model must return. The same shape is sent to the server as a JSON Schema
+(`llm.json_schema`; built from the parser's own enums, at most 4 items per list, quotes up
+to 100 characters, the explanation up to 120). Parsing still finds the object inside
+chatter or code fences, accepts `"0.7"` and `"true"`, and drops invalid items one by one.
 
 ```json
 {

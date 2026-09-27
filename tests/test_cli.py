@@ -285,3 +285,13 @@ def test_offline_llm_answers_never_start_a_server(
                  str(tmp_path / "cache"), "--llm-offline"])  # fmt: skip
     assert "setup --llm" not in capsys.readouterr().err
     assert code == EXIT_OK
+
+
+@pytest.mark.parametrize("ablation", ["B", "C", "D"])
+def test_live_mode_refuses_configurations_that_wait_for_an_llm(
+    ablation: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Live mode has no LLM wired in: such a configuration would hold alerts back while
+    # "waiting for the LLM". Refuse it instead of protecting less.
+    assert main(["run", "--no-audio", "--no-screen", "--ablation", ablation]) == EXIT_ERROR
+    assert "--ablation E" in capsys.readouterr().err

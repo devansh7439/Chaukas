@@ -589,3 +589,24 @@ test set; they are listed as known limitations):
   recognised as a money request, so the digital-arrest chain never completes: warning.
 - AT06 (card-block "6 digit code"): warning, not critical.
 The held-out set has now been seen twice; a fresh set is needed for any further claim.
+
+### 2026-09-28 - Docs brought up to date; live mode refuses LLM configurations
+
+- **Bug fixed (test first):** `chaukas run --ablation B|C|D` was accepted, but live mode
+  has no LLM wired in, so the engine would have held alerts back for up to 20 s "waiting
+  for the LLM" and then continued without it. `run` now refuses those configurations with
+  a clear message (use E, the default, or A).
+- **README rewritten** around the current state: how to run the demo and live protection,
+  measured results (held-out detection with its caveats, speech recognition, live
+  latency, the LLM), a Snapdragon section that says plainly what is and isn't verified,
+  updated privacy, commands, limitations, licences, and a "How this was built" section
+  disclosing AI assistance.
+- **ARCHITECTURE.md** rewritten: live audio, ONNX Whisper, the remote-banking rule, the
+  optional managed LLM, threads, models and downloads, design decisions, known gaps.
+  **DATA_MODEL.md**: coercion floor, storage (models folder, HF cache, LLM server log),
+  every new config key (`asr`, `audio`, `llm`, `rules`), the reply JSON Schema. The
+  architecture diagram is re-rendered (audio and speech-to-text built; LLM optional).
+- **Git tags** `eval-run-1` (bdfd2c7) and `eval-run-2` (58f4c53) mark the exact commits of
+  the two held-out runs; `default.yaml`'s header now points to them.
+
+Gates: ruff, ruff format, mypy strict, 687 tests passing, 95 % line coverage.

@@ -1,6 +1,7 @@
 # Chaukas default configuration: the single source of truth for every tunable.
-# All numbers are starting hypotheses (blueprint section 6.7). Tune on the dev split only,
-# then freeze with the git tag `eval-freeze` before touching the test split.
+# All numbers are starting hypotheses (blueprint section 6.7). Tune on the dev split only.
+# The held-out test split has been run twice, at the tagged commits eval-run-1 and
+# eval-run-2 (docs/WORKLOG.md); a claim beyond those needs a fresh test set.
 
 audio:
   sample_rate: 16000           # Hz, mono
