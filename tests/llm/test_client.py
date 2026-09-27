@@ -104,6 +104,23 @@ class TestChatClient:
             "stream": False,
         }
 
+    def test_a_json_schema_is_sent_as_the_response_format_when_given(self) -> None:
+        seen: dict[str, Any] = {}
+
+        def transport(url: str, payload: Mapping[str, Any], timeout: float) -> Any:
+            seen.update(payload=payload)
+            return {"choices": [{"message": {"role": "assistant", "content": VALID}}]}
+
+        schema = {"type": "object", "properties": {}}
+        client = ChatClient(base_url="http://127.0.0.1:8080/v1", model="m", timeout_s=5.0,
+                            max_tokens=10, temperature=0.0, transport=transport,
+                            json_schema=schema)  # fmt: skip
+        client.chat([{"role": "user", "content": "hi"}])
+        assert seen["payload"]["response_format"] == {
+            "type": "json_schema",
+            "json_schema": {"name": "assessment", "strict": True, "schema": schema},
+        }
+
     def test_a_failed_request_reports_the_time_it_took(self) -> None:
         def transport(url: str, payload: Mapping[str, Any], timeout: float) -> Any:
             raise LLMUnavailableError("timed out")

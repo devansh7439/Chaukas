@@ -431,7 +431,7 @@ Return ONLY a JSON object matching this schema, with no other text:
 
 **Model choice:** a GenieX **AI Hub bundle** (runs on the NPU). On Day 2, test 5 Hinglish transcripts: JSON validity, sensible tactics, Hindi understanding, time-to-first-token, tokens/s and total call latency. Prefer the smallest model with ≥ 90% valid JSON. Also check that Whisper (ONNX Runtime QNN) and GenieX can use the NPU **at the same time**.
 
-**Evidence guard (`evidence.py`).** Each quote must fuzzy-match (token overlap ≥ 0.6) the CALLER line it cites; otherwise the item is dropped as a hallucination. The signal's `t` is that line's `t_start`, so LLM latency can't scramble the chain order.
+**Evidence guard (`evidence.py`).** Each quote must fuzzy-match (token overlap ≥ 0.6) a CALLER line in the prompt window, preferably the one it cites (a real quote under a neighbouring line number is moved to its true line; USER lines never count); otherwise the item is dropped as a hallucination. The signal's `t` is that line's `t_start`, so LLM latency can't scramble the chain order.
 
 **Mapping LLM output → Signals:**
 

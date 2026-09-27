@@ -79,7 +79,7 @@ def test_a_faithful_quote_becomes_a_signal_timed_at_its_line() -> None:
     "item",
     [
         tactic("threat", 3, "you will be deported tomorrow"),  # hallucinated quote
-        tactic("threat", 99, "arrest warrant hai"),  # line not in the window
+        tactic("threat", 99, "your SIM will be blocked"),  # not in the window at all
         tactic("isolation", 2, "Kya hua sir"),  # quotes the USER
     ],
 )
@@ -144,3 +144,29 @@ def test_quotes_are_trimmed_for_the_why_panel() -> None:
     long_quote = "Aapke naam pe arrest warrant hai, giraftar ho sakte hain. " * 3
     (signal,) = guard(tactics=[tactic("threat", 3, long_quote)]).signals
     assert len(signal.evidence) <= 80
+
+
+class TestWrongLineNumber:
+    """Small models quote a real caller line but cite its neighbour's number."""
+
+    def test_a_real_caller_quote_under_the_wrong_number_is_moved_to_its_line(self) -> None:
+        result = guard(tactics=[tactic("threat", 4, "arrest warrant hai")])  # it is in L3
+        (signal,) = result.signals
+        assert signal.seg_id == 3
+        assert signal.t == 5.0
+        assert result.rejected == 0
+
+    def test_a_quote_that_is_nowhere_in_the_caller_lines_is_still_rejected(self) -> None:
+        result = guard(tactics=[tactic("threat", 3, "transfer the amount for verification")])
+        assert result.signals == ()
+        assert result.rejected == 1
+
+    def test_words_the_user_said_never_become_caller_evidence(self) -> None:
+        result = guard(requested_actions=[action("disclose_otp", 4, "Saat aath nau paanch")])
+        assert result.signals == ()
+        assert result.rejected == 1
+
+    def test_a_line_number_not_in_the_prompt_can_still_be_matched(self) -> None:
+        result = guard(tactics=[tactic("authority", 99, "Main CBI se bol raha hoon")])
+        (signal,) = result.signals
+        assert signal.seg_id == 1

@@ -7,23 +7,35 @@ The reply schema is kept short because every output token costs NPU time.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Final
+from typing import Final, get_args
 
-from chaukas.core.models import ContextEvent, RiskState, Segment
+from chaukas.core.models import ContextEvent, Objective, RiskState, Segment
+from chaukas.llm.schema import IDENTITIES, ActionName, Compliance, TacticName
 
-SCHEMA: Final = """{
+# The format by example, instead of "a|b|c" placeholders that small models copied
+# literally. The quotes are instructions, not scam words: models copied example quotes too.
+EXAMPLE: Final = """{
   "addressed_to_user": true,
-  "claimed_identity": "police|cbi|ed|trai|rbi|bank|customs|courier|tech_support|telecom|government|family|none|other",
+  "claimed_identity": "police",
   "tactics": [
-    {"name": "authority|threat|urgency|isolation|surveillance", "line": 12, "evidence": "exact quote under 12 words", "confidence": 0.0}
+    {"name": "threat", "line": 12, "evidence": "exact words copied from line 12", "confidence": 0.8}
   ],
   "requested_actions": [
-    {"action": "money_transfer|install_remote_app|share_screen|download_file|disclose_otp|disclose_password|open_bank_site", "line": 14, "evidence": "exact quote under 12 words", "confidence": 0.0}
+    {"action": "money_transfer", "line": 14, "evidence": "exact words copied from line 14", "confidence": 0.9}
   ],
-  "user_compliance": "complied|resisting|unclear",
-  "suspected_objective": "money_transfer|remote_control|credential_disclosure|none|unclear",
-  "benign_explanation": "most plausible innocent reading, under 15 words, or empty"
+  "user_compliance": "unclear",
+  "suspected_objective": "money_transfer",
+  "benign_explanation": "most plausible innocent reading, under 15 words"
 }"""  # noqa: E501
+
+ALLOWED: Final = f"""Allowed values:
+- claimed_identity: one of {", ".join(sorted(IDENTITIES))}
+- tactics[].name: one of {", ".join(get_args(TacticName))}
+- requested_actions[].action: one of {", ".join(get_args(ActionName))}
+- user_compliance: one of {", ".join(get_args(Compliance))}
+- suspected_objective: one of {", ".join(o.value for o in Objective)}
+- line: the number after L in the transcript line the quote comes from
+- confidence: a number from 0 to 1"""
 
 SYSTEM_PROMPT: Final = f"""\
 You analyse live phone/video-call transcripts on a user's own computer to detect
@@ -38,10 +50,13 @@ Decide what the CALLER is trying to get the USER to do. Be conservative:
   Always write the most plausible innocent explanation in benign_explanation.
 - Only list tactics used by the CALLER, each with the line number and an exact quote
   of under 12 words copied from that line.
-- Use [] for empty lists.
+- Use [] for empty lists and "none" when there is no objective.
 
-Return ONLY a JSON object matching this schema, with no other text:
-{SCHEMA}"""
+Return ONLY one JSON object with exactly these fields, and no other text.
+{ALLOWED}
+
+Example of the format (the content depends on the transcript):
+{EXAMPLE}"""
 
 QUESTION: Final = "What is the CALLER trying to make the USER do? Answer with the JSON object only."
 

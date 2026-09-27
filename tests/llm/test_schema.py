@@ -113,3 +113,47 @@ def test_lax_types_from_small_models_are_accepted() -> None:
 def test_unusable_replies_raise(text: str) -> None:
     with pytest.raises(LLMReplyError):
         parse_reply(text)
+
+
+class TestReplyJsonSchema:
+    """The schema sent to servers that constrain output (llama.cpp): same enums as the parser."""
+
+    def test_enums_come_from_the_parsers_own_types(self) -> None:
+        from typing import get_args
+
+        from chaukas.llm.schema import IDENTITIES, ActionName, TacticName, reply_json_schema
+
+        props = reply_json_schema()["properties"]
+        tactic = props["tactics"]["items"]["properties"]["name"]["enum"]
+        action = props["requested_actions"]["items"]["properties"]["action"]["enum"]
+        assert set(tactic) == set(get_args(TacticName))
+        assert set(action) == set(get_args(ActionName))
+        assert set(props["claimed_identity"]["enum"]) == IDENTITIES
+        assert set(props["suspected_objective"]["enum"]) == {o.value for o in Objective}
+
+    def test_every_field_is_required_and_output_is_bounded(self) -> None:
+        from chaukas.llm.schema import reply_json_schema
+
+        schema = reply_json_schema()
+        assert set(schema["required"]) == set(schema["properties"])
+        assert schema["additionalProperties"] is False
+        for name in ("tactics", "requested_actions"):
+            assert schema["properties"][name]["maxItems"] <= 5
+            item = schema["properties"][name]["items"]
+            assert item["properties"]["evidence"]["maxLength"] <= 120
+        assert schema["properties"]["benign_explanation"]["maxLength"] <= 150
+
+    def test_an_object_following_the_schema_parses(self) -> None:
+        assert parse_reply(json.dumps(reply())).suspected_objective is Objective.MONEY_TRANSFER
+
+
+class TestPrompt:
+    def test_the_prompt_has_no_pipe_placeholders_a_model_could_copy(self) -> None:
+        from chaukas.llm.prompts import SYSTEM_PROMPT
+
+        assert "|" not in SYSTEM_PROMPT
+
+    def test_the_example_in_the_prompt_is_itself_a_valid_reply(self) -> None:
+        from chaukas.llm.prompts import EXAMPLE
+
+        parse_reply(EXAMPLE)

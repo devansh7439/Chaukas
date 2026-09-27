@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Annotated, Any, Final, Literal, TypeVar
+from typing import Annotated, Any, Final, Literal, TypeVar, get_args
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError
 
@@ -87,6 +87,50 @@ class LLMReply:
     suspected_objective: Objective
     benign_explanation: str  # logged for evaluation; never shown to the user
     dropped_items: int  # items that failed validation
+
+
+MAX_ITEMS: Final = 4
+MAX_EVIDENCE_CHARS: Final = 100  # "under 12 words"
+MAX_EXPLANATION_CHARS: Final = 120  # "under 15 words"
+
+
+def reply_json_schema() -> dict[str, Any]:
+    """The reply as a JSON Schema, for servers that constrain output to one (llama.cpp).
+
+    Built from the same enums the parser validates, so the two cannot drift. Lengths and
+    list sizes are bounded, which also caps how many tokens a reply can take.
+    """
+
+    def item(key: str, values: tuple[str, ...]) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                key: {"type": "string", "enum": list(values)},
+                "line": {"type": "integer", "minimum": 0},
+                "evidence": {"type": "string", "maxLength": MAX_EVIDENCE_CHARS},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": [key, "line", "evidence", "confidence"],
+            "additionalProperties": False,
+        }
+
+    properties: dict[str, Any] = {
+        "addressed_to_user": {"type": "boolean"},
+        "claimed_identity": {"type": "string", "enum": sorted(IDENTITIES)},
+        "tactics": {"type": "array", "items": item("name", get_args(TacticName)),
+                    "maxItems": MAX_ITEMS},
+        "requested_actions": {"type": "array", "items": item("action", get_args(ActionName)),
+                              "maxItems": MAX_ITEMS},
+        "user_compliance": {"type": "string", "enum": list(get_args(Compliance))},
+        "suspected_objective": {"type": "string", "enum": [o.value for o in Objective]},
+        "benign_explanation": {"type": "string", "maxLength": MAX_EXPLANATION_CHARS},
+    }  # fmt: skip
+    return {
+        "type": "object",
+        "properties": properties,
+        "required": list(properties),
+        "additionalProperties": False,
+    }
 
 
 def parse_reply(text: str) -> LLMReply:

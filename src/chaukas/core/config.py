@@ -89,6 +89,7 @@ class LLMConfig(_Section):
     temperature: Annotated[float, Field(ge=0.0, le=2.0)]
     can_discount: bool
     evidence_min_overlap: UnitFloat
+    json_schema: bool
 
 
 class ThresholdsConfig(_Section):

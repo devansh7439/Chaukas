@@ -4,9 +4,11 @@ llama.cpp / Ollama / LM Studio server on a dev machine (blueprint 6.4).
 Uses only the standard library: one JSON POST to ``/chat/completions``. That avoids the
 ``openai`` package's native dependencies, which may have no Windows-on-ARM64 wheels.
 
-GenieX has no documented JSON-schema mode, so ``assess`` validates the reply and retries
-once: with a "return only JSON" reminder after an unusable answer, or unchanged after a
-timeout or connection error. After that the window falls back to keywords only.
+Servers that can constrain output to a JSON Schema (llama.cpp) are sent the reply schema
+(``llm.json_schema``). GenieX has no documented JSON-schema mode, so ``assess`` still
+validates every reply and retries once: with a "return only JSON" reminder after an
+unusable answer, or unchanged after a timeout or connection error. After that the window
+falls back to keywords only.
 """
 
 from __future__ import annotations
@@ -21,7 +23,7 @@ from typing import Any, Final, Protocol
 
 from chaukas.core.config import LLMConfig
 from chaukas.core.errors import LLMReplyError, LLMUnavailableError
-from chaukas.llm.schema import LLMReply, parse_reply
+from chaukas.llm.schema import LLMReply, parse_reply, reply_json_schema
 
 Message = Mapping[str, str]
 Transport = Callable[[str, Mapping[str, Any], float], Any]
@@ -60,8 +62,8 @@ def http_transport(url: str, payload: Mapping[str, Any], timeout: float) -> Any:
 class ChatClient:
     """One chat completion per call, timed with a monotonic clock."""
 
-    __slots__ = ("_clock", "_max_tokens", "_model", "_temperature", "_timeout", "_transport",
-                 "_url")  # fmt: skip
+    __slots__ = ("_clock", "_json_schema", "_max_tokens", "_model", "_temperature", "_timeout",
+                 "_transport", "_url")  # fmt: skip
 
     def __init__(
         self,
@@ -73,6 +75,7 @@ class ChatClient:
         temperature: float,
         transport: Transport = http_transport,
         clock: Callable[[], float] = time.perf_counter,
+        json_schema: Mapping[str, Any] | None = None,
     ) -> None:
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._model = model
@@ -81,6 +84,7 @@ class ChatClient:
         self._temperature = temperature
         self._transport = transport
         self._clock = clock
+        self._json_schema = json_schema
 
     @classmethod
     def from_config(cls, config: LLMConfig, **kwargs: Any) -> ChatClient:
@@ -90,6 +94,7 @@ class ChatClient:
             timeout_s=config.timeout_s,
             max_tokens=config.max_tokens,
             temperature=config.temperature,
+            json_schema=reply_json_schema() if config.json_schema else None,
             **kwargs,
         )
 
@@ -98,13 +103,19 @@ class ChatClient:
         return self._model
 
     def chat(self, messages: Sequence[Message]) -> ChatResult:
-        payload = {
+        payload: dict[str, Any] = {
             "model": self._model,
             "messages": [dict(message) for message in messages],
             "temperature": self._temperature,
             "max_tokens": self._max_tokens,
             "stream": False,
         }
+        if self._json_schema is not None:
+            # Grammar-constrained decoding: the server can only produce a valid reply.
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "assessment", "strict": True, "schema": self._json_schema},
+            }
         start = self._clock()
         try:
             response = self._transport(self._url, payload, self._timeout)

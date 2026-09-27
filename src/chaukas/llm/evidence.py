@@ -1,9 +1,11 @@
 """Evidence guard (blueprint 6.4): LLM items become signals only if they quote real speech.
 
-Each tactic or requested action must cite a CALLER line in the prompt window and quote it:
-at least ``min_overlap`` of the quote's tokens must appear in that line. Anything else is
-dropped as a hallucination. A kept item becomes a signal timed at its line's start, so LLM
-latency can never reorder the attack chain.
+Each tactic or requested action must quote a CALLER line in the prompt window: at least
+``min_overlap`` of the quote's tokens must appear in that line. Anything else is dropped as
+a hallucination. Small models often quote a real line but cite its neighbour's number, so
+when the cited line doesn't match, the CALLER line that matches best is used instead; the
+words must still be ones the caller said, and USER lines never count. A kept item becomes
+a signal timed at its line's start, so LLM latency can never reorder the attack chain.
 """
 
 from __future__ import annotations
@@ -112,12 +114,24 @@ def apply_guard(
 def _cited_caller_line(
     item: Tactic | RequestedAction, lines: Mapping[int, Segment], min_overlap: float
 ) -> Segment | None:
-    line = lines.get(item.line)
-    if line is None or line.stream is not Stream.CALLER:
+    """The CALLER line the quote comes from: the cited one if it matches, else the best
+    matching CALLER line (nearest to the cited number on a tie), else None."""
+    cited = lines.get(item.line)
+    if (
+        cited is not None
+        and cited.stream is Stream.CALLER
+        and token_overlap(item.evidence, cited.text) >= min_overlap
+    ):
+        return cited
+    scored = [
+        (token_overlap(item.evidence, line.text), -abs(seg_id - item.line), line)
+        for seg_id, line in lines.items()
+        if line.stream is Stream.CALLER
+    ]
+    matching = [entry for entry in scored if entry[0] >= min_overlap]
+    if not matching:
         return None
-    if token_overlap(item.evidence, line.text) < min_overlap:
-        return None
-    return line
+    return max(matching, key=lambda entry: entry[:2])[2]
 
 
 def _kind_of(item: Tactic | RequestedAction) -> tuple[SignalKind, float]:
