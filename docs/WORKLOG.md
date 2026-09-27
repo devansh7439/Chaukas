@@ -556,3 +556,36 @@ flattering. Failure modes seen in replays:
 3. Scams that use greed instead of fear (a refund plus AnyDesk) only reach notice, because
    escalation needs authority, threat or isolation (AT03); several Hinglish threat
    phrasings ("connection kaat diya jayega", "account frozen") are not in the lexicon.
+
+### 2026-09-28 - Detection fixes, developed on new dev cases; held-out re-run (once)
+
+Protocol: the held-out failures were diagnosed (replays), then 12 **new** dev cases with
+different wording (DV01-DV12) were written and all fixes were developed against them only.
+The code was committed (58f4c53) and the held-out set was run a second and final time.
+
+Fixes (commit 58f4c53): lexicon breadth (consequence-style threats, claimed departments and
+ranks, "don't discuss / don't phone anyone", credential requests that never say "OTP",
+polite remote-install and money requests, fees and deposits) and one engine rule,
+`remote_banking_warning`: a remote-control app runs, the bank opens after it, and the
+caller claimed to be from an organisation, so at least a warning (family remote help
+makes no such claim).
+
+Disclosure: an authoring mistake in three held-out labels (AT02, AT06, AT08: the end state
+after the user reads out a code is `critical_recovery`) was found on dev cases and fixed
+(4b9ac39) before the re-run. It only affects "within acceptable".
+
+| Configuration E (default) | Dev, 16 cases | Held-out, 16 cases: first run | Held-out: second run |
+|---|---|---|---|
+| Attacks detected (warning+) | 9/9 | 3/8 | **7/8** |
+| Critical before harm | 8/9 | 0/8 | **5/8** |
+| False alarms | 0/7 | 0/8 | **0/8** |
+| Objective correct | 9/9 | 0/8 | 5/8 |
+
+Remaining held-out misses, left unfixed on purpose (fixing them now would be tuning on the
+test set; they are listed as known limitations):
+- AT03 (refund + AnyDesk): "Amazon customer support" is not recognised as an organisation
+  claim ("customer care" is), so the remote-banking rule does not fire: notice only.
+- AT07 (English digital arrest): "move your savings to the verification account" is not
+  recognised as a money request, so the digital-arrest chain never completes: warning.
+- AT06 (card-block "6 digit code"): warning, not critical.
+The held-out set has now been seen twice; a fresh set is needed for any further claim.
