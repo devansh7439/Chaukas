@@ -634,3 +634,39 @@ can run:
   error rate would mislead: Whisper writes Hindi in either script). Recordings stay on the
   PC (`*.wav` is git-ignored). Tested only with Windows' English voice, which mangles
   Hinglish (3/9 signals): that tests the code path, not accuracy.
+
+### 2026-09-28 - Security review and security test suite
+
+Chaukas has no database, accounts or web API, so the review covered its real surface:
+untrusted text (caller speech, window titles, file names), data that must not leak,
+downloads, and the optional local LLM server.
+
+Scans: `bandit` on src/ and tools/ (16 findings, triaged below); `pip-audit` on all 148
+locked packages (no known vulnerabilities); a regex secret scan over every commit on every
+branch (none).
+
+Found and fixed (each with a test that failed first):
+1. The LLM server had **no authentication**: any process or other Windows user on the PC
+   could use it while running. Each launch now gets a random 256-bit key
+   (`secrets.token_urlsafe(32)`) in `LLAMA_API_KEY` (environment, not the command line,
+   which process lists show); the client sends it; requests without it get 401.
+2. The **Whisper ONNX download was not pinned** (bandit B615): now pinned to a revision,
+   like every other download.
+3. `llm.base_url` accepted any scheme (`file:///...` would be read by urllib; B310): now
+   http(s) only, checked when the config loads.
+4. A debug log message included up to 80 characters of **transcript text**: now only its
+   length.
+5. `.gitignore` did not cover `.env` files.
+Remaining bandit findings are false positives or mitigated and annotated (fixed https
+URLs, the validated config URL, the loopback health check; subprocess with fixed argument
+lists and no shell; asserts that only narrow types after validation).
+
+Confirmed correct and locked in by tests (`tests/security/`, 18 tests): the window renders
+all untrusted text as plain text (Qt's default AutoText would render HTML from a web page
+title); YAML is parsed with `safe_load` (a `!!python/object/apply` payload is rejected);
+no transcript text reaches any log record at debug level through the audio pipeline; live
+protection opens no listening socket; the real llama.cpp server listens on 127.0.0.1 only
+and refuses keyless requests; every download is pinned or hash-checked. The LLM server's
+own log holds only timings, no prompt text.
+
+Gates: ruff, ruff format, mypy strict, bandit (0 medium/high), 705 tests passing.

@@ -33,6 +33,7 @@ Snapdragon® AI Lab Build & Present Challenge.
 - [Snapdragon](#snapdragon)
 - [What works today](#what-works-today)
 - [Privacy](#privacy)
+- [Security](#security)
 - [Commands](#commands)
 - [Development](#development)
 - [Related work](#related-work)
@@ -230,7 +231,8 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 | Running on a Snapdragon laptop; Whisper on the NPU | **Not done** |
 | Tray icon, spoken alerts, onboarding | **Not built** |
 
-Quality: 687 automated tests, 95 % line coverage, `ruff` and `mypy --strict` clean.
+Quality: 705 automated tests (18 of them security tests), 95 % line coverage, `ruff`,
+`mypy --strict` and `bandit` clean, no known vulnerabilities in the locked dependencies.
 
 ## Privacy
 
@@ -250,6 +252,30 @@ Quality: 687 automated tests, 95 % line coverage, `ruff` and `mypy --strict` cle
   can't see the warning (off by default: it also hides them from your own recordings).
 - Not yet verified: a firewall test proving Chaukas works with all network access blocked.
   Until it has been run, we don't claim "makes no network calls".
+
+## Security
+
+Chaukas has no database, user accounts or web API. Its attack surface is text it doesn't
+control (the caller's words, web page titles, file names), data it must not leak
+(transcripts, codes read out, your trusted contact), what it downloads, and the one
+network service it can start (the optional LLM server). Reviewed on 28 September 2026:
+
+| Check | Result |
+|---|---|
+| Static analysis (`bandit`, all of `src/`) | No medium or high findings (four `urlopen` calls annotated: fixed https URLs, a scheme-validated config URL, a loopback health check) |
+| Known vulnerabilities (`pip-audit`, all 148 locked packages) | None |
+| Secrets in the repository (all 29 commits, every branch) | None; `.env` files are git-ignored |
+| Untrusted text in the window | Rendered as plain text only: a web page titled `<a href=...>` can't inject links or formatting into an alert |
+| Config and case files | Parsed with YAML's safe loader: a `!!python/...` tag is rejected, never run |
+| Transcripts in logs | Never: tested at debug level through the whole audio pipeline |
+| Listening sockets during live protection | None |
+| The optional LLM server | Listens on 127.0.0.1 only (checked on the running process); each launch gets a new random 256-bit key, passed through the environment, not the command line; requests without it are refused (401) |
+| Downloads | All pinned (release tags, repository revisions) and SHA-256 checked; zip entries can't escape their folder |
+
+Fixed in that review: the Whisper download was not pinned to a revision; the LLM server
+had no API key; the LLM URL accepted non-http schemes; a debug log message could include
+transcript text. Every check is an automated test in
+[tests/security/](tests/security/test_security.py).
 
 ## Commands
 
@@ -351,9 +377,9 @@ tests/           one folder per package
 
 Chaukas was written by its author ([@devansh7439](https://github.com/devansh7439)) with
 extensive help from an AI coding assistant (Claude), which wrote much of the code, tests
-and documentation under the author's direction and review. The evaluation cases are synthetic and were also written with AI assistance;
-measurements were taken on the author's laptop and are reproducible with the commands
-above. The full development log is in [docs/WORKLOG.md](docs/WORKLOG.md).
+and documentation under the author's direction and review. The evaluation cases are
+synthetic and were also written with AI assistance; measurements were taken on the
+author's laptop and are reproducible with the commands above. The full development log is in [docs/WORKLOG.md](docs/WORKLOG.md).
 
 ## Credits and licences
 

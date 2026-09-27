@@ -40,6 +40,10 @@ from chaukas.audio.convert import TARGET_RATE, Samples
 logger = logging.getLogger(__name__)
 
 REPO: Final = "onnx-community/whisper-{size}"
+# Pinned: a later push to the repository cannot change what Chaukas runs. Other sizes
+# (tiny, base) live in their own repositories with their own revisions.
+REVISION: Final = "36050c46d777d46dc4b5f43f6d90574fc38f8732"  # whisper-small
+REVISIONS: Final = {"small": REVISION}
 ENCODER: Final = "onnx/encoder_model_int8.onnx"
 DECODER: Final = "onnx/decoder_model_merged_int8.onnx"
 FILES: Final = (ENCODER, DECODER, "tokenizer.json", "config.json", "generation_config.json")
@@ -161,7 +165,7 @@ class WhisperOnnx:
             logits, cache = self._step([token], encoded, cache, first=False)
         text = self._tokenizer.decode(tokens, skip_special_tokens=True).strip()
         if text and _compression_ratio(text) > _MAX_COMPRESSION:
-            logger.debug("dropped a repetitive transcript: %r", text[:80])
+            logger.debug("dropped a repetitive transcript (%d characters)", len(text))
             return "", language
         return text, language
 
@@ -215,7 +219,9 @@ def find_model(size: str) -> Path | None:
     try:
         from huggingface_hub import snapshot_download
 
-        folder = Path(snapshot_download(REPO.format(size=size), allow_patterns=list(FILES),
+        repo = REPO.format(size=size)
+        folder = Path(snapshot_download(repo, allow_patterns=list(FILES),
+                                        revision=REVISIONS.get(size),
                                         local_files_only=True))  # fmt: skip
     except Exception:  # not installed, or not in the cache
         return None
@@ -227,5 +233,8 @@ def download(size: str) -> Path:
     os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
     from huggingface_hub import snapshot_download
 
+    if size not in REVISIONS:
+        raise ModelMissingError(f"no pinned ONNX Whisper revision for size {size!r}; "
+                                f"pinned: {sorted(REVISIONS)}")  # fmt: skip
     return Path(snapshot_download(REPO.format(size=size), allow_patterns=list(FILES),
-                                  max_workers=2))  # fmt: skip
+                                  revision=REVISIONS[size], max_workers=2))  # fmt: skip

@@ -129,7 +129,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "check-config":
             print(load_config(*args.config).model_dump_json(indent=2))
         elif args.command in _OFFLINE_COMMANDS:
-            with _llm_server(args):
+            with _llm_server(args) as api_key:
+                args.llm_api_key = api_key
                 print(_OFFLINE_COMMANDS[args.command](args))
         elif args.command == "ui":
             return _ui(args)
@@ -188,7 +189,7 @@ def _add_llm_options(parser: argparse.ArgumentParser) -> None:
 
 
 @contextmanager
-def _llm_server(args: argparse.Namespace) -> Iterator[None]:
+def _llm_server(args: argparse.Namespace) -> Iterator[str | None]:
     """Start the managed LLM server for a ``--llm`` run and stop it afterwards. Nothing to
     start for scripted verdicts, answers replayed from a cache, or an external server."""
     process = None
@@ -196,12 +197,12 @@ def _llm_server(args: argparse.Namespace) -> Iterator[None]:
         llm = load_config(*args.config).llm
         process = managed_server(llm)
     if process is None:
-        yield
+        yield None
         return
     print("Starting the local LLM server...", file=sys.stderr)
     process.start(timeout_s=llm.startup_timeout_s)
     try:
-        yield
+        yield process.api_key
     finally:
         process.stop()
 
@@ -209,7 +210,8 @@ def _llm_server(args: argparse.Namespace) -> Iterator[None]:
 def _reasoner(args: argparse.Namespace, config: ChaukasConfig) -> Reasoner | None:
     if not args.llm:
         return None
-    chat: Chat = ChatClient.from_config(config.llm)
+    api_key = getattr(args, "llm_api_key", None) or "local"
+    chat: Chat = ChatClient.from_config(config.llm, api_key=api_key)
     if args.llm_cache is not None:
         chat = CachedChat(chat, args.llm_cache, model=config.llm.model, offline=args.llm_offline)
     return Reasoner(chat, config)

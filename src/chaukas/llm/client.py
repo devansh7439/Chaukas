@@ -19,6 +19,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from functools import partial
 from typing import Any, Final, Protocol
 
 from chaukas.core.config import LLMConfig
@@ -44,16 +45,19 @@ class Chat(Protocol):
     def chat(self, messages: Sequence[Message]) -> ChatResult: ...
 
 
-def http_transport(url: str, payload: Mapping[str, Any], timeout: float) -> Any:
+def http_transport(
+    url: str, payload: Mapping[str, Any], timeout: float, *, api_key: str = "local"
+) -> Any:
     """POST ``payload`` as JSON and return the decoded JSON response."""
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        # nosec B310: llm.base_url is validated as http(s) when the config loads
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
             return json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
         raise LLMUnavailableError(f"LLM request to {url} failed: {exc}") from exc
@@ -73,16 +77,17 @@ class ChatClient:
         timeout_s: float,
         max_tokens: int,
         temperature: float,
-        transport: Transport = http_transport,
+        transport: Transport | None = None,
         clock: Callable[[], float] = time.perf_counter,
         json_schema: Mapping[str, Any] | None = None,
+        api_key: str = "local",
     ) -> None:
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._model = model
         self._timeout = timeout_s
         self._max_tokens = max_tokens
         self._temperature = temperature
-        self._transport = transport
+        self._transport = transport or partial(http_transport, api_key=api_key)
         self._clock = clock
         self._json_schema = json_schema
 

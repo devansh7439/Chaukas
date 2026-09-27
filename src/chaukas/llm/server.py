@@ -7,7 +7,9 @@ below for this machine (SHA-256 checked, extracted without letting any entry esc
 folder) and the model file (pinned revision, SHA-256 checked).
 
 A managed server only ever listens on 127.0.0.1: transcripts never leave the PC, and a
-``base_url`` pointing anywhere else is refused. If something already listens on the port,
+``base_url`` pointing anywhere else is refused. Each launch gets a new random API key
+(passed through the environment, never the command line), so other processes and other
+Windows users on the same PC cannot use it. If something already listens on the port,
 Chaukas refuses to start rather than send transcripts to an unknown process.
 """
 
@@ -18,6 +20,7 @@ import io
 import logging
 import os
 import platform
+import secrets
 import shutil
 import socket
 import subprocess
@@ -150,7 +153,8 @@ def _sha256_file(path: Path) -> str:
 
 
 def _fetch(url: str) -> bytes:
-    with urllib.request.urlopen(url, timeout=300) as response:
+    # nosec B310: url is the pinned https release URL, and the bytes are SHA-256 checked
+    with urllib.request.urlopen(url, timeout=300) as response:  # nosec B310
         data: bytes = response.read()
     return data
 
@@ -187,18 +191,47 @@ def llama_command(
 class ServerProcess:
     """A child process serving HTTP, ready once ``health_url`` answers 200."""
 
-    __slots__ = ("_command", "_health_url", "_log", "_log_handle", "_process")
+    __slots__ = ("_api_key", "_command", "_environment", "_health_url", "_log", "_log_handle",
+                 "_process")  # fmt: skip
 
-    def __init__(self, command: Sequence[str], *, health_url: str, log: Path) -> None:
+    def __init__(
+        self,
+        command: Sequence[str],
+        *,
+        health_url: str,
+        log: Path,
+        environment: Mapping[str, str] | None = None,
+        api_key: str = "",
+    ) -> None:
         self._command = list(command)
         self._health_url = health_url
         self._log = log
+        self._environment = dict(environment or {})
+        self._api_key = api_key
         self._process: subprocess.Popen[bytes] | None = None
         self._log_handle: io.BufferedWriter | None = None
 
     @property
     def running(self) -> bool:
         return self._process is not None and self._process.poll() is None
+
+    @property
+    def command(self) -> tuple[str, ...]:
+        return tuple(self._command)
+
+    @property
+    def environment(self) -> Mapping[str, str]:
+        """Variables added to the child's environment (the API key travels here)."""
+        return MappingProxyType(self._environment)
+
+    @property
+    def api_key(self) -> str:
+        """The key requests must carry; empty if the server takes none."""
+        return self._api_key
+
+    @property
+    def pid(self) -> int | None:
+        return self._process.pid if self._process is not None else None
 
     def start(self, timeout_s: float) -> None:
         parts = urllib.parse.urlsplit(self._health_url)
@@ -213,6 +246,7 @@ class ServerProcess:
         self._process = subprocess.Popen(
             self._command, stdin=subprocess.DEVNULL, stdout=self._log_handle,
             stderr=subprocess.STDOUT, creationflags=flags,
+            env={**os.environ, **self._environment},
         )  # fmt: skip
         deadline = time.monotonic() + timeout_s
         while time.monotonic() < deadline:
@@ -276,13 +310,18 @@ def managed_server(config: LLMConfig) -> ServerProcess | None:
         raise ChaukasError(f"the model {config.gguf} is not on this PC; run: chaukas setup --llm")
     command = llama_command(binary, model, host=host, port=port, threads=config.threads,
                             ctx_size=config.ctx_size)  # fmt: skip
+    # A fresh 256-bit key per launch, so no other process or user on this PC can use the
+    # server. It goes through the environment: a command line is visible in process lists.
+    api_key = secrets.token_urlsafe(32)
     return ServerProcess(command, health_url=f"http://{host}:{port}/health",
-                         log=server_dir() / "server.log")  # fmt: skip
+                         log=server_dir() / "server.log",
+                         environment={"LLAMA_API_KEY": api_key}, api_key=api_key)  # fmt: skip
 
 
 def _healthy(url: str) -> bool:
     try:
-        with urllib.request.urlopen(url, timeout=2) as response:
+        # nosec B310: url is http://127.0.0.1:<port>/health, built by this module
+        with urllib.request.urlopen(url, timeout=2) as response:  # nosec B310
             return bool(response.status == 200)
     except (urllib.error.URLError, OSError, ValueError):
         return False  # not listening yet, or 503 while the model loads

@@ -69,7 +69,8 @@ def download_vad_model(
 
 
 def _fetch(url: str) -> bytes:
-    with urllib.request.urlopen(url, timeout=120) as response:
+    # nosec B310: url is the fixed https MODEL_URL, and the bytes are SHA-256 checked
+    with urllib.request.urlopen(url, timeout=120) as response:  # nosec B310
         data: bytes = response.read()
     return data
 

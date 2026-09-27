@@ -28,3 +28,7 @@ logs/
 Thumbs.db
 .DS_Store
 .idea/
+
+# Secrets: never committed
+.env
+*.env

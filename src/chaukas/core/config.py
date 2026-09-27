@@ -96,6 +96,13 @@ class LLMConfig(_Section):
     evidence_min_overlap: UnitFloat
     json_schema: bool
 
+    @model_validator(mode="after")
+    def _check_url(self) -> Self:
+        # urllib would also open file:// and other schemes; only a web endpoint makes sense.
+        if not self.base_url.lower().startswith(("http://", "https://")):
+            raise ValueError(f"llm.base_url must be an http(s) URL, got {self.base_url!r}")
+        return self
+
 
 class ThresholdsConfig(_Section):
     notice: UnitFloat
