@@ -43,14 +43,21 @@ signals:
   digit_confidence: 0.9        # confidence of the resulting user_digits_spoken signal
 
 llm:
-  base_url: "http://127.0.0.1:8080/v1"  # set to the GenieX serve endpoint on Day 2
-  model: ""                              # set to the chosen AI Hub bundle on Day 2
+  # managed: Chaukas starts llama.cpp's server on this PC (install: chaukas setup --llm) and
+  # stops it afterwards. external: you run an OpenAI-compatible server at base_url (GenieX).
+  server: managed
+  base_url: "http://127.0.0.1:8080/v1"  # managed servers only ever listen on 127.0.0.1
+  model: ""                              # the model name an external server expects
+  gguf: qwen2.5-1.5b-instruct-q4_k_m.gguf  # in <models>/llm, or an absolute path
+  threads: 8
+  ctx_size: 4096
+  startup_timeout_s: 120       # loading the model from disk
   window_s: 90
   context_lookback_s: 300
   heartbeat_s: 45
   heartbeat_min_speech_s: 10
   debounce_s: 8
-  timeout_s: 10                # replace with 2 x the measured median latency
+  timeout_s: 15                # 2 x the measured median (7.1 s, Qwen2.5-1.5B Q4 on 8 CPU threads)
   failure_grace_s: 20          # lift the pre-LLM cap after this long without a response
   max_tokens: 300
   temperature: 0.0

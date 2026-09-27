@@ -479,3 +479,57 @@ Not measured yet: the ONNX backend on an actual Snapdragon laptop (CPU or NPU), 
 Hinglish accuracy.
 
 Gates: ruff, ruff format, mypy strict, 650 tests passing, none skipped on this PC.
+
+### 2026-09-27 - Review fixes, part 3: a real on-device LLM, measured
+
+Until now the LLM layer had only run against scripted verdicts. It now runs a real model on
+this PC, and the numbers are published even where they are unflattering.
+
+**Running the model.** llama.cpp's `llama-server` (one prebuilt binary; official Windows
+x64 and ARM64 builds; the OpenAI-compatible API the client already speaks), with
+Qwen2.5-1.5B-Instruct Q4_K_M (1.1 GB, from Qwen's own repository).
+- `llm/server.py`: `chaukas setup --llm` downloads the llama.cpp build pinned for this
+  machine (b11218; SHA-256 from the release; zip entries that would land outside their
+  folder are refused) and the model (pinned revision, SHA-256 checked). With
+  `llm.server: managed` (default), `replay`/`eval`/`ablate --llm` start the server, wait
+  for `/health`, and stop it afterwards. It only ever listens on 127.0.0.1: a non-loopback
+  `base_url` is refused, and if the port is already taken Chaukas stops instead of sending
+  transcripts to an unknown process. `llm.server: external` keeps the old behaviour (you
+  run the server, e.g. GenieX on Snapdragon).
+- New `llm` settings: `server`, `gguf`, `threads`, `ctx_size`, `startup_timeout_s`,
+  `json_schema`; `timeout_s` 10 -> 15 (2 x the measured median).
+
+**Fixes found by measuring (4 dev cases, configuration D = full system with the LLM):**
+1. JSON validity was **7/15 (47 %)**. The prompt described fields as `"a|b|c"` and the
+   model copied those strings literally. Now the reply schema (built from the parser's own
+   enums, lengths and list sizes bounded) goes to the server as `response_format`, so
+   decoding is grammar-constrained, and the prompt lists allowed values in words with one
+   format example. Result: **12/12 (100 %)**.
+2. The model then copied the *example's* quotes ("arrest warrant issued in your name")
+   into calls that never said them; the evidence guard caught every one. The example's
+   quotes are now instructions ("exact words copied from line 12").
+3. Real caller quotes cited under a neighbouring line number were rejected (off by one).
+   The guard now moves such a quote to the CALLER line it actually comes from. Invented
+   quotes and USER lines are still rejected. (Blueprint 6.4 updated to match.)
+
+**Result with the real model** (median call 7.1 s, 6.3-9.8 s, 8 CPU threads, i7-1360P):
+
+| | E: keywords, no LLM (default) | D: with Qwen2.5-1.5B |
+|---|---|---|
+| Attacks detected | 2/2 | 2/2 |
+| Warning latency (median) | +2.0 s | -5.3 s (earlier) |
+| False alarms on benign calls | **0/2** | **2/2** |
+| JSON validity | - | 12/12 |
+| Evidence rejected | - | 0/28 |
+
+With valid, genuinely quoted output, the 1.5B model still mislabels: it calls a TV news
+report about scams "addressed to you, money transfer, threat", and a helpdesk visit the
+user asked for "threat". The guard cannot catch that (the quotes are real; the labels are
+wrong). Conclusion: **the default stays E (no LLM)**; the LLM is opt-in (`--ablation D`)
+until a larger model is tried (on Snapdragon, a larger model on the NPU). Thresholds were
+not tuned to hide this: with 4 cases that would be fitting the test set.
+
+Not done, deliberately: the LLM in live mode (`chaukas run`). With this model it would add
+false alarms to real calls; the reasoner's request/execute/finish split is ready for it.
+
+Gates: ruff, ruff format, mypy strict, 680 tests passing.

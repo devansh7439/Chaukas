@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from pathlib import Path
+from types import MappingProxyType
+from typing import Final
 
 from chaukas import __version__
-from chaukas.core.config import ChaukasConfig, load_config
+from chaukas.core.config import ChaukasConfig, LLMConfig, load_config
 from chaukas.core.errors import ChaukasError
 from chaukas.evaluation.ablation import ABLATIONS, config_for
 from chaukas.evaluation.cases import Case, Split, load_case, load_cases
@@ -23,6 +26,7 @@ from chaukas.evaluation.runner import run_case
 from chaukas.llm.cache import CachedChat
 from chaukas.llm.client import Chat, ChatClient
 from chaukas.llm.reasoner import Reasoner
+from chaukas.llm.server import managed_server
 from chaukas.signals.lexicon import Lexicon
 
 EXIT_OK = 0
@@ -95,6 +99,11 @@ def build_parser() -> argparse.ArgumentParser:
     _add_config_option(setup)
     setup.add_argument("--asr-model", metavar="SIZE", help="Whisper size to download")
     setup.add_argument("--asr-backend", choices=["onnx", "ctranslate2"], help="for which engine")
+    setup.add_argument(
+        "--llm",
+        action="store_true",
+        help="also install the local LLM server (llama.cpp) and its model",
+    )
 
     commands.add_parser("devices", help="list the audio devices Chaukas would use")
 
@@ -119,12 +128,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.command == "check-config":
             print(load_config(*args.config).model_dump_json(indent=2))
-        elif args.command == "replay":
-            print(_replay(args))
-        elif args.command == "eval":
-            print(_evaluate(args))
-        elif args.command == "ablate":
-            print(_ablate(args))
+        elif args.command in _OFFLINE_COMMANDS:
+            with _llm_server(args):
+                print(_OFFLINE_COMMANDS[args.command](args))
         elif args.command == "ui":
             return _ui(args)
         elif args.command == "run":
@@ -181,6 +187,25 @@ def _add_llm_options(parser: argparse.ArgumentParser) -> None:
     )
 
 
+@contextmanager
+def _llm_server(args: argparse.Namespace) -> Iterator[None]:
+    """Start the managed LLM server for a ``--llm`` run and stop it afterwards. Nothing to
+    start for scripted verdicts, answers replayed from a cache, or an external server."""
+    process = None
+    if args.llm and not args.llm_offline:
+        llm = load_config(*args.config).llm
+        process = managed_server(llm)
+    if process is None:
+        yield
+        return
+    print("Starting the local LLM server...", file=sys.stderr)
+    process.start(timeout_s=llm.startup_timeout_s)
+    try:
+        yield
+    finally:
+        process.stop()
+
+
 def _reasoner(args: argparse.Namespace, config: ChaukasConfig) -> Reasoner | None:
     if not args.llm:
         return None
@@ -220,6 +245,11 @@ def _ablate(args: argparse.Namespace) -> str:
         if config.ablation.use_llm and not args.llm:
             llm_configs.append(name)
     return _with_llm_note(format_ablation(summaries), cases, llm_configs)
+
+
+_OFFLINE_COMMANDS: Final[Mapping[str, Callable[[argparse.Namespace], str]]] = MappingProxyType(
+    {"replay": _replay, "eval": _evaluate, "ablate": _ablate}
+)
 
 
 def _ui(args: argparse.Namespace) -> int:
@@ -288,7 +318,31 @@ def _setup(args: argparse.Namespace) -> None:
     else:
         print("Voice detection model: downloading (one time, checked by SHA-256)...")
         print(f"  saved to {download_vad_model()}")
+    if args.llm:
+        _setup_llm(config.llm)
     _devices()
+
+
+def _setup_llm(llm: LLMConfig) -> None:
+    from chaukas.llm.server import (
+        BUILD,
+        download_gguf,
+        download_server,
+        find_gguf,
+        find_server,
+    )
+
+    name = f"LLM server (llama.cpp {BUILD})"
+    if find_server() is not None:
+        print(f"{name}: already on this PC")
+    else:
+        print(f"{name}: downloading (one time, checked by SHA-256)...")
+        print(f"  saved to {download_server()}")
+    if find_gguf(llm.gguf) is not None:
+        print(f"LLM model {llm.gguf}: already on this PC")
+    else:
+        print(f"LLM model {llm.gguf}: downloading (one time, about 1 GB, checked by SHA-256)...")
+        print(f"  saved to {download_gguf(llm.gguf)}")
 
 
 def _devices() -> None:

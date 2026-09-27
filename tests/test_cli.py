@@ -135,8 +135,9 @@ def model_config(tmp_path: Path) -> Iterator[Path]:
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
     override = tmp_path / "llm.yaml"
+    port = httpd.server_address[1]
     override.write_text(
-        f"llm:\n  base_url: http://127.0.0.1:{httpd.server_address[1]}/v1\n", encoding="utf-8"
+        f"llm:\n  server: external\n  base_url: http://127.0.0.1:{port}/v1\n", encoding="utf-8"
     )
     yield override
     httpd.shutdown()
@@ -240,3 +241,46 @@ def test_run_opens_the_live_window(
     app = create_app(headless=True)
     QTimer.singleShot(300, app.quit)
     assert main(["run", "--no-audio", "--no-screen"]) == EXIT_OK
+
+
+def test_setup_llm_reports_the_server_and_model_already_present(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    pytest.importorskip("soundcard")
+    pytest.importorskip("tokenizers")
+    from chaukas.asr.whisper_onnx import find_model
+    from chaukas.audio.vad import MODEL_NAME, find_vad_model
+    from chaukas.llm import server
+
+    vad_model = find_vad_model()
+    if find_model("small") is None or vad_model is None:
+        pytest.skip("the speech models are not downloaded")
+    models = tmp_path / "models"
+    (models / "llm").mkdir(parents=True)
+    (models / MODEL_NAME).write_bytes(vad_model.read_bytes())
+    (models / "llm" / "qwen2.5-1.5b-instruct-q4_k_m.gguf").write_bytes(b"gguf")
+    server.server_dir(models).mkdir(parents=True)
+    (server.server_dir(models) / server.BINARY).write_bytes(b"MZ")
+    monkeypatch.setenv("CHAUKAS_MODELS", str(models))  # nothing to download: no network
+    assert main(["setup", "--llm"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert f"LLM server (llama.cpp {server.BUILD}): already on this PC" in out
+    assert "LLM model qwen2.5-1.5b-instruct-q4_k_m.gguf: already on this PC" in out
+
+
+def test_llm_without_an_installed_server_says_how_to_install_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CHAUKAS_MODELS", str(tmp_path))
+    assert main(["eval", str(CASES_DIR), "--ablation", "D", "--llm"]) == EXIT_ERROR
+    assert "chaukas setup --llm" in capsys.readouterr().err
+
+
+def test_offline_llm_answers_never_start_a_server(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CHAUKAS_MODELS", str(tmp_path))  # no server installed
+    code = main(["eval", str(CASES_DIR), "--ablation", "D", "--llm", "--llm-cache",
+                 str(tmp_path / "cache"), "--llm-offline"])  # fmt: skip
+    assert "setup --llm" not in capsys.readouterr().err
+    assert code == EXIT_OK

@@ -76,8 +76,13 @@ class SignalsConfig(_Section):
 
 
 class LLMConfig(_Section):
+    server: Literal["managed", "external"]
     base_url: str
     model: str
+    gguf: str = Field(min_length=1)
+    threads: PositiveInt
+    ctx_size: PositiveInt
+    startup_timeout_s: Seconds
     window_s: Seconds
     context_lookback_s: Seconds
     heartbeat_s: Seconds
