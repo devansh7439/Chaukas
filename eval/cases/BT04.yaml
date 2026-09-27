@@ -1,0 +1,21 @@
+case_id: BT04
+category: benign
+scenario: work_screen_share
+split: test
+author: me
+language: english
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  A colleague in a work meeting asks the user to share their screen.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Morning! Before we start, can you share your screen and open the Q3 dashboard?"}
+  - {after: 1.0, user: "Sure, give me a second."}
+  - {after: 2.0, caller: "Perfect, I can see it. Scroll down to the regional numbers please."}
+  - {after: 1.0, caller: "The north region looks low, can you check if the data is complete?"}
+  - {after: 1.0, user: "Yes, I will ask the team and update you by evening."}

@@ -1,0 +1,24 @@
+case_id: AT04
+category: attack
+scenario: electricity_disconnection
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "Namaskar, bijli vibhag se bol raha hoon. Aaj raat saadhe nau baje aapka connection kaat diya jayega."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, user: "Par maine is mahine ka bill bhar diya tha."}
+  - {after: 1.0, caller: "Aapka pichhla bill system mein update nahi hua hai. Jaldi kijiye, sirf aadha ghanta bacha hai."}
+  - {after: 1.0, caller: "Main ek link bhej raha hoon, usse support app install kariye, main update kar dunga."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 5.0, event: download_executable, detail: "SupportTool_Setup.exe"}
+  - {after: 6.0, event: remote_app_started, detail: "RustDesk.exe"}
+  - {after: 1.0, mark: harm}

@@ -1,0 +1,20 @@
+case_id: BT08
+category: benign
+scenario: school_fee_reminder
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  A reminder to pay fees through the school's portal; the user opens the bank page later.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Namaste, main school office se bol rahi hoon, Aarav ki fees ki last date das tarikh hai."}
+  - {after: 1.0, user: "Achha, main is weekend pay kar dungi."}
+  - {after: 1.0, caller: "Ji, school ke portal par online bhar dijiye, receipt wahi se download ho jayegi."}
+  - {after: 5.0, event: bank_page, detail: "DemoBank (MOCK) - Login"}

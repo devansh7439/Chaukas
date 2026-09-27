@@ -1,0 +1,27 @@
+case_id: AT01
+category: attack
+scenario: courier_customs
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "Hello, main BlueDart courier se bol raha hoon. Aapke naam ka ek parcel Mumbai airport par roka gaya hai."}
+  - {after: 1.0, user: "Kaunsa parcel? Maine kuch nahi bheja."}
+  - {after: 1.0, caller: "Parcel mein paanch passport aur drugs mile hain, customs ne case bana diya hai."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Main aapko Mumbai police officer se connect kar raha hoon, line par rahiye."}
+  - {after: 2.0, caller: "Main Inspector Patil bol raha hoon. Aapke khilaaf FIR darj ho chuki hai."}
+  - {after: 1.0, caller: "Agar aapne sahyog nahi kiya toh aaj hi giraftaari hogi. Yeh baat kisi ko mat batana."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "Apna naam clear karne ke liye verification fee jama karni hogi, main account number bhej raha hoon."}
+  - {after: 3.0, event: bank_page, detail: "DemoBank (MOCK) - Login"}
+  - {after: 5.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 8.0, mark: harm}

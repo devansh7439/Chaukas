@@ -1,0 +1,24 @@
+case_id: AT06
+category: attack
+scenario: card_block_code
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  Paraphrase: never says "OTP", only "code".
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Sir, aapke credit card se abhi abhi 38 hazaar ka ek suspicious payment try hua hai."}
+  - {after: 1.0, user: "Maine toh koi payment nahi kiya."}
+  - {after: 1.0, caller: "Isiliye call kiya hai. Main abhi card block kar raha hoon, bas confirm karna hoga."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Jo chhe ank ka code abhi SMS mein aaya hai, woh bol dijiye, jaldi, payment process ho raha hai."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "Teen aath shoonya do ek nau."}
+  - {after: 0.5, mark: harm}

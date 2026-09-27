@@ -1,0 +1,24 @@
+case_id: AT08
+category: attack
+scenario: fake_announcement_kyc
+split: test
+author: me
+language: english
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  The caller also tells the user to ignore warnings on the screen.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "This is a recorded announcement from your bank. Your KYC has expired and your account will be frozen today."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "If a warning appears on your computer, ignore it, it is a known system error."}
+  - {after: 1.0, caller: "Hello sir, I am your KYC officer. To reactivate the account I need to verify you."}
+  - {after: 1.0, caller: "Please read out the OTP that we have just sent to your registered mobile."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "It says five one nine four two eight."}
+  - {after: 0.5, mark: harm}

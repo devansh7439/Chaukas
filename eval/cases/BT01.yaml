@@ -1,0 +1,21 @@
+case_id: BT01
+category: benign
+scenario: delivery_otp
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  Delivery agents in India legitimately ask for the order OTP at the door.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Hello sir, Swiggy delivery hai, main aapke gate par khada hoon."}
+  - {after: 1.0, user: "Haan aa raha hoon, do minute."}
+  - {after: 1.0, caller: "Sir order ka OTP bata dijiye, app mein dikh raha hoga."}
+  - {after: 2.0, user: "Haan, saat do paanch chaar."}
+  - {after: 1.0, caller: "Thank you sir, aapka khana de diya hai."}

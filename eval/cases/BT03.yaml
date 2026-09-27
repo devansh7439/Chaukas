@@ -1,0 +1,22 @@
+case_id: BT03
+category: benign
+scenario: family_rent_money
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  A real family request for money, and the user opens the transfer page.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Didi, is mahine ka rent bharna hai, salary thodi late aayegi."}
+  - {after: 1.0, caller: "Aath hazaar bhej sakti ho? Agle hafte lauta dungi."}
+  - {after: 1.0, user: "Haan bhej deti hoon, wahi purane account mein na?"}
+  - {after: 1.0, caller: "Haan wahi. Thank you didi, mummy ko bhi bol dena main Sunday ko aaungi."}
+  - {after: 3.0, event: bank_page, detail: "DemoBank (MOCK) - Login"}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}

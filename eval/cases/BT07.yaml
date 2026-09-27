@@ -1,0 +1,21 @@
+case_id: BT07
+category: benign
+scenario: airline_refund_user_called
+split: test
+author: me
+language: english
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  The user called the airline; the agent asks for nothing sensitive.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Hi, I cancelled my flight last week and I wanted to check the refund status."}
+  - {after: 1.0, caller: "Sure, I can see the cancellation. The refund was processed yesterday."}
+  - {after: 1.0, caller: "It will reach your original payment method within five to seven working days."}
+  - {after: 1.0, user: "Great, thanks for checking."}
+  - {after: 1.0, caller: "You are welcome. Is there anything else I can help you with?"}

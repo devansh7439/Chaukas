@@ -1,0 +1,20 @@
+case_id: BT05
+category: benign
+scenario: movie_dialogue
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  A film playing on the laptop: threats and authority, addressed to a character.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "CBI ki team bahar khadi hai, Raghav. Tumhara khel khatam."}
+  - {after: 1.0, caller: "Tumhare khilaaf arrest warrant hai, bhaagne ki koshish mat karna."}
+  - {after: 1.0, caller: "Aur haan, apne saathiyon ko kuch mat batana, warna woh bhi andar jayenge."}
+  - {after: 2.0, caller: "Hathkadi lagao isko aur gaadi mein bithao."}

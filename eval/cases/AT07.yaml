@@ -1,0 +1,26 @@
+case_id: AT07
+category: attack
+scenario: digital_arrest
+split: test
+author: me
+language: english
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "This is Inspector Sharma from the Mumbai Crime Branch. Please confirm your full name."}
+  - {after: 1.0, user: "Yes, speaking. What is this about?"}
+  - {after: 1.0, caller: "Your Aadhaar number has been linked to a money laundering investigation."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "From this moment you are under digital arrest. Keep your video on and do not disconnect."}
+  - {after: 1.0, caller: "You must not inform your family or anyone else, it will affect the investigation."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "To prove your innocence, move your savings to the RBI verification account I will give you."}
+  - {after: 4.0, event: bank_page, detail: "DemoBank (MOCK) - Login"}
+  - {after: 5.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 8.0, mark: harm}

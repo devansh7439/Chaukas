@@ -1,0 +1,24 @@
+case_id: AT02
+category: attack
+scenario: trai_sim_block
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Yeh call TRAI ki taraf se hai. Aapka mobile number do ghante mein band kar diya jayega."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, user: "Kyun? Maine toh bill bhara hai."}
+  - {after: 1.0, caller: "Aapke Aadhaar se ek aur SIM li gayi hai jo illegal kaam mein use ho rahi hai."}
+  - {after: 1.0, caller: "Isko rokne ke liye abhi turant verification karna padega, warna police case banega."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "Aapke phone par ek code aaya hoga, woh mujhe padh kar sunaiye."}
+  - {after: 2.0, user: "Haan aaya hai, char saat do nau ek paanch."}
+  - {after: 0.5, mark: harm}

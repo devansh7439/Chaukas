@@ -1,0 +1,19 @@
+case_id: BT06
+category: benign
+scenario: clinic_appointment
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Namaste, Sharma Clinic se bol rahe hain. Kal subah gyarah baje aapka appointment confirm hai."}
+  - {after: 1.0, user: "Ji, theek hai. Reports saath laani hain?"}
+  - {after: 1.0, caller: "Haan, pichhli blood report aur prescription le aaiye. Khaali pet aana hai."}
+  - {after: 1.0, user: "Theek hai, dhanyavaad."}

@@ -1,0 +1,21 @@
+case_id: BT02
+category: benign
+scenario: real_bank_fraud_alert
+split: test
+author: me
+language: hinglish
+notes: >
+  Held-out test case, written before it was ever run and not used to tune anything.
+  Synthetic: written with AI assistance from common Indian scam patterns and everyday
+  situations that look similar; no real calls or victims.
+  A genuine fraud alert: asks nothing, and warns the user never to share an OTP.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Namaste, main aapke bank ki fraud prevention team se bol rahi hoon."}
+  - {after: 1.0, caller: "Aapke card par 45 hazaar ka ek transaction try hua tha, kya woh aapne kiya tha?"}
+  - {after: 1.0, user: "Nahi, maine nahi kiya."}
+  - {after: 1.0, caller: "Theek hai, humne transaction rok diya hai aur card block kar diya hai. Naya card ghar aa jayega."}
+  - {after: 1.0, caller: "Yaad rakhiye, bank kabhi OTP ya PIN nahi maangta, kisi ko mat bataiye."}
