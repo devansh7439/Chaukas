@@ -135,6 +135,15 @@ It tracks three attack patterns, each a sequence of steps:
 6. **Interrupt, explain, let you decide.** Alerts escalate, every reason is shown with the
    moment it happened, and you choose what to do.
 
+**Paraphrases: a semantic intent layer.** Next to the keywords, each caller line is
+compared by meaning with example sentences per intent ("read me the digits we sent",
+"let me get onto your computer", "move your savings to the account I give you"), using a
+small multilingual embedding model on the device (MiniLM, int8, ~120 MB, 9 ms per line).
+It detects *intent*, never "scam": a match is ordinary evidence with a capped confidence,
+look-alikes such as protective advice are listed as counter-examples, and the risk engine
+still decides. It covers English and Hindi in Devanagari; Roman-script Hinglish stays with
+the lexicon, because the model confuses any two Hinglish sentences (measured).
+
 An optional **local LLM** (Qwen2.5-1.5B via llama.cpp) can be asked "what is the caller
 trying to make the user do?"; every claim must quote the caller's actual words. It is
 **off by default**, because on our tests it added false alarms (see [Results](#results)).
@@ -205,8 +214,25 @@ an English-speaking delivery agent asking for the order OTP (any OTP request fro
 who hasn't claimed authority is a warning by design). This set was written after the
 detector, by the same assistant that built it, so it is not blind; it is reported as-is
 and will not be used for tuning. The clearest lesson: **paraphrase defeats the keyword
-layer** (0/3), which is what the optional LLM was meant to fix and why a stronger local
-model matters.
+layer** (0/3), which led to the semantic intent layer below.
+
+**Semantic intent layer** (built and tuned on dev cases only, frozen at tag
+`semantic-frozen`; then two fresh sets written and committed before their only run, tag
+`eval-paraphrase-1`; configuration E, the layer switched off and on):
+
+| | Keywords only | + semantic layer |
+|---|---|---|
+| Set B: 12 fresh paraphrased scams, detected | 1/12 | **6/12** |
+| Set B: critical before harm | 1/12 | 2/12 |
+| Set C: 8 fresh legitimate look-alikes, false alarms | 0/8 | **1/8** |
+| Robustness matrix above (second run; seen before), detected | 10/18 | 13/18 |
+| Robustness matrix, false alarms | 2/8 | 2/8 |
+
+The layer turns paraphrase from invisible into mostly caught, for one extra false alarm
+(a Hindi news bulletin saying fraudsters ask for OTPs). Half of the fresh scams still get
+through, mainly remote-access paraphrases ("take over your PC", "let me operate your
+laptop"), which reach notice at best. Same caveat as before: synthetic cases, written by
+the same assistant that built the detector, small samples.
 
 **Speech recognition** (Whisper small int8, greedy, 8 threads; 48 synthetic English clips
 from 4 voices, 143 s):
@@ -261,12 +287,13 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 | Desktop monitor: remote tools, bank / transfer / OTP pages, downloads | Built, tested (real Windows calls) |
 | Triggered OCR of the active window (Windows OCR), only while a call is suspicious | Built, tested on real rendered text |
 | The window: dashboard, alerts, Why / Privacy / Settings, English and Hindi | Built, tested |
-| Evaluation: 58 cases (16 dev, 16 held-out, 26 robustness), replay, metrics with confidence intervals, ablations A-E | Built |
+| Semantic intent layer for paraphrases (on-device embeddings; English and Devanagari) | Built, measured on fresh sets |
+| Evaluation: 88 cases (26 dev, 16 held-out, 26 robustness, 20 paraphrase), replay, metrics with confidence intervals, ablations A-E, `--no-semantic` | Built |
 | Optional local LLM (llama.cpp, managed by Chaukas; evidence guard; schema-constrained) | Built, measured; off by default, not wired into live mode |
 | Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; CPU fallback tested |
 | Tray icon, spoken alerts, onboarding | **Not built** |
 
-Quality: 752 automated tests (30 of them security tests), `ruff`, `mypy --strict` and
+Quality: 761 automated tests (30 of them security tests), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on
 every push.
 
@@ -403,9 +430,9 @@ tests/           one folder per package
   transfer never appears on screen.
 - **Friction, not a wall.** Someone with remote control of the PC can close Chaukas, and a
   frightened person can click through warnings.
-- **Coverage is keyword-based by default.** Paraphrased scams are missed (0 of 3 English
-  paraphrases in the robustness test; see [Results](#results)); the LLM that would help is
-  not good enough yet at 1.5B parameters.
+- **Paraphrases are only partly covered.** The semantic layer caught 6 of 12 fresh
+  paraphrased scams (keywords alone: 1); remote-access paraphrases are the weakest, and
+  Roman-script Hinglish paraphrases depend on the lexicon (see [Results](#results)).
 - **OTP false alarms:** a stranger asking for an OTP is a warning even when legitimate (an
   English-speaking delivery agent), and a bank saying it will *send* an OTP can read as a
   request.

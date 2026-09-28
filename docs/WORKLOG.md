@@ -845,3 +845,25 @@ paraphrases). New layer, before the risk engine, detecting *intent* (not "scam")
   detected, 1/11 false alarms.
 
 Tests: 761 passing.
+
+### 2026-09-29 - Semantic layer: fresh test results (one run each)
+
+Two fresh sets written after the layer was frozen (tag `semantic-frozen`) and committed
+before their only run (tag `eval-paraphrase-1`): Set B, 12 paraphrased scams (English,
+Devanagari, one Hinglish, one reordered, one adversarial); Set C, 8 legitimate look-alikes.
+Configuration E, the semantic layer off and on:
+
+| | Keywords only | + semantic |
+|---|---|---|
+| Set B detected | 1/12 | **6/12** |
+| Set B critical before harm | 1/12 | 2/12 |
+| Set C false alarms | 0/8 | **1/8** (a Hindi news bulletin about OTP fraud) |
+| Robustness matrix, second run (seen), detected | 10/18 | 13/18 |
+| Robustness matrix false alarms | 2/8 | 2/8 |
+
+The layer does what it was built for (paraphrase from 1/12 to 6/12) for one extra false
+alarm. Still missed: mostly remote-access paraphrases ("take over your PC", "let me operate
+your laptop", "allow me to connect to your desktop"), which reach notice at best; a
+likely cause is that the "I'll share my screen" counter-examples pull them down. Not tuned
+further: these sets are now spent. The reordered case reached critical, so the chain
+engine was left as it is. README and deck updated with these numbers.
