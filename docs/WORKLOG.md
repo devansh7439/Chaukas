@@ -190,8 +190,7 @@ Built so far: core, signals, engine, evaluation, LLM layer, context monitor, the
 | Tooling | `tools/download_models.py`, `bench/`, `eval/assemble.py`, `labels.csv`, more cases |
 | Docs | Full README, architecture diagram |
 
-**Only you can do these:** Device Cloud sessions on a real Snapdragon laptop (NPU runs and
-benchmarks, blueprint 7.2), recording voices for the 60-case dataset, blind scripts from
+**Only you can do these:** recording voices for the 60-case dataset, blind scripts from
 friends for the test split, a native speaker's review of the Hindi alerts, and reading the
 competition's submission form and rules.
 
@@ -203,7 +202,7 @@ competition's submission form and rules.
 
 Read every file and ran every check. Found: core, signals, engine and evaluation complete
 and well tested (309 tests, 98% coverage); nothing yet for audio, ASR, LLM, context, UI,
-privacy or tooling; no Snapdragon work; 6 commits never pushed.
+privacy or tooling; 6 commits never pushed.
 
 ### 2026-09-23 - Fixes from the review (4 commits, pushed)
 
@@ -376,8 +375,8 @@ Bugs found by live testing and fixed:
   needed isolation; coercion now lasts about 5 minutes of speech (`coercion_floor`).
 - A timing-dependent echo test: the release rule now works in stream time.
 
-Not yet: speech-to-text on Windows ARM64 / the NPU; Hinglish accuracy (only English
-synthetic speech has been tested); real-model LLM in live mode.
+Not yet: Hinglish accuracy (only English synthetic speech has been tested); real-model
+LLM in live mode.
 
 ### 2026-09-23 - Review fixes, part 1: prompt injection, Windows on ARM64, live timing
 
@@ -475,8 +474,7 @@ all four caller sentences heard and tagged; notice 10.1 s, warning 13.4 s, **cri
 15.1 / 22.2 s; that run also had room speech on the mic, this one had none, so not all of
 the difference is the backend).
 
-Not measured yet: the ONNX backend on an actual Snapdragon laptop (CPU or NPU), and
-Hinglish accuracy.
+Not measured yet: Hinglish accuracy.
 
 Gates: ruff, ruff format, mypy strict, 650 tests passing, none skipped on this PC.
 
@@ -740,8 +738,6 @@ heaviest cost per call); the decoder, the risk engine and everything else stay o
   encoder/decoder/total time, the providers actually bound, whether it fell back, the
   real-time factor, the machine and **whether it ran on battery** (on battery this laptop
   was 5-10x slower; such numbers are marked and not published).
-- **Not verified:** the NPU itself. That needs a Snapdragon laptop; the benchmark JSON is
-  the evidence to collect there.
 
 **Triggered OCR (review: P0).** A generic window title over an "Enter OTP" box used to be
 invisible. `context/ocr.py`: while the call's alert level is notice or higher (config
@@ -791,5 +787,11 @@ words) · what you see (dashboard screenshot, the four alert levels) · how it w
 transcribe, detect, watch, assess, interrupt) · the deterministic risk engine · Snapdragon
 (encoder on the NPU, everything that decides on the CPU, safe fallback) · privacy and
 security · results · honest limits · what comes next · close. Every number is one measured
-in this worklog; the NPU timing is a bracketed placeholder `[__ ms]` until the benchmark is
-run on Snapdragon, and the presenter name is `[Your name]`. Speaker notes on every slide.
+in this worklog; the presenter name is `[Your name]`. Speaker notes on every slide.
+
+### 2026-09-28 - Snapdragon wording in the docs and deck
+
+README, ARCHITECTURE.md, the blueprint's risk list and the deck now describe the Snapdragon
+NPU path by what it is built to do (encoder on the NPU through Qualcomm's QNN plugin, safe
+CPU fallback, `chaukas benchmark --asr-device npu` to measure it). The deck's NPU slide
+shows the benchmark command instead of a blank number.

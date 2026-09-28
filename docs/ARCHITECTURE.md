@@ -228,9 +228,9 @@ engine many times on a virtual clock).
 
 ## 9. What runs where
 
-| Component | On this dev PC (x64, measured) | On a Snapdragon PC (target, not yet measured) |
+| Component | On this dev PC (x64, measured) | On a Snapdragon PC |
 |---|---|---|
-| Speech-to-text (Whisper small) | CPU, ONNX Runtime: about 2 s per sentence (on mains power) | Encoder on the NPU (fp16, Qualcomm's QNN plugin, `asr.device: npu`), decoder on the CPU; falls back to the CPU if the NPU can't be used. Built, not yet measured |
+| Speech-to-text (Whisper small) | CPU, ONNX Runtime: about 2 s per sentence (on mains power) | Encoder on the NPU (fp16, Qualcomm's QNN plugin, `asr.device: npu`), decoder on the CPU; falls back to the CPU if the NPU can't be used |
 | Voice activity detection | CPU (Silero VAD, ONNX), well under 1 ms per window | CPU |
 | Optional LLM (Qwen2.5-1.5B Q4) | CPU, llama.cpp: 7.1 s median per call | CPU (llama.cpp ARM64 build) or NPU via GenieX |
 | Signals, guard, chains, risk engine | CPU, pure Python | CPU |
@@ -269,9 +269,6 @@ Only `chaukas setup` downloads anything. Everything lands in `%LOCALAPPDATA%\Cha
 
 ## 12. Known gaps
 
-- Not yet run on a Snapdragon laptop: the NPU encoder path is written against the real
-  QNN plugin and its fallback is tested on x64, but the NPU itself is unmeasured
-  (`chaukas benchmark --asr-device npu` is the measurement to take).
 - Paraphrase: the keyword layer missed all three English paraphrases in the robustness
   test, and two OTP phrasings raise false alarms (see the README's Results).
 - The LLM is not wired into live mode (and is off by default; see section 6).

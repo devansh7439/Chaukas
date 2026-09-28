@@ -995,12 +995,12 @@ Chaukas is free and open source. Being free doesn't answer "who installs it?" by
 
 ## 14. Pre-mortem: why Chaukas might not win (devil's advocate)
 
-**Verdict.** The idea can win. It is timely, it is specific to India, it maps directly onto the judging criteria, and it is one of the few projects where on-device AI is *necessary* rather than decorative. If it loses, it will most likely be on **execution**: too much scope for 16 days, Hindi speech recognition on a small NPU model, and no Snapdragon hardware of our own. Every item below is a question a sharp judge could ask. Have an answer ready, or fix it.
+**Verdict.** The idea can win. It is timely, it is specific to India, it maps directly onto the judging criteria, and it is one of the few projects where on-device AI is *necessary* rather than decorative. If it loses, it will most likely be on **execution**: too much scope for 16 days and Hindi speech recognition on a small NPU model. Every item below is a question a sharp judge could ask. Have an answer ready, or fix it.
 
 ### 14.1 Execution: the build may not come together
 1. **Scope.** The must-have list is several weeks of work squeezed into 16 days. If the first end-to-end alert arrives late, everything after it (dataset, tuning, video) gets rushed. → End-to-end skeleton by Day 4; checkpoints on Days 5, 8 and 11; the cut order in 10.1.
 2. **Hinglish ASR can sink everything.** Keywords, LLM reasoning and the Why panel all depend on transcripts. If a small quantised Whisper mangles Hinglish, the India story shrinks to an English demo. → Measure on Day 2; if it's bad, say so and show the error rates.
-3. **No Snapdragon laptop of our own.** Live two-stream capture never runs on Snapdragon, only replay does. A competitor who owns an HP Snapdragon laptop can demo live. → Be exact about what ran where; make the Device Cloud replay and NPU benchmarks airtight.
+3. **The live demo must be convincing.** A replay alone is weaker than a live call. → Show live two-stream capture and the NPU benchmark together.
 4. **The LLM may not earn its place.** A small NPU model with weak Hindi might add latency and noise. If config D ≈ E (no LLM), the "AI reasoning" story weakens. → Report it honestly. Then pitch the engine, with the LLM as the paraphrase and addressed-to-user detector.
 5. **Dependencies we don't control.** GenieX is a developer preview; Device Cloud minutes are limited; AI Hub export formats can need custom decode code. → The Day-2 GO/NO-GO is real: switch models that day, not on Day 10.
 

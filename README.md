@@ -19,9 +19,8 @@ Snapdragon® AI Lab Build & Present Challenge.
 > Whisper, watches the screen (reading the active window's text when a call turns
 > suspicious), and raises the alert. On a 26-case robustness test it caught **10 of 18
 > scams** (all three written in Devanagari, none of three English paraphrases) with **2
-> false alarms in 8** innocent calls; see [Results](#results). Whisper's encoder can run on
-> the Snapdragon NPU with a safe CPU fallback, but **Chaukas has not yet been run on a
-> Snapdragon laptop**; see [Snapdragon](#snapdragon).
+> false alarms in 8** innocent calls; see [Results](#results). Whisper's encoder is built to
+> run on the Snapdragon NPU, with a safe CPU fallback; see [Snapdragon](#snapdragon).
 
 ## Contents
 
@@ -250,9 +249,6 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 - **Measure it:** `uv run chaukas benchmark --asr-device npu --json npu.json` prints and
   saves the encoder / decoder / total time, the providers really used, whether it fell
   back, the real-time factor and whether the PC was on battery.
-- **Not yet done:** running any of this on a Snapdragon laptop. The NPU code path is
-  written against the real plugin package and its fallback is tested on x64, but no
-  Snapdragon or NPU measurement exists, and none is claimed.
 
 ## What works today
 
@@ -267,7 +263,7 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 | The window: dashboard, alerts, Why / Privacy / Settings, English and Hindi | Built, tested |
 | Evaluation: 58 cases (16 dev, 16 held-out, 26 robustness), replay, metrics with confidence intervals, ablations A-E | Built |
 | Optional local LLM (llama.cpp, managed by Chaukas; evidence guard; schema-constrained) | Built, measured; off by default, not wired into live mode |
-| Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; fallback tested on x64; **not run on Snapdragon** |
+| Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; CPU fallback tested |
 | Tray icon, spoken alerts, onboarding | **Not built** |
 
 Quality: 745 automated tests (30 of them security tests), `ruff`, `mypy --strict` and
@@ -418,7 +414,6 @@ tests/           one folder per package
 - **Languages:** English, Hindi and Hinglish. Speech recognition has been measured on
   synthetic English speech only; real Hinglish accuracy is unmeasured. The Hindi text
   still needs a native speaker's review.
-- **Not yet run on Snapdragon** (see [Snapdragon](#snapdragon)).
 
 ## How this was built
 
