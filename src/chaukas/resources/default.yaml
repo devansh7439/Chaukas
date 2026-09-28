@@ -107,6 +107,8 @@ engine:
     order_penalty_threshold: 0.7
     order_penalty: 0.85
     tie_margin: 0.05
+    step_memory_s: 1800           # a step not seen again within this much speech expires: steps
+                                  # from a video this morning must not complete tonight's chain
   rules:
     min_evidence: 0.5             # decayed evidence that counts as present (authority, recovery)
     coercion_floor: 0.35          # a coercive signal heard at >= min_evidence keeps counting as

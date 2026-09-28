@@ -3,7 +3,9 @@
 Every template is tracked in parallel. A step is seen at the earliest segment time at which
 a listed caller signal (confidence >= ``step_min_confidence``) or a listed context event
 occurred; an LLM signal that arrives late but quotes earlier speech moves that time back.
-Steps don't decay within a session: the session boundary is the reset.
+A step also remembers when it was *last* seen; ``expire`` forgets steps not seen again for
+too long (the engine measures that in speech time), because a session can span a video in
+the morning and an unrelated call at night. A forgotten step heard again is new again.
 
     progress = seen step weight / total weight
                x order_penalty      if steps appeared noticeably out of template order
@@ -22,7 +24,7 @@ from chaukas.engine.templates import ChainTemplate, Step
 class ChainTracker:
     """First-seen times per template step, and the chain states derived from them."""
 
-    __slots__ = ("_config", "_first_seen", "_templates")
+    __slots__ = ("_config", "_first_seen", "_last_seen", "_templates")
 
     def __init__(self, templates: Sequence[ChainTemplate], config: ChainConfig) -> None:
         if not templates:
@@ -30,6 +32,7 @@ class ChainTracker:
         self._templates = tuple(templates)
         self._config = config
         self._first_seen: tuple[dict[str, float], ...] = tuple({} for _ in self._templates)
+        self._last_seen: tuple[dict[str, float], ...] = tuple({} for _ in self._templates)
 
     @property
     def templates(self) -> tuple[ChainTemplate, ...]:
@@ -81,16 +84,25 @@ class ChainTracker:
         )
         return chosen
 
+    def expire(self, is_stale: Callable[[float], bool]) -> None:
+        """Forget every step whose last sighting ``is_stale``."""
+        for first, last in zip(self._first_seen, self._last_seen, strict=True):
+            for step_id in [step_id for step_id, t in last.items() if is_stale(t)]:
+                del first[step_id], last[step_id]
+
     def reset(self) -> None:
-        for seen in self._first_seen:
+        for seen in (*self._first_seen, *self._last_seen):
             seen.clear()
 
     def _observe(self, t: float, matches: Callable[[Step], bool]) -> bool:
         new_step = False
-        for template, seen in zip(self._templates, self._first_seen, strict=True):
+        for template, seen, last in zip(
+            self._templates, self._first_seen, self._last_seen, strict=True
+        ):
             for step in template.steps:
                 if not matches(step):
                     continue
+                last[step.id] = max(t, last.get(step.id, t))
                 previous = seen.get(step.id)
                 if previous is None:
                     seen[step.id] = t

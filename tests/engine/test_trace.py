@@ -116,3 +116,42 @@ class TestRelevance:
         assert (state.level, state.rule) == (Level.CRITICAL, "held")
         assert [(r.label, r.detail) for r in state.reasons] == [
             ("authority", "cbi"), ("credential_request", "otp batao")]  # fmt: skip
+
+
+class TestStaleChainSteps:
+    """Review finding: chain steps never expired within a session. A "CBI ... arrest" heard
+    in a morning video completed the digital-arrest chain for an evening family call."""
+
+    def evening_call(self, engine: RiskEngine, now: float) -> float:
+        engine.on_signal(signal(K.ISOLATION, 0.6, now, words="mummy ko mat batana"))
+        engine.on_signal(signal(K.MONEY_REQUEST, 0.75, now + 2.0, words="paise bhej do"))
+        engine.on_context(ContextEvent(t=now + 4.0, kind=ContextKind.TRANSFER_PAGE))
+        return now + 5.0
+
+    def test_steps_from_hours_ago_do_not_complete_a_new_chain(self) -> None:
+        engine = make_engine()
+        engine.on_signal(signal(K.AUTHORITY, 0.6, 0.0, words="cbi"))
+        engine.on_signal(signal(K.THREAT, 0.6, 1.0, words="arrest"))
+        now = talk(engine, 2.0, 3 * 3600.0)  # three hours of unrelated speech
+        state = engine.evaluate(self.evening_call(engine, now))
+        assert state.level < Level.CRITICAL
+        assert state.chain is not None
+        assert {step for step, _ in state.chain.steps_seen}.isdisjoint({"authority", "threat"})
+
+    def test_steps_within_the_same_call_still_count(self) -> None:
+        engine = make_engine()
+        engine.on_signal(signal(K.AUTHORITY, 0.6, 0.0, words="cbi"))
+        engine.on_signal(signal(K.THREAT, 0.6, 1.0, words="arrest"))
+        now = talk(engine, 2.0, 600.0)  # ten minutes into the same call
+        state = engine.evaluate(self.evening_call(engine, now))
+        assert state.chain is not None
+        assert {"authority", "threat"} <= {step for step, _ in state.chain.steps_seen}
+
+    def test_a_step_heard_again_is_fresh_again(self) -> None:
+        engine = make_engine()
+        engine.on_signal(signal(K.AUTHORITY, 0.6, 0.0, words="cbi"))
+        now = talk(engine, 1.0, 3 * 3600.0)
+        engine.on_signal(signal(K.AUTHORITY, 0.6, now, words="cbi again"))
+        state = engine.evaluate(now + 1.0)
+        assert state.chain is not None
+        assert ("authority", now) in state.chain.steps_seen

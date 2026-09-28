@@ -105,6 +105,7 @@ class RiskEngine:
         self._evidence.add(signal)
         if self._first_trigger_t is None and signal.tier in _LLM_TRIGGER_TIERS:
             self._first_trigger_t = signal.t
+        self._expire_chain_steps(signal.t)
         if self._chains.observe_signal(signal):
             self._changes += 1
 
@@ -112,6 +113,7 @@ class RiskEngine:
         if event.objective is None:
             return
         self._context.add(event.t, event)
+        self._expire_chain_steps(event.t)
         self._chains.observe_context(event)
         self._changes += 1
 
@@ -154,6 +156,7 @@ class RiskEngine:
         weights = self._config.weights
         evidence = {kind: self._evidence.level(kind, now) for kind in SignalKind}
         pressure = 1.0 - math.prod(1.0 - w * evidence[kind] for kind, w in weights.items())
+        self._expire_chain_steps(now)
         hint = self._objective_hint()
         active = self._chains.active(hint)
         addressed, is_addressed = self._addressed_gate()
@@ -337,10 +340,19 @@ class RiskEngine:
         ]
         return max(heard, key=lambda signal: signal.t, default=None)
 
+    def _expire_chain_steps(self, now: float) -> None:
+        """Forget chain steps not seen within ``step_memory_s`` of speech before ``now``,
+        so a new sighting of an old step starts it afresh."""
+        memory = self._config.chain.step_memory_s
+        self._chains.expire(lambda t: not self._within(t, now, memory))
+
     def _recent(self, t: float, now: float) -> bool:
         """``t`` lies within ``priming_window_s`` of speech before ``now``."""
-        elapsed = self._clock.call_time(now) - self._clock.call_time(t)
-        return elapsed <= self._config.rules.priming_window_s
+        return self._within(t, now, self._config.rules.priming_window_s)
+
+    def _within(self, t: float, now: float, speech_s: float) -> bool:
+        """At most ``speech_s`` seconds of speech lie between ``t`` and ``now``."""
+        return self._clock.call_time(now) - self._clock.call_time(t) <= speech_s
 
     def _remote_banking(self) -> bool:
         """The causal order of a remote-control scam: the caller claims to be from an

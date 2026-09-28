@@ -154,6 +154,7 @@ class ChainConfig(_Section):
     order_penalty_threshold: UnitFloat
     order_penalty: UnitFloat
     tie_margin: UnitFloat
+    step_memory_s: Seconds  # a step not heard again within this much speech is forgotten
 
 
 class RulesConfig(_Section):
