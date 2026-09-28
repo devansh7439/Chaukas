@@ -23,6 +23,7 @@ from chaukas.evaluation.session import Session, Snapshot
 from chaukas.llm.reasoner import LLMOutcome, Reasoner
 from chaukas.signals.extractor import SignalExtractor
 from chaukas.signals.lexicon import Lexicon
+from chaukas.signals.semantic import SemanticDetector
 
 SETTLE_S: Final = 60.0  # keep ticking after the last event so de-escalation is visible
 
@@ -80,6 +81,7 @@ def run_case(
     tick_s: float = 1.0,
     settle_s: float = SETTLE_S,
     reasoner: Reasoner | None = None,
+    semantic: SemanticDetector | None = None,
 ) -> CaseRun:
     """Replay ``case`` as transcript text and collect every evaluation.
 
@@ -87,7 +89,7 @@ def run_case(
     verdicts are the ones the case scripts.
     """
     session = Session(
-        SignalExtractor(lexicon, config.signals),
+        SignalExtractor(lexicon, config.signals, semantic=semantic),
         RiskEngine.from_config(config, templates),
         tick_s=tick_s,
         session_id=case.case_id,

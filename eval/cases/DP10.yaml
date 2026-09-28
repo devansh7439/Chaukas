@@ -1,0 +1,16 @@
+case_id: DP10
+category: benign
+scenario: look.news.hi
+split: dev
+author: me
+language: hindi
+notes: >
+  Development case for the semantic layer (tuning allowed). Paraphrased: avoids the
+  lexicon's key words on purpose. Synthetic, written with AI assistance.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "समाचार: पुलिस ने कल ठगी करने वाले तीन लोगों को गिरफ्तार किया।"}
+  - {after: 1.0, caller: "अधिकारियों ने लोगों से कहा कि फ़ोन पर किसी को भी अपना कोड न बताएँ।"}

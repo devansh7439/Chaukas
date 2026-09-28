@@ -1,0 +1,22 @@
+case_id: DP02
+category: attack
+scenario: para.money.en
+split: dev
+author: me
+language: english
+notes: >
+  Development case for the semantic layer (tuning allowed). Paraphrased: avoids the
+  lexicon's key words on purpose. Synthetic, written with AI assistance.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "I am an inspector with the anti-corruption bureau."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Your name has come up in a fraud investigation and you may be taken into custody."}
+  - {after: 1.0, caller: "Do not speak about this to your wife or children."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "Shift your savings into the account we will share, only for checking."}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

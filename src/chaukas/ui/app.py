@@ -25,6 +25,7 @@ from chaukas.engine.templates import load_templates
 from chaukas.evaluation.ablation import config_for
 from chaukas.evaluation.cases import load_case
 from chaukas.signals.lexicon import Lexicon
+from chaukas.signals.semantic import load_semantic
 from chaukas.ui.bridge import DashboardBridge
 from chaukas.ui.icons import IconProvider
 from chaukas.ui.live import LiveSession
@@ -98,12 +99,20 @@ def load_ui(
     config_overrides: Sequence[Mapping[str, Any]] = (),
     speed: float = 1.0,
     size: tuple[int, int] | None = None,
+    semantic: bool = False,
 ) -> LoadedUi:
-    """Build the whole interface. Call ``create_app`` first."""
+    """Build the whole interface. Call ``create_app`` first. ``semantic`` loads the
+    paraphrase layer (live mode); scripted demos run keywords only, so they stay the same."""
     config = config_for(ablation, *config_paths, *config_overrides)
+    detector = None
+    if semantic:
+        try:
+            detector = load_semantic(config.signals.semantic)
+        except ImportError:  # onnxruntime or tokenizers not installed
+            detector = None
     templates = load_templates()
     live = LiveSession(config, Lexicon.load(), templates,
-                       case=load_case(case) if case else None)  # fmt: skip
+                       case=load_case(case) if case else None, semantic=detector)  # fmt: skip
     path = settings_file if settings_file is not None else settings_path()
     bridge = DashboardBridge(live, templates, load_settings(path), path, speed=speed)
 
@@ -136,7 +145,7 @@ def run_live(
 
     app = create_app(headless=False)
     ui = load_ui(case=None, ablation=ablation, config_paths=config_paths,
-                 config_overrides=config_overrides)  # fmt: skip
+                 config_overrides=config_overrides, semantic=True)  # fmt: skip
     services = LiveServices(ui.bridge, ui.config, audio=audio, screen=screen)
     services.start()
     app.aboutToQuit.connect(services.stop)

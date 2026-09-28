@@ -22,6 +22,7 @@ from chaukas.signals.digits import find_codes
 from chaukas.signals.lexicon import Lexicon
 from chaukas.signals.normalise import tokenize
 from chaukas.signals.requests import RequestHit, Span, find_requests, inside_any
+from chaukas.signals.semantic import SemanticDetector
 
 # Protective advice also neutralises isolation phrases inside it: "OTP kisi ko mat batana".
 _ALSO_SUPPRESSED_BY_ADVICE: Final = frozenset({SignalKind.ISOLATION})
@@ -30,11 +31,14 @@ _ALSO_SUPPRESSED_BY_ADVICE: Final = frozenset({SignalKind.ISOLATION})
 class SignalExtractor:
     """Stateless per segment except for the digit rule's memory of recent requests."""
 
-    __slots__ = ("_config", "_credential_requests", "_lexicon", "_tier_confidence")
+    __slots__ = ("_config", "_credential_requests", "_lexicon", "_semantic", "_tier_confidence")
 
-    def __init__(self, lexicon: Lexicon, config: SignalsConfig) -> None:
+    def __init__(
+        self, lexicon: Lexicon, config: SignalsConfig, *, semantic: SemanticDetector | None = None
+    ) -> None:
         self._lexicon = lexicon
         self._config = config
+        self._semantic = semantic
         self._tier_confidence: Mapping[Tier, float] = {
             Tier.WEAK: config.weak,
             Tier.STRONG: config.strong,
@@ -90,6 +94,11 @@ class SignalExtractor:
         for hit in requests:
             if not hit.negated:
                 self._offer(best, segment, hit.kind, Tier.FAST_PATH, tokens[hit.start : hit.end])
+        if self._semantic is not None:
+            for signal in self._semantic.detect(segment):  # paraphrases; the stronger wins
+                current = best.get(signal.kind)
+                if current is None or current.confidence < signal.confidence:
+                    best[signal.kind] = signal
         return [best[kind] for kind in SignalKind if kind in best]
 
     def _offer(

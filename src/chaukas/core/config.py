@@ -55,6 +55,16 @@ class ASRConfig(_Section):
     hotwords: str
 
 
+class SemanticConfig(_Section):
+    """The semantic layer: what a caller line means, for paraphrases the lexicon misses."""
+
+    enabled: bool
+    threshold: UnitFloat  # cosine similarity to a `means` example
+    margin: UnitFloat  # ...and at least this much closer than to any `not` example
+    tactic_confidence: UnitFloat
+    request_confidence: UnitFloat
+
+
 class SignalsConfig(_Section):
     weak: UnitFloat
     strong: UnitFloat
@@ -66,6 +76,7 @@ class SignalsConfig(_Section):
     digit_lookback_s: Seconds
     digit_request_min_confidence: UnitFloat
     digit_confidence: UnitFloat
+    semantic: SemanticConfig
 
     @model_validator(mode="after")
     def _check_order(self) -> Self:

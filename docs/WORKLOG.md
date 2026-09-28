@@ -818,3 +818,30 @@ Also: a test imported winrt before Qt and crashed the test process (the DLL-orde
 from before); tests now load Qt's runtime first through one helper.
 
 Tests: 752 passing.
+
+### 2026-09-29 - Semantic intent layer (paraphrases), frozen before its test
+
+The robustness matrix showed paraphrase defeats the keyword layer (0/3 English
+paraphrases). New layer, before the risk engine, detecting *intent* (not "scam"):
+- `signals/semantic.py`: `paraphrase-multilingual-MiniLM-L12-v2` (int8 ONNX, ~120 MB, x64 and
+  ARM64 builds, pinned revision, SHA-256 checked, downloaded by `chaukas setup`), mean
+  pooling; each caller line is compared with example sentences per signal kind
+  (`resources/intents.yaml`). A kind fires when the line is within `threshold` (0.6
+  cosine) of a `means` example and at least `margin` (0.05) closer to it than to any `not`
+  example (look-alikes: protective advice, informational bank calls, delivery codes,
+  "I'll share *my* screen"), because embeddings barely see negation.
+- Conservative: its own source and tier; a tactic counts like a keyword phrase (0.6), a
+  request 0.72 (just above the OTP rule's 0.7, below a keyword request's 0.75); the user's
+  own words never count; the engine's gates still decide. 9 ms per line on the CPU.
+- `--no-semantic` on replay / eval / ablate (they say on stderr whether it is on); live
+  `run` uses it; scripted demos don't (so their timings stay fixed).
+- **Measured finding:** the model misreads Roman-script Hinglish (trained on English and
+  Devanagari): with Hinglish examples, family chat matched "don't tell anyone" and a jail
+  threat (4/7 false alarms on dev). Roman Hinglish is left to the lexicon; the semantic
+  layer covers English and Devanagari.
+- Tuned on dev only (10 new paraphrase dev cases DP01-DP10 plus the existing dev cases):
+  paraphrase dev 0/6 -> 5/6 scams detected, false alarms 1/4 (a delivery-code request,
+  kept: the OTP rule warns on any unexplained code request by design); all dev 14/15
+  detected, 1/11 false alarms.
+
+Tests: 761 passing.

@@ -1,0 +1,100 @@
+# What a caller line MEANS, for the semantic layer (signals/semantic.py).
+#
+# The lexicon matches words; these examples match meaning, so a paraphrase ("read me the
+# digits we just sent") is still recognised. A caller line becomes a signal of a kind when
+# it is close to one of that kind's `means` examples and closer to it than to any of the
+# kind's `not` examples: look-alikes such as protective advice, which embedding models
+# can't tell apart by negation alone.
+#
+# Write short, natural sentences in English and in Hindi (Devanagari). Not Hinglish in Roman
+# script: the model was trained on English and Devanagari Hindi, so to it any two Roman
+# Hinglish sentences look alike (measured: family chat matched "don't tell anyone" and a
+# jail threat). Roman Hinglish is the lexicon's job. Never copy an evaluation case here.
+
+version: 1
+
+intents:
+  authority:
+    means:
+      - I am calling from the police department
+      - this is an officer from a government investigation agency
+      - I am speaking from the security team of your bank
+      - this call is from the telecom regulator
+      - मैं पुलिस विभाग से बोल रहा हूँ
+    not:
+      - I am calling from the doctor's clinic about your appointment
+      - this is your colleague from the office
+
+  threat:
+    means:
+      - you will be arrested today
+      - a legal case has been registered against you
+      - your bank account will be closed permanently
+      - you could go to prison for this
+      - your number will be cut off in two hours
+      - आपको गिरफ्तार किया जाएगा
+    not:
+      - the police arrested a gang of fraudsters yesterday
+      - your parcel will be delivered tomorrow
+
+  urgency:
+    means:
+      - you must do this right now or it will be too late
+      - there is no time, finish it in the next ten minutes
+
+  isolation:
+    means:
+      - do not tell anyone about this call
+      - keep this secret from your family
+      - you must not discuss this with anybody until it is over
+      - यह बात किसी को मत बताना
+    not:
+      - please tell your family about the good news
+      - never share the numbers in our messages with anyone who calls you
+      - do not give your password or code to any caller
+      - किसी भी कॉल करने वाले को अपना कोड न बताएँ
+
+  surveillance:
+    means:
+      - stay on the video call and do not disconnect
+      - keep your camera on the whole time
+      - you are under watch until the investigation is finished
+
+  money_request:
+    means:
+      - transfer your money to the account I give you
+      - send the amount now for verification
+      - move your savings to a safe government account
+      - pay the fee to get your parcel released
+      - पैसे इस खाते में भेज दीजिए
+    not:
+      - your refund will reach your account in five days
+      - the payment you made has been received, thank you
+
+  remote_access_request:
+    means:
+      - install this app so I can control your computer
+      - let me connect to your laptop remotely to fix it
+      - share your screen with me now
+      - download the support program and tell me the number it shows
+      - कंप्यूटर पर यह ऐप डाल दीजिए ताकि मैं देख सकूँ
+    not:
+      - I will share my screen to show you the report
+      - can you see my screen now
+
+  credential_request:
+    means:
+      - tell me the code that was sent to your phone
+      - read out the numbers in the message you just received
+      - what is the one time password you got
+      - tell me your card PIN
+      - give me the verification number from the SMS
+      - आपके फ़ोन पर आया कोड मुझे बताइए
+    not:
+      - never share your OTP with anyone
+      - the bank will never ask you for your PIN
+      - type the code into the app yourself and do not read it out
+      - we have sent a code, please enter it on the website
+      - your bank is calling to tell you about your new debit card
+      - please tell me the delivery code for your order at the door
+      - नया कार्ड आपके पते पर भेज दिया गया है

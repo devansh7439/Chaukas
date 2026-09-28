@@ -1,0 +1,21 @@
+case_id: DP04
+category: attack
+scenario: para.cred.hi
+split: dev
+author: me
+language: hindi
+notes: >
+  Development case for the semantic layer (tuning allowed). Paraphrased: avoids the
+  lexicon's key words on purpose. Synthetic, written with AI assistance.
+expected:
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "नमस्ते, मैं आपके बैंक की सुरक्षा टीम से बात कर रहा हूँ।"}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "आपका खाता आज बंद हो सकता है।"}
+  - {after: 1.0, caller: "आपके मोबाइल पर जो संदेश आया है, उसके अंक पढ़कर सुनाइए।"}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "छह तीन आठ दो नौ एक।"}
+  - {after: 0.5, mark: harm}

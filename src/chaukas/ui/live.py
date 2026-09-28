@@ -34,6 +34,7 @@ from chaukas.evaluation.cases import AssessmentCue, Case, ContextCue, SpeechLine
 from chaukas.evaluation.session import Session, Snapshot
 from chaukas.signals.extractor import SignalExtractor
 from chaukas.signals.lexicon import Lexicon
+from chaukas.signals.semantic import SemanticDetector
 
 Speaker = Literal["caller", "user", "system"]
 
@@ -60,9 +61,10 @@ class LiveSession:
         *,
         case: Case | None = None,
         tick_s: float = 1.0,
+        semantic: SemanticDetector | None = None,
     ) -> None:
         self._session = Session(
-            SignalExtractor(lexicon, config.signals),
+            SignalExtractor(lexicon, config.signals, semantic=semantic),
             RiskEngine.from_config(config, templates),
             tick_s=tick_s,
             session_id=case.case_id if case else "live",

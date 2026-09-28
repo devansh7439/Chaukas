@@ -58,6 +58,7 @@ class SignalSource(StrEnum):
     """Which detector produced a signal."""
 
     KEYWORD = "keyword"
+    SEMANTIC = "semantic"
     LLM = "llm"
     RULE = "rule"
 
@@ -69,6 +70,7 @@ class Tier(StrEnum):
     STRONG = "strong"
     PHRASE = "phrase"
     FAST_PATH = "fast_path"
+    SEMANTIC = "semantic"
     LLM = "llm"
     RULE = "rule"
 

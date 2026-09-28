@@ -1,0 +1,20 @@
+case_id: DP06
+category: attack
+scenario: para.cred.en2
+split: dev
+author: me
+language: english
+notes: >
+  Development case for the semantic layer (tuning allowed). Paraphrased: avoids the
+  lexicon's key words on purpose. Synthetic, written with AI assistance.
+expected:
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Sir, this is the fraud desk. Somebody is trying to empty your account."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "To stop it I need the one-time number your phone just received."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "Okay, nine nine four one two eight."}
+  - {after: 0.5, mark: harm}

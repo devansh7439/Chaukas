@@ -1,0 +1,17 @@
+case_id: DP09
+category: benign
+scenario: look.presenter.en
+split: dev
+author: me
+language: english
+notes: >
+  Development case for the semantic layer (tuning allowed). Paraphrased: avoids the
+  lexicon's key words on purpose. Synthetic, written with AI assistance.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Give me a moment, I will share my screen so everyone can see the chart."}
+  - {after: 1.0, caller: "Can you all see the sales numbers now?"}
+  - {after: 1.0, user: "Yes, it is visible."}

@@ -29,6 +29,7 @@ from chaukas.llm.client import Chat, ChatClient
 from chaukas.llm.reasoner import Reasoner
 from chaukas.llm.server import managed_server
 from chaukas.signals.lexicon import Lexicon
+from chaukas.signals.semantic import SemanticDetector, describe, load_semantic
 
 EXIT_OK = 0
 EXIT_ERROR = 2
@@ -59,6 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_config_option(replay)
     _add_ablation_option(replay)
     _add_llm_options(replay)
+    _add_semantic_option(replay)
     replay.add_argument("--tick", type=float, default=1.0, metavar="SECONDS")
 
     evaluate = commands.add_parser("eval", help="score every case in a directory")
@@ -66,12 +68,14 @@ def build_parser() -> argparse.ArgumentParser:
     _add_config_option(evaluate)
     _add_ablation_option(evaluate)
     _add_llm_options(evaluate)
+    _add_semantic_option(evaluate)
     evaluate.add_argument("--split", choices=[split.value for split in Split])
 
     ablate = commands.add_parser("ablate", help="run every ablation configuration and compare")
     ablate.add_argument("cases", type=Path, help="directory of case scripts")
     _add_config_option(ablate)
     _add_llm_options(ablate)
+    _add_semantic_option(ablate)
     ablate.add_argument("--split", choices=[split.value for split in Split])
 
     ui = commands.add_parser("ui", help="open the Chaukas window (needs the 'ui' extra)")
@@ -185,6 +189,24 @@ def _add_ablation_option(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_semantic_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--no-semantic", action="store_true",
+                        help="keywords only: don't match caller lines by meaning")  # fmt: skip
+
+
+def _semantic(args: argparse.Namespace, config: ChaukasConfig) -> SemanticDetector | None:
+    """The semantic layer for replay / eval / ablate, loaded once; says on stderr if it is on."""
+    detector = None
+    if not args.no_semantic:
+        try:
+            detector = load_semantic(config.signals.semantic)
+        except ImportError:  # onnxruntime or tokenizers not installed
+            detector = None
+    note = describe(detector) if detector or args.no_semantic else "off (model not downloaded)"
+    print(f"semantic layer: {note}", file=sys.stderr)
+    return detector
+
+
 def _add_llm_options(parser: argparse.ArgumentParser) -> None:
     group = parser.add_argument_group("LLM")
     group.add_argument(
@@ -242,6 +264,7 @@ def _replay(args: argparse.Namespace) -> str:
         lexicon=Lexicon.load(),
         tick_s=args.tick,
         reasoner=_reasoner(args, config),
+        semantic=_semantic(args, config),
     )
     return format_run(run)
 
@@ -249,7 +272,7 @@ def _replay(args: argparse.Namespace) -> str:
 def _evaluate(args: argparse.Namespace) -> str:
     config = config_for(args.ablation, *args.config)
     cases = _load_cases(args)
-    outcomes = _score_all(cases, config, _reasoner(args, config))
+    outcomes = _score_all(cases, config, _reasoner(args, config), _semantic(args, config))
     llm_configs = [args.ablation] if config.ablation.use_llm and not args.llm else []
     return _with_llm_note(format_outcomes(outcomes, summarise(outcomes)), cases, llm_configs)
 
@@ -258,9 +281,10 @@ def _ablate(args: argparse.Namespace) -> str:
     cases = _load_cases(args)
     summaries: dict[str, Summary] = {}
     llm_configs: list[str] = []
+    semantic = _semantic(args, config_for(DEFAULT_ABLATION, *args.config))
     for name in sorted(ABLATIONS):
         config = config_for(name, *args.config)
-        summaries[name] = summarise(_score_all(cases, config, _reasoner(args, config)))
+        summaries[name] = summarise(_score_all(cases, config, _reasoner(args, config), semantic))
         if config.ablation.use_llm and not args.llm:
             llm_configs.append(name)
     return _with_llm_note(format_ablation(summaries), cases, llm_configs)
@@ -342,6 +366,7 @@ def _setup(args: argparse.Namespace) -> None:
     else:
         print(f"{name}: downloading (one time)...")
         print(f"  saved to {download(asr)}")
+    _setup_semantic()
     if (models_dir() / MODEL_NAME).is_file():
         print("Voice detection model: already on this PC")
     else:
@@ -350,6 +375,16 @@ def _setup(args: argparse.Namespace) -> None:
     if args.llm:
         _setup_llm(config.llm)
     _devices()
+
+
+def _setup_semantic() -> None:
+    from chaukas.signals import semantic
+
+    if semantic.find_model() is not None:
+        print("Paraphrase model: already on this PC")
+    else:
+        print("Paraphrase model: downloading (one time, about 120 MB, checked by SHA-256)...")
+        print(f"  saved to {semantic.download()}")
 
 
 def _setup_llm(llm: LLMConfig) -> None:
@@ -427,11 +462,16 @@ def _load_cases(args: argparse.Namespace) -> tuple[Case, ...]:
 
 
 def _score_all(
-    cases: Sequence[Case], config: ChaukasConfig, reasoner: Reasoner | None
+    cases: Sequence[Case],
+    config: ChaukasConfig,
+    reasoner: Reasoner | None,
+    semantic: SemanticDetector | None = None,
 ) -> list[CaseOutcome]:
     lexicon = Lexicon.load()
     return [
-        score_case(run_case(case, config=config, lexicon=lexicon, reasoner=reasoner))
+        score_case(
+            run_case(case, config=config, lexicon=lexicon, reasoner=reasoner, semantic=semantic)
+        )
         for case in cases
     ]
 

@@ -1,0 +1,17 @@
+case_id: DP08
+category: benign
+scenario: look.delivery.en
+split: dev
+author: me
+language: english
+notes: >
+  Development case for the semantic layer (tuning allowed). Paraphrased: avoids the
+  lexicon's key words on purpose. Synthetic, written with AI assistance.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Hi, I have your grocery order at the gate."}
+  - {after: 1.0, caller: "Could you tell me the delivery code shown in your app?"}
+  - {after: 2.0, user: "It is seven two one nine."}

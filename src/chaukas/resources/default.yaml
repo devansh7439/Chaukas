@@ -45,6 +45,13 @@ signals:
   digit_lookback_s: 90         # user digits count only this soon after a credential request
   digit_request_min_confidence: 0.6  # ...and only if that request was at least this confident
   digit_confidence: 0.9        # confidence of the resulting user_digits_spoken signal
+  semantic:                    # paraphrases: a caller line close in meaning to intents.yaml
+    enabled: true              # (needs `chaukas setup`; off quietly if the model is missing)
+    threshold: 0.6             # cosine similarity to one of a kind's `means` examples...
+    margin: 0.05               # ...and this much closer than to any of its `not` examples
+    tactic_confidence: 0.6     # a paraphrased tactic counts like a keyword phrase
+    request_confidence: 0.72   # just above the OTP rule's 0.7 (headroom for decay), below
+                               # a keyword request's 0.75
 
 llm:
   # managed: Chaukas starts llama.cpp's server on this PC (install: chaukas setup --llm) and

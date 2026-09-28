@@ -1,0 +1,22 @@
+case_id: DP05
+category: attack
+scenario: para.money.hi
+split: dev
+author: me
+language: hindi
+notes: >
+  Development case for the semantic layer (tuning allowed). Paraphrased: avoids the
+  lexicon's key words on purpose. Synthetic, written with AI assistance.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "मैं केंद्रीय जाँच विभाग का अधिकारी बोल रहा हूँ।"}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "आपके नाम पर गंभीर अपराध का मामला है, आपको हिरासत में लिया जा सकता है।"}
+  - {after: 1.0, caller: "परिवार में किसी से यह बात साझा मत कीजिए।"}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "अपनी सारी जमा राशि हमारे बताए खाते में भेज दीजिए।"}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

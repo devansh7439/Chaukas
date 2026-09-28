@@ -1,0 +1,17 @@
+case_id: DP07
+category: benign
+scenario: look.advice.en
+split: dev
+author: me
+language: english
+notes: >
+  Development case for the semantic layer (tuning allowed). Paraphrased: avoids the
+  lexicon's key words on purpose. Synthetic, written with AI assistance.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Hello, this is your bank calling about your new card."}
+  - {after: 1.0, caller: "Please remember, never read out the numbers from our messages to anyone who phones you."}
+  - {after: 1.0, user: "Okay, thanks for telling me."}
