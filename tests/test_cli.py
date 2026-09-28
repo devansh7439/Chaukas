@@ -63,6 +63,9 @@ def test_eval_prints_outcomes_and_a_summary(capsys: pytest.CaptureFixture[str]) 
     assert "critical before harm" in out
     assert "DA01" in out
     assert "95% CI" in out
+    assert "warning before harm" in out
+    for table in ("by language", "by intent", "by case set"):
+        assert table in out
 
 
 def test_ablate_prints_a_comparison_table(capsys: pytest.CaptureFixture[str]) -> None:

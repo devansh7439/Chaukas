@@ -16,9 +16,10 @@ from chaukas.core.config import ChaukasConfig, LLMConfig, load_config
 from chaukas.core.errors import ChaukasError
 from chaukas.evaluation.ablation import ABLATIONS, config_for
 from chaukas.evaluation.cases import Case, Split, load_case, load_cases
-from chaukas.evaluation.metrics import CaseOutcome, Summary, score_case, summarise
+from chaukas.evaluation.metrics import CaseOutcome, Summary, breakdown, score_case, summarise
 from chaukas.evaluation.report import (
     format_ablation,
+    format_breakdown,
     format_outcomes,
     format_run,
     format_scripted_llm_note,
@@ -274,7 +275,16 @@ def _evaluate(args: argparse.Namespace) -> str:
     cases = _load_cases(args)
     outcomes = _score_all(cases, config, _reasoner(args, config), _semantic(args, config))
     llm_configs = [args.ablation] if config.ablation.use_llm and not args.llm else []
-    return _with_llm_note(format_outcomes(outcomes, summarise(outcomes)), cases, llm_configs)
+    tables = [
+        format_breakdown(title, breakdown(outcomes, key))
+        for title, key in (
+            ("by language", lambda outcome: outcome.language),
+            ("by intent", lambda outcome: outcome.intent),
+            ("by case set", lambda outcome: outcome.case_set),
+        )
+    ]
+    report = "\n\n".join([format_outcomes(outcomes, summarise(outcomes)), *tables])
+    return _with_llm_note(report, cases, llm_configs)
 
 
 def _ablate(args: argparse.Namespace) -> str:

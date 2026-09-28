@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from chaukas.core.models import Level, Objective, Reason, RiskState
-from chaukas.evaluation.metrics import CaseOutcome, Summary
+from chaukas.evaluation.metrics import CaseOutcome, Proportion, Summary
 from chaukas.evaluation.runner import CaseRun
 from chaukas.llm.reasoner import LLMOutcome
 
@@ -79,11 +79,30 @@ def format_outcomes(outcomes: Sequence[CaseOutcome], summary: Summary) -> str:
     return "\n".join(lines)
 
 
+def format_breakdown(title: str, groups: Mapping[str, Summary]) -> str:
+    """A compact table: per group, attacks detected, warned and critical before harm, and
+    false alarms on benign cases. Groups are small: read the counts, not the percentages."""
+    header = (f"{title:<22} {'detected':>9} {'warn<harm':>10} {'crit<harm':>10}"
+              f" {'false alarms':>13}")  # fmt: skip
+    lines = [header, "-" * len(header)]
+    for name, summary in groups.items():
+        lines.append(
+            f"{name:<22} {_hits(summary.detection):>9} {_hits(summary.warning_before_harm):>10}"
+            f" {_hits(summary.critical_before_harm):>10} {_hits(summary.false_alarms):>13}"
+        )
+    return "\n".join(lines)
+
+
+def _hits(proportion: Proportion) -> str:
+    return "-" if proportion.total == 0 else f"{proportion.hits}/{proportion.total}"
+
+
 def format_summary(summary: Summary) -> str:
     rows = [
         ("cases", f"{summary.cases} ({summary.attacks} attack, {summary.benign} benign)"),
         ("detection", str(summary.detection)),
         ("critical before harm", str(summary.critical_before_harm)),
+        ("warning before harm", str(summary.warning_before_harm)),
         ("false alarms", str(summary.false_alarms)),
         ("notices on benign", str(summary.notices_on_benign)),
         ("objective accuracy", str(summary.objective_accuracy)),
@@ -140,9 +159,15 @@ def _describe_outcome(outcome: LLMOutcome) -> str:
 def _latency(summary: Summary) -> str:
     if summary.warning_latency_median is None:
         return "-"
-    p90 = summary.warning_latency_p90
-    p90_text = "-" if p90 is None else f"{p90:+.1f}s"
-    return f"median {summary.warning_latency_median:+.1f}s, p90 {p90_text}"
+
+    def seconds(value: float | None) -> str:
+        return "-" if value is None else f"{value:+.1f}s"
+
+    return (
+        f"median {seconds(summary.warning_latency_median)},"
+        f" p90 {seconds(summary.warning_latency_p90)},"
+        f" p95 {seconds(summary.warning_latency_p95)}"
+    )
 
 
 def _objective_text(state: RiskState) -> str:

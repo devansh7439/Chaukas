@@ -7,7 +7,7 @@ tight claims: 18 of 18 attacks detected still only means "82-100%".
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from statistics import median
 from typing import Final
@@ -61,6 +61,11 @@ class CaseOutcome:
     llm_valid: int = 0  # calls that returned a usable JSON object
     llm_items: int = 0  # tactics and requested actions in usable replies
     llm_rejected: int = 0  # items the evidence guard dropped
+    # for breakdowns
+    language: str = ""
+    intent: str = "none"  # the expected objective
+    case_set: str = ""  # the case id's letter prefix: DV, AT, RA, PB, ...
+    warning_before_harm: bool | None = None  # attacks with a harm mark
 
 
 def score_case(run: CaseRun) -> CaseOutcome:
@@ -71,8 +76,10 @@ def score_case(run: CaseRun) -> CaseOutcome:
     is_attack = case.category is Category.ATTACK
 
     critical_before_harm: bool | None = None
+    warning_before_harm: bool | None = None
     if is_attack and case.harm_t is not None:
         critical_before_harm = first_critical is not None and first_critical < case.harm_t
+        warning_before_harm = first_warning is not None and first_warning < case.harm_t
 
     latency: float | None = None
     if first_warning is not None and case.expected_warning_t is not None:
@@ -102,6 +109,10 @@ def score_case(run: CaseRun) -> CaseOutcome:
         llm_valid=valid,
         llm_items=sum(guard.accepted + guard.rejected for guard in guards),
         llm_rejected=sum(guard.rejected for guard in guards),
+        language=case.language,
+        intent=case.expectation.objective.value,
+        case_set=case.case_id.rstrip("0123456789"),
+        warning_before_harm=warning_before_harm,
     )
 
 
@@ -114,12 +125,14 @@ class Summary:
     benign: int
     detection: Proportion
     critical_before_harm: Proportion
+    warning_before_harm: Proportion
     false_alarms: Proportion
     notices_on_benign: Proportion
     objective_accuracy: Proportion
     within_acceptable: Proportion
     warning_latency_median: float | None
     warning_latency_p90: float | None
+    warning_latency_p95: float | None
     llm_json_validity: Proportion = Proportion(0, 0)
     llm_evidence_rejected: Proportion = Proportion(0, 0)
     llm_calls_per_minute_benign: float | None = None  # None when the LLM was never called
@@ -135,6 +148,7 @@ def summarise(outcomes: Sequence[CaseOutcome]) -> Summary:
         benign=len(benign),
         detection=_count(o.detected for o in attacks),
         critical_before_harm=_count(o.critical_before_harm for o in attacks),
+        warning_before_harm=_count(o.warning_before_harm for o in attacks),
         false_alarms=_count(o.false_alarm for o in benign),
         notices_on_benign=_count(
             o.max_level is Level.NOTICE for o in benign if o.false_alarm is False
@@ -143,6 +157,7 @@ def summarise(outcomes: Sequence[CaseOutcome]) -> Summary:
         within_acceptable=_count(o.within_acceptable for o in outcomes),
         warning_latency_median=median(latencies) if latencies else None,
         warning_latency_p90=_percentile(latencies, 0.9),
+        warning_latency_p95=_percentile(latencies, 0.95),
         llm_json_validity=Proportion(
             hits=sum(o.llm_valid for o in outcomes), total=sum(o.llm_calls for o in outcomes)
         ),
@@ -151,6 +166,16 @@ def summarise(outcomes: Sequence[CaseOutcome]) -> Summary:
         ),
         llm_calls_per_minute_benign=_calls_per_minute(benign, outcomes),
     )
+
+
+def breakdown(
+    outcomes: Sequence[CaseOutcome], key: Callable[[CaseOutcome], str]
+) -> dict[str, Summary]:
+    """One summary per group (language, intent, case set ...), groups sorted by name."""
+    groups: dict[str, list[CaseOutcome]] = {}
+    for outcome in outcomes:
+        groups.setdefault(key(outcome), []).append(outcome)
+    return {name: summarise(groups[name]) for name in sorted(groups)}
 
 
 def _calls_per_minute(

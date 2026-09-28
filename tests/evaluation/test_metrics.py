@@ -13,12 +13,14 @@ from chaukas.evaluation.cases import Category, load_cases
 from chaukas.evaluation.metrics import (
     CaseOutcome,
     Proportion,
+    breakdown,
     score_case,
     summarise,
     wilson_interval,
 )
 from chaukas.evaluation.report import (
     format_ablation,
+    format_breakdown,
     format_outcomes,
     format_run,
     format_summary,
@@ -77,6 +79,29 @@ class TestScoring:
         assert (summary.false_alarms.hits, summary.false_alarms.total) == (0, 2)
         assert summary.within_acceptable.hits == 4
         assert summary.warning_latency_median is not None
+
+
+class TestBreakdowns:
+    def test_outcomes_carry_language_intent_and_set(self, outcomes: list[CaseOutcome]) -> None:
+        da01 = by_id(outcomes, "DA01")
+        assert (da01.language, da01.intent, da01.case_set) == (
+            "hinglish", "money_transfer", "DA")  # fmt: skip
+        assert by_id(outcomes, "BN01").intent == "none"
+
+    def test_warning_before_harm_is_counted(self, outcomes: list[CaseOutcome]) -> None:
+        assert by_id(outcomes, "DA01").warning_before_harm is True
+        summary = summarise(outcomes)
+        assert (summary.warning_before_harm.hits, summary.warning_before_harm.total) == (2, 2)
+        assert summary.warning_latency_p95 is not None
+
+    def test_breakdown_groups_and_formats(self, outcomes: list[CaseOutcome]) -> None:
+        groups = breakdown(outcomes, lambda outcome: outcome.case_set)
+        assert sorted(groups) == ["BN", "CT", "DA"]
+        assert groups["BN"].benign == 2
+        text = format_breakdown("by set", groups)
+        assert text.splitlines()[0].startswith("by set")
+        assert "DA" in text
+        assert "0/2" in text  # BN: no false alarms out of two
 
 
 class TestProportions:
