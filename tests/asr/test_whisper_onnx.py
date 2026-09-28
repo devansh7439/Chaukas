@@ -107,3 +107,61 @@ class TestDevices:
         assert timing.encoder_ms > 0
         assert timing.decoder_ms > 0
         assert timing.encoder_ms + timing.decoder_ms <= transcript.ms + 1.0
+
+
+class TestPrecision:
+    """Review finding: the benchmark called everything "int8", but on the NPU the encoder is
+    the fp32 model run in fp16 by QNN, while the decoder stays int8 on the CPU."""
+
+    def test_the_cpu_runtime_is_int8_throughout(self, whisper: WhisperOnnx) -> None:
+        assert whisper.runtime.encoder_precision == "int8 model on the CPU"
+        assert whisper.runtime.decoder_precision == "int8 model on the CPU"
+
+    @staticmethod
+    def npu_session(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, *, fp16: bool) -> str:
+        import sys
+        from types import SimpleNamespace
+
+        from chaukas.asr.whisper_onnx import _npu_encoder
+
+        name = "QNNExecutionProvider"
+        monkeypatch.setitem(sys.modules, "onnxruntime_qnn", SimpleNamespace(
+            get_ep_name=lambda: name, get_library_path=lambda: "QnnHtp.dll"))  # fmt: skip
+
+        class Options:
+            def __init__(self) -> None:
+                self.chosen: dict[str, str] = {}
+
+            def add_provider_for_devices(self, devices: object, options: dict[str, str]) -> None:
+                self.chosen = options
+
+        class Session:
+            def __init__(self, path: str, sess_options: Options) -> None:
+                if "enable_htp_fp16_precision" in sess_options.chosen and not fp16:
+                    raise RuntimeError("fp16 not supported by this backend")
+
+            def get_providers(self) -> list[str]:
+                return [name, "CPUExecutionProvider"]
+
+        npu = SimpleNamespace(ep_name=name, device=SimpleNamespace(type="NPU"))
+        ort = SimpleNamespace(
+            get_ep_devices=lambda: [npu], register_execution_provider_library=lambda *a: None,
+            OrtHardwareDeviceType=SimpleNamespace(NPU="NPU"), SessionOptions=Options,
+            InferenceSession=Session,
+        )  # fmt: skip
+        encoder = tmp_path / "encoder_model.onnx"
+        encoder.write_bytes(b"onnx")
+        _, precision = _npu_encoder(ort, encoder, 4)
+        return str(precision)
+
+    def test_the_npu_encoder_reports_fp32_weights_run_in_fp16(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        precision = self.npu_session(monkeypatch, tmp_path, fp16=True)
+        assert precision == "fp32 model, run in fp16 on the NPU (QNN HTP)"
+
+    def test_without_fp16_it_says_the_backend_chose(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        precision = self.npu_session(monkeypatch, tmp_path, fp16=False)
+        assert precision == "fp32 model, the NPU backend's default precision (QNN HTP)"

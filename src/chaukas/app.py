@@ -443,7 +443,7 @@ def _benchmark(args: argparse.Namespace) -> None:
     if not isinstance(whisper, WhisperOnnx):  # load_transcriber honours backend="onnx"
         raise ChaukasError("the benchmark needs the ONNX Runtime backend")
     audio = load_wav(args.audio) if args.audio else synthesize()
-    result = benchmark(whisper, audio, runs=args.runs, model=f"whisper-{asr.model} int8")
+    result = benchmark(whisper, audio, runs=args.runs, model=f"whisper-{asr.model}")
     print(describe(result))
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)

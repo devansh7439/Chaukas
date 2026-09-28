@@ -36,6 +36,7 @@ def test_reports_timings_providers_and_real_time_factor(
     assert result["total_ms"] >= result["encoder_ms"] > 0
     assert result["rtf"] == pytest.approx(result["total_ms"] / 1000 / result["audio_s"], rel=0.01)
     assert result["fallback"] is False
+    assert result["encoder_precision"] == result["decoder_precision"] == "int8 model on the CPU"
     assert "OTP" in result["text"]
     assert result["on_battery"] in (True, False, None)  # recorded: it changes the numbers
     assert result["peak_memory_mb"] is None or result["peak_memory_mb"] > 100.0  # the model

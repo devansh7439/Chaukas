@@ -55,6 +55,9 @@ ENCODER_NPU: Final = "onnx/encoder_model.onnx"  # fp32: the NPU runs it in fp16
 DECODER: Final = "onnx/decoder_model_merged_int8.onnx"
 FILES: Final = (ENCODER, DECODER, "tokenizer.json", "config.json", "generation_config.json")
 CPU_PROVIDER: Final = "CPUExecutionProvider"
+CPU_PRECISION: Final = "int8 model on the CPU"
+NPU_FP16: Final = "fp32 model, run in fp16 on the NPU (QNN HTP)"
+NPU_DEFAULT: Final = "fp32 model, the NPU backend's default precision (QNN HTP)"
 
 Device = Literal["cpu", "npu"]
 
@@ -68,6 +71,8 @@ class Runtime:
     encoder_providers: tuple[str, ...]
     decoder_providers: tuple[str, ...]
     note: str = ""  # why the requested device isn't used; empty if it is
+    encoder_precision: str = CPU_PRECISION  # which model file, and how it is computed
+    decoder_precision: str = CPU_PRECISION
 
     @property
     def fallback(self) -> bool:
@@ -139,9 +144,10 @@ class WhisperOnnx:
         options = _session_options(ort, cpu_threads)
         note = ""
         encoder = None
+        encoder_precision = CPU_PRECISION
         if device == "npu":
             try:
-                encoder = _npu_encoder(ort, folder / ENCODER_NPU, cpu_threads)
+                encoder, encoder_precision = _npu_encoder(ort, folder / ENCODER_NPU, cpu_threads)
             except NpuUnavailableError as exc:
                 note = f"NPU unavailable, the encoder runs on the CPU: {exc}"
                 logger.warning("%s", note)
@@ -158,6 +164,7 @@ class WhisperOnnx:
             encoder_providers=tuple(self._encoder.get_providers()),
             decoder_providers=tuple(self._decoder.get_providers()),
             note=note,
+            encoder_precision=encoder_precision,
         )
         self._last_timing: Timing | None = None
         self._tokenizer = Tokenizer.from_file(str(folder / "tokenizer.json"))
@@ -315,8 +322,10 @@ def download(size: str, device: Device = "cpu") -> Path:
                                   revision=REVISIONS[size], max_workers=2))  # fmt: skip
 
 
-def _npu_encoder(ort: Any, path: Path, cpu_threads: int) -> Any:
-    """An encoder session bound to the Snapdragon NPU, or NpuUnavailableError saying why.
+def _npu_encoder(ort: Any, path: Path, cpu_threads: int) -> tuple[Any, str]:
+    """An encoder session bound to the Snapdragon NPU and the precision it runs in, or
+    NpuUnavailableError saying why. fp16 is asked for first; if the backend refuses it, the
+    backend's default is used and reported as such.
 
     ``onnxruntime-qnn`` is a plugin execution provider: its library is registered with ONNX
     Runtime, which then lists the hardware it can drive. Only a device of type NPU is used
@@ -348,7 +357,11 @@ def _npu_encoder(ort: Any, path: Path, cpu_threads: int) -> Any:
     if not npus:
         raise NpuUnavailableError("the QNN plugin found no Qualcomm NPU on this PC")
     errors = []
-    for provider_options in ({"enable_htp_fp16_precision": "1"}, {}):
+    attempts: tuple[tuple[dict[str, str], str], ...] = (
+        ({"enable_htp_fp16_precision": "1"}, NPU_FP16),
+        ({}, NPU_DEFAULT),
+    )
+    for provider_options, precision in attempts:
         options = _session_options(ort, cpu_threads)
         options.add_provider_for_devices(npus, provider_options)
         try:
@@ -357,7 +370,7 @@ def _npu_encoder(ort: Any, path: Path, cpu_threads: int) -> Any:
             errors.append(str(exc).splitlines()[0][:200])
             continue
         if name in session.get_providers():
-            return session
+            return session, precision
         errors.append("ONNX Runtime fell back to the CPU")
     raise NpuUnavailableError(f"the NPU session could not be created: {'; '.join(errors)}")
 

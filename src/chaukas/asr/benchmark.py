@@ -66,6 +66,8 @@ def benchmark(whisper: WhisperOnnx, audio: Samples, *, runs: int, model: str) ->
         "note": runtime.note,
         "encoder_providers": list(runtime.encoder_providers),
         "decoder_providers": list(runtime.decoder_providers),
+        "encoder_precision": runtime.encoder_precision,
+        "decoder_precision": runtime.decoder_precision,
         "audio_s": round(audio_s, 3),
         "runs": runs,
         "total_ms": round(total_ms, 1),
@@ -145,7 +147,9 @@ def describe(result: dict[str, Any]) -> str:
         + ("  ON BATTERY: expect slower, throttled numbers" if result["on_battery"] else ""),
         f"Model:             {result['model']}  on ONNX Runtime {result['onnxruntime']}",
         f"Encoder runs on:   {where}  [{', '.join(result['encoder_providers'])}]",
+        f"                   {result['encoder_precision']}",
         f"Decoder runs on:   {', '.join(result['decoder_providers'])}",
+        f"                   {result['decoder_precision']}",
         f"Audio:             {result['audio_s']:.1f} s, median of {result['runs']} runs",
         f"Speech-to-text:    {result['total_ms']:.0f} ms"
         f"  (encoder {result['encoder_ms']:.0f} ms, decoder {result['decoder_ms']:.0f} ms)",
