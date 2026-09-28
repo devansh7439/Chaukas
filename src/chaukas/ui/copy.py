@@ -71,6 +71,11 @@ _EN_HI: Final[dict[str, tuple[str, str]]] = {
     "reason_remote_app_started": ("A remote-access app started", "रिमोट-एक्सेस ऐप चालू हुआ"),
     "reason_otp_field_visible": ("A page is asking for an OTP", "एक पेज OTP माँग रहा है"),
     "reason_password_field_visible": ("A page is asking for a password", "एक पेज पासवर्ड माँग रहा है"),
+    # How a reason was detected (from the decision trace)
+    "how_keyword": ("Exact words", "ठीक यही शब्द"),
+    "how_semantic": ("Similar meaning, not the exact words", "मिलता-जुलता मतलब, ठीक यही शब्द नहीं"),
+    "how_llm": ("The local AI's reading of the call", "कॉल के बारे में लोकल AI की राय"),
+    "how_screen": ("Seen on your screen", "आपकी स्क्रीन पर दिखा"),
     # Short labels for evidence chips
     "kind_authority": ("Authority", "अधिकार"),
     "kind_threat": ("Threat", "धमकी"),

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
@@ -132,6 +133,14 @@ class TestReports:
         assert "DA01" in text
         assert "CRITICAL" in text
         assert "transfer money" in text
+
+    def test_run_report_prints_the_decision_trace(self, cases_dir: Path) -> None:
+        case = next(case for case in load_cases(cases_dir) if case.case_id == "CT01")
+        text = format_run(run_case(case, config=config_for("E"), lexicon=Lexicon.load()))
+        assert "rule pre_disclosure_primed" in text
+        # source, confidence when heard -> current evidence, contribution, chain step
+        assert re.search(r"credential_request: .* \[keyword 0\.75->0\.\d\d w\*e=0\.\d\d cred_req\]",
+                         text)  # fmt: skip
 
     def test_outcome_and_ablation_tables(self, outcomes: list[CaseOutcome]) -> None:
         text = format_outcomes(outcomes, summarise(outcomes))

@@ -53,6 +53,13 @@ ColumnLayout {
                     font.italic: true
                     maximumLineCount: 2
                 }
+                AppText {
+                    visible: (row.modelData.how || "").length > 0
+                    Layout.fillWidth: true
+                    text: row.modelData.how || ""
+                    color: root.darkSurface ? Theme.textOnDarkMuted : Theme.inkMuted
+                    font.pixelSize: Theme.label
+                }
             }
 
             AppText {

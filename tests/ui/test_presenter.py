@@ -126,7 +126,24 @@ class TestReasons:
             "text": "Caller claimed to be an official",
             "quote": "cbi se",
             "icon": "shield-alert",
+            "how": "",
         }
+
+    @pytest.mark.parametrize(
+        ("source", "how"),
+        [
+            ("keyword", "Exact words"),
+            ("semantic", "Similar meaning, not the exact words"),
+            ("llm", "The local AI's reading of the call"),
+            ("screen", "Seen on your screen"),
+            ("rule", ""),
+        ],
+    )
+    def test_the_trace_says_how_each_reason_was_detected(self, source: str, how: str) -> None:
+        reason = Reason(t=1.0, label="credential_request", detail="x", source=source)
+        assert reason_view(reason, "en")["how"] == how
+        if how:
+            assert reason_view(reason, "hi")["how"]
 
     def test_context_reasons_have_no_quote(self) -> None:
         view = reason_view(

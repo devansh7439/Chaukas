@@ -278,6 +278,25 @@ class TestCredentialRules:
         assert engine.evaluate(end + 1.0).level is L.CRITICAL_RECOVERY
         assert talk_and_tick(engine, end + 1.0, 1800.0).level is L.CRITICAL_RECOVERY
 
+    def test_a_claim_from_long_ago_does_not_prime_a_new_otp_request(self) -> None:
+        # Red-team: loopback hears all PC audio, so one session can span a news clip and,
+        # an hour of speech later, an unrelated call. The old "CBI ... arrest" must not
+        # make this OTP request critical; the request alone is still a warning.
+        engine = make_engine()
+        engine.on_signal(caller(K.AUTHORITY, 0.6, 0.0))
+        engine.on_signal(caller(K.THREAT, 0.5, 1.0))
+        end = talk_and_tick(engine, 2.0, 3600.0).t
+        engine.on_signal(caller(K.CREDENTIAL_REQUEST, 0.75, end + 1.0))
+        assert engine.evaluate(end + 2.0).level is L.WARNING
+
+    def test_a_claim_earlier_in_the_same_conversation_still_primes(self) -> None:
+        # Digital-arrest calls are long: "CBI" at the start, the OTP 20 minutes later.
+        engine = make_engine()
+        engine.on_signal(caller(K.AUTHORITY, 0.6, 0.0))
+        end = talk_and_tick(engine, 1.0, 1200.0).t
+        engine.on_signal(caller(K.CREDENTIAL_REQUEST, 0.75, end + 1.0))
+        assert engine.evaluate(end + 2.0).level is L.CRITICAL
+
     def test_a_pre_disclosure_warning_is_not_held(self) -> None:
         # Without authority or coercion ("beta, OTP bata do") the warning fades normally.
         engine = make_engine()

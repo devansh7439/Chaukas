@@ -29,6 +29,7 @@ _SIGNAL_ICONS: Final[Mapping[str, str]] = {
     "user_digits_spoken": "mic",
 }
 _CONTEXT_ICON: Final = "monitor"
+_HOW: Final = frozenset({"keyword", "semantic", "llm", "screen"})  # rule reasons need no note
 
 
 def clock(t: float) -> str:
@@ -79,6 +80,8 @@ def reason_view(reason: Reason, language: Language) -> View:
         "text": text(f"reason_{reason.label}", language, fallback=reason.label),
         "quote": reason.detail,
         "icon": _SIGNAL_ICONS.get(reason.label, _CONTEXT_ICON) if is_signal else _CONTEXT_ICON,
+        # from the decision trace: a meaning match is weaker evidence than quoted words
+        "how": text(f"how_{reason.source}", language) if reason.source in _HOW else "",
     }
 
 

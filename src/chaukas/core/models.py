@@ -298,11 +298,17 @@ class RiskComponents:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Reason:
-    """One line of evidence for the Why panel. The UI turns ``label`` into localised text."""
+    """One entry of the decision trace, and one line of the Why panel (the UI turns
+    ``label`` into localised text). In memory only, like everything heard."""
 
     t: float
     label: str  # a SignalKind or ContextKind value
     detail: str  # evidence snippet or context detail (memory only)
+    source: str = ""  # keyword | semantic | llm | rule (a signal), screen (a context event)
+    confidence: float = 1.0  # the signal's confidence when heard
+    current: float = 0.0  # e_t for this kind now, after decay (what enters P)
+    contribution: float = 0.0  # w_t * e_t: this kind's factor in the noisy-OR pressure
+    chain_step: str | None = None  # the active chain's step this entry satisfied
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -318,8 +324,11 @@ class RiskState:
     coercion: bool = False
     llm_assessed: bool = False
     dismissed: bool = False  # the user acknowledged this level; show it without interrupting
-    reasons: tuple[Reason, ...] = ()
+    reasons: tuple[Reason, ...] = ()  # the decision trace
     evidence: tuple[tuple[SignalKind, float], ...] = ()  # current (decayed) e_t, non-zero only
+    # what set the level before hysteresis: threshold, awaiting_llm, pre_disclosure,
+    # pre_disclosure_primed, recovery, digits, remote_banking or held
+    rule: str = "threshold"
 
     def __post_init__(self) -> None:
         _check_time("t", self.t)

@@ -60,6 +60,16 @@ class EvidenceStore:
         """Session time of the earliest ``kind`` signal this session, or None."""
         return self._first_seen.get(kind)
 
+    def latest(self, kind: SignalKind, *, min_confidence: float) -> Signal | None:
+        """The latest ``kind`` signal that was at least ``min_confidence`` (after discounts),
+        among entries not yet pruned; None if there is none. Pruning needs about 5.6
+        half-lives of speech even for a 0.5 signal, so this is exact for any look-back
+        shorter than that."""
+        qualifying = [
+            e.signal for e in self._entries.get(kind, ()) if e.confidence >= min_confidence
+        ]
+        return max(qualifying, key=lambda s: s.t, default=None)
+
     def level(self, kind: SignalKind, now: float, *, min_confidence: float = 0.0) -> float:
         """Decayed evidence for ``kind`` at session time ``now``, counting only signals that
         were at least ``min_confidence`` when heard."""

@@ -159,6 +159,7 @@ class RulesConfig(_Section):
     min_evidence: UnitFloat  # decayed evidence that counts as present
     coercion_floor: UnitFloat  # a confident coercive signal counts while it stays above this
     pre_disclosure_min_confidence: UnitFloat
+    priming_window_s: Seconds  # authority/coercion primes an OTP request for this much speech
     hysteresis_margin: UnitFloat
     hysteresis_hold_s: Seconds
     dismissal_s: Seconds

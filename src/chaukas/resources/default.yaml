@@ -111,6 +111,9 @@ engine:
                                   # coercion while its faded value stays above this (a 0.5
                                   # keyword: about 5 minutes of speech)
     pre_disclosure_min_confidence: 0.7
+    priming_window_s: 1800        # an OTP request is critical if authority or coercion was heard
+                                  # within this much speech before it (not "ever this session":
+                                  # loopback also hears videos and news between calls)
     hysteresis_margin: 0.10
     hysteresis_hold_s: 30
     dismissal_s: 180

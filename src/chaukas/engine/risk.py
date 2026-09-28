@@ -13,7 +13,8 @@ Levels come from thresholds on R, then:
     matching its objective, and speech addressed to the user;
   * nothing escalates before the session's first LLM assessment (with a failure grace);
   * pre-disclosure rule: a confident caller credential request is critical at once if
-    authority or coercion was seen this session, and a warning otherwise. An LLM verdict
+    authority or coercion was heard within ``priming_window_s`` of speech before it, and
+    a warning otherwise. An LLM verdict
     of "not addressed to the user" can lower it to a warning but never silence it;
   * recovery rule: a code read out after a pre-disclosure alert is critical_recovery.
   * A critical or critical_recovery raised by these rules holds until the session ends:
@@ -50,7 +51,7 @@ from chaukas.engine.activity import ActivityClock
 from chaukas.engine.chains import ChainTracker
 from chaukas.engine.evidence import EvidenceStore
 from chaukas.engine.levels import LevelController
-from chaukas.engine.templates import ChainTemplate, load_templates
+from chaukas.engine.templates import ChainTemplate, Step, load_templates
 
 _DISCOUNTABLE: Final = frozenset({SignalKind.AUTHORITY, SignalKind.THREAT, SignalKind.URGENCY})
 _DISCOUNT_FACTOR: Final = 0.5
@@ -82,6 +83,7 @@ class RiskEngine:
         self._discounted: set[tuple[int, SignalKind]] = set()
         self._first_trigger_t: float | None = None
         self._held = Level.QUIET  # raised by the credential rules; held until session end
+        self._held_signals: tuple[Signal, ...] = ()  # what raised the hold, for the trace
         self._changes = 0  # new chain steps or context events; invalidates dismissals
 
     @classmethod
@@ -139,6 +141,7 @@ class RiskEngine:
         self._discounted.clear()
         self._first_trigger_t = None
         self._held = Level.QUIET
+        self._held_signals = ()
         self._changes = 0
 
     # ------------------------------------------------------------- evaluation
@@ -165,9 +168,10 @@ class RiskEngine:
         )
 
         raw = self._threshold_level(score, active, context_matches, is_addressed, coercion)
+        rule = "threshold"
         if self._awaiting_llm(now):
-            raw = Level.QUIET
-        raw, rule_objective = self._apply_rules(raw, evidence, is_addressed)
+            raw, rule = Level.QUIET, "awaiting_llm"
+        raw, rule, rule_objective = self._apply_rules(now, raw, rule, evidence, is_addressed)
         level = self._levels.update(now, raw, score)
 
         return RiskState(
@@ -185,8 +189,9 @@ class RiskEngine:
             coercion=coercion,
             llm_assessed=self._latest is not None,
             dismissed=self._levels.is_dismissed(now, self._changes),
-            reasons=self._reasons(now),
+            reasons=self._reasons(now, evidence, active),
             evidence=tuple((kind, value) for kind, value in evidence.items() if value > 0.0),
+            rule=rule,
         )
 
     # ---------------------------------------------------------------- helpers
@@ -268,36 +273,74 @@ class RiskEngine:
         return first is None or now - first < self._llm.failure_grace_s
 
     def _apply_rules(
-        self, level: Level, evidence: dict[SignalKind, float], is_addressed: bool
-    ) -> tuple[Level, Objective | None]:
+        self,
+        now: float,
+        level: Level,
+        rule: str,
+        evidence: dict[SignalKind, float],
+        is_addressed: bool,
+    ) -> tuple[Level, str, Objective | None]:
         rules = self._config.rules
         rule_objective: Objective | None = None
+        raised_hold = ""
+
+        def at_least(target: Level, name: str) -> None:
+            nonlocal level, rule
+            if target > level:
+                level, rule = target, name
+
         credential = evidence[SignalKind.CREDENTIAL_REQUEST]
         if credential >= rules.pre_disclosure_min_confidence:
             rule_objective = Objective.CREDENTIAL_DISCLOSURE
-            primed = self._evidence.peak(SignalKind.AUTHORITY) >= rules.min_evidence or any(
-                self._evidence.peak(kind) >= rules.min_evidence for kind in _COERCIVE
-            )
+            prime = self._prime(now)
             # An LLM verdict of "not addressed to the user" can be induced by the caller
             # ("this is a recorded announcement"), so it may lower this alert to a warning,
             # never remove it: the warning still says never to share an OTP.
-            if primed and is_addressed:
+            if prime is not None and is_addressed:
+                if self._held < Level.CRITICAL:
+                    request = self._evidence.strongest(SignalKind.CREDENTIAL_REQUEST, now)
+                    self._held_signals = tuple(s for s in (prime, request) if s is not None)
                 self._held = max(self._held, Level.CRITICAL)
+                raised_hold = "pre_disclosure_primed"
             else:
-                level = max(level, Level.WARNING)
+                at_least(Level.WARNING, "pre_disclosure")
         if evidence[SignalKind.USER_DIGITS_SPOKEN] >= rules.min_evidence:
             rule_objective = Objective.CREDENTIAL_DISCLOSURE
             if self._held >= Level.CRITICAL:
+                if self._held is not Level.CRITICAL_RECOVERY:
+                    digits = self._evidence.strongest(SignalKind.USER_DIGITS_SPOKEN, now)
+                    self._held_signals += (digits,) if digits is not None else ()
                 self._held = Level.CRITICAL_RECOVERY
+                raised_hold = "recovery"
             else:
-                level = max(level, Level.WARNING)
+                at_least(Level.WARNING, "digits")
         if self._remote_banking():
-            level = max(level, Level.WARNING)
+            at_least(Level.WARNING, "remote_banking")
             rule_objective = rule_objective or Objective.REMOTE_CONTROL
         if self._held > level:
-            level = self._held
+            level, rule = self._held, raised_hold or "held"
             rule_objective = Objective.CREDENTIAL_DISCLOSURE
-        return level, rule_objective
+        return level, rule, rule_objective
+
+    def _prime(self, now: float) -> Signal | None:
+        """The latest authority or coercion signal heard confidently within the last
+        ``priming_window_s`` of speech, or None. Loopback hears all PC audio, so a session
+        can span a news clip and, much later, an unrelated call: a "CBI" from then must not
+        make today's OTP request critical. Speech time, not wall time, so a long silent hold
+        in a digital-arrest call does not expire it."""
+        min_evidence = self._config.rules.min_evidence
+        heard = [
+            signal
+            for kind in (SignalKind.AUTHORITY, *_COERCIVE)
+            if (signal := self._evidence.latest(kind, min_confidence=min_evidence)) is not None
+            and self._recent(signal.t, now)
+        ]
+        return max(heard, key=lambda signal: signal.t, default=None)
+
+    def _recent(self, t: float, now: float) -> bool:
+        """``t`` lies within ``priming_window_s`` of speech before ``now``."""
+        elapsed = self._clock.call_time(now) - self._clock.call_time(t)
+        return elapsed <= self._config.rules.priming_window_s
 
     def _remote_banking(self) -> bool:
         """The causal order of a remote-control scam: the caller claims to be from an
@@ -336,25 +379,64 @@ class RiskEngine:
             return hint
         return Objective.UNCLEAR if level > Level.QUIET else Objective.NONE
 
-    def _reasons(self, now: float) -> tuple[Reason, ...]:
-        """Everything that counted this session. Evidence fades for scoring, but the Why
-        panel keeps explaining it: a strong keyword starts exactly at ``min_evidence`` and
-        would otherwise vanish from the explanation within seconds."""
+    def _reasons(
+        self, now: float, evidence: dict[SignalKind, float], active: ChainState | None
+    ) -> tuple[Reason, ...]:
+        """The decision trace: every confident signal heard within ``priming_window_s`` of
+        speech, the signals behind a held alert, and the context events in the look-back.
+
+        Evidence fades for scoring, but the Why panel keeps explaining it: a strong keyword
+        starts exactly at ``min_evidence`` and would otherwise vanish within seconds. What
+        is older than the window is left out, as it no longer takes part in any rule; a
+        held alert keeps quoting what raised it."""
         min_evidence = self._config.rules.min_evidence
-        reasons: list[Reason] = []
+        chosen: dict[SignalKind, Signal] = {}
         for kind in SignalKind:
             if self._evidence.peak(kind) < min_evidence:
                 continue
             # the signal that met the bar, not whatever is strongest now (a weak "officer"
             # heard later must not stand in for the "CBI" that justified the alert)
             signal = self._evidence.explanation(kind, now, min_confidence=min_evidence)
-            if signal is not None:
-                reasons.append(Reason(t=signal.t, label=kind.value, detail=signal.evidence))
+            if signal is not None and self._recent(signal.t, now):
+                chosen[kind] = signal
+        if self._held > Level.QUIET:
+            for signal in self._held_signals:
+                chosen.setdefault(signal.kind, signal)
+
+        steps = self._seen_steps(active)
+        weights = self._config.weights
+        reasons = [
+            Reason(
+                t=signal.t,
+                label=kind.value,
+                detail=signal.evidence,
+                source=signal.source.value,
+                confidence=signal.confidence,
+                current=evidence[kind],
+                contribution=weights.get(kind, 0.0) * evidence[kind],
+                chain_step=next((s.id for s in steps if kind in s.signals), None),
+            )
+            for kind, signal in chosen.items()
+        ]
         reasons.extend(
-            Reason(t=event.t, label=event.kind.value, detail=event.detail)
+            Reason(
+                t=event.t,
+                label=event.kind.value,
+                detail=event.detail,
+                source="screen",
+                chain_step=next((s.id for s in steps if event.kind in s.events), None),
+            )
             for event in self._context
         )
         return tuple(sorted(reasons, key=lambda reason: reason.t))
+
+    def _seen_steps(self, active: ChainState | None) -> list[Step]:
+        """The active chain's steps that have been seen, in template order."""
+        if active is None:
+            return []
+        template = next((t for t in self._chains.templates if t.name == active.template), None)
+        seen = {step_id for step_id, _ in active.steps_seen}
+        return [step for step in (template.steps if template else ()) if step.id in seen]
 
 
 def _counts_as_evidence(signal: Signal) -> bool:

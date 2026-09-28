@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from chaukas.core.models import Level, Objective, RiskState
+from chaukas.core.models import Level, Objective, Reason, RiskState
 from chaukas.evaluation.metrics import CaseOutcome, Summary
 from chaukas.evaluation.runner import CaseRun
 from chaukas.llm.reasoner import LLMOutcome
@@ -31,10 +31,12 @@ def format_run(run: CaseRun, *, max_reasons: int = 4) -> str:
         state = snapshot.state
         lines.append(
             f"[{state.t:7.1f}s] {state.level.label.upper():<18}"
-            f" R={state.score:.2f}  {_objective_text(state)}"
+            f" R={state.score:.2f}  {_objective_text(state)}  (rule {state.rule})"
         )
         for reason in state.reasons[-max_reasons:]:
-            lines.append(f"{'':11}  {reason.t:7.1f}s  {reason.label}: {reason.detail}")
+            lines.append(
+                f"{'':11}  {reason.t:7.1f}s  {reason.label}: {reason.detail}  {_trace(reason)}"
+            )
     if not run.transitions:
         lines.append("(stayed quiet)")
     for outcome in run.llm_outcomes:
@@ -145,3 +147,14 @@ def _latency(summary: Summary) -> str:
 
 def _objective_text(state: RiskState) -> str:
     return _OBJECTIVE_TEXT.get(state.objective, state.objective.value)
+
+
+def _trace(reason: Reason) -> str:
+    """One decision-trace entry: how it was detected, its confidence when heard -> its
+    current evidence, its weighted contribution to pressure, and the chain step it filled."""
+    if reason.source == "screen":
+        return f"[screen {reason.chain_step or '-'}]"
+    return (
+        f"[{reason.source or '-'} {reason.confidence:.2f}->{reason.current:.2f}"
+        f" w*e={reason.contribution:.2f} {reason.chain_step or '-'}]"
+    )
