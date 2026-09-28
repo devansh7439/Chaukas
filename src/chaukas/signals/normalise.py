@@ -13,6 +13,10 @@ Steps:
 5. Convert spoken digit sequences ("four five six seven", "ek do teen char") to digits.
    A run converts only when it has at least two number words, at least one of them
    unambiguous. "one time password", "do not" and "bhej do 5000" stay unchanged.
+
+``tokenize_clauses`` also reports which tokens begin a new clause (after a comma, full stop,
+danda, ...), so negation can stay inside its clause: in "No, share the OTP" the "no" does
+not negate "share".
 """
 
 from __future__ import annotations
@@ -28,6 +32,7 @@ _DEVANAGARI_DIGITS: Final = str.maketrans("०१२३४५६७८९", "012
 # (already mapped to ASCII), zero-width (non-)joiners; optional internal apostrophes.
 _WORD_CHARS: Final = r"\wऀ-ॣ॰-ॿ‌‍"
 _TOKEN: Final = re.compile(rf"₹|[{_WORD_CHARS}]+(?:'[{_WORD_CHARS}]+)*")
+_CLAUSE_MARK: Final = re.compile(r"[,.;:!?।॥…—–]")
 
 _CONTRACTIONS: Final[dict[str, tuple[str, ...]]] = {
     "won't": ("will", "not"),
@@ -58,12 +63,24 @@ _MULTIPLIERS: Final[dict[str, int]] = {"double": 2, "triple": 3}
 
 def tokenize(text: str) -> list[str]:
     """Normalise ``text`` and split it into tokens."""
+    return tokenize_clauses(text)[0]
+
+
+def tokenize_clauses(text: str) -> tuple[list[str], frozenset[int]]:
+    """Tokens as ``tokenize`` gives them, plus the indices of tokens that start a clause."""
     text = unicodedata.normalize("NFC", text).casefold()
     text = text.translate(_APOSTROPHES).translate(_DEVANAGARI_DIGITS)
     tokens: list[str] = []
-    for raw in _TOKEN.findall(text):
-        tokens.extend(_expand_contraction(raw))
-    return _convert_number_runs(tokens)
+    starts: list[bool] = []
+    previous_end = 0
+    for match in _TOKEN.finditer(text):
+        new_clause = bool(tokens) and bool(_CLAUSE_MARK.search(text, previous_end, match.start()))
+        previous_end = match.end()
+        for i, token in enumerate(_expand_contraction(match.group())):
+            tokens.append(token)
+            starts.append(new_clause and i == 0)
+    tokens, starts = _convert_number_runs(tokens, starts)
+    return tokens, frozenset(i for i, start in enumerate(starts) if start)
 
 
 def normalise(text: str) -> str:
@@ -91,20 +108,29 @@ def _is_numberish(token: str) -> bool:
     )
 
 
-def _convert_number_runs(tokens: list[str]) -> list[str]:
+def _convert_number_runs(tokens: list[str], starts: list[bool]) -> tuple[list[str], list[bool]]:
+    """Convert spoken digit runs; a converted run keeps only its first clause start."""
     out: list[str] = []
+    out_starts: list[bool] = []
     i = 0
     while i < len(tokens):
         if not _is_numberish(tokens[i]):
             out.append(tokens[i])
+            out_starts.append(starts[i])
             i += 1
             continue
         j = i
         while j < len(tokens) and _is_numberish(tokens[j]):
             j += 1
-        out.extend(_convert_run(tokens[i:j]))
+        run = tokens[i:j]
+        converted = _convert_run(run)
+        out.extend(converted)
+        if converted == run:
+            out_starts.extend(starts[i:j])
+        else:
+            out_starts.extend([starts[i]] + [False] * (len(converted) - 1))
         i = j
-    return out
+    return out, out_starts
 
 
 def _convert_run(run: list[str]) -> list[str]:

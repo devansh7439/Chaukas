@@ -107,7 +107,10 @@ requests:
               पैसे, रकम, रुपये]
 
 negation:
-  gap: 1                                   # words allowed between a negator and its verb
+  gap: 1                                   # filler words allowed between a negator and its verb
+  # Only these may sit in that gap: in "don't worry send the OTP" the negator belongs to
+  # "worry", so the request stays a request (the caller must not be able to forge advice).
+  fillers: [ever, even, please, kabhi, bhi, कभी, भी]
   before: [not, never, "no", mat, nahi, nahin, na, मत, नहीं, न]   # quoted: bare no is a YAML boolean
   after: [nahi, nahin, नहीं]                # "batana nahi"
   # "OTP ya PIN ... mat bataiye": advice covers every object in a list joined by these

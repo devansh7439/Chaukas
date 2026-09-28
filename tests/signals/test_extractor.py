@@ -177,3 +177,40 @@ def test_spellings_whisper_actually_produces(
 ) -> None:
     kinds = {signal.kind for signal in extractor.extract(segment(Stream.CALLER, text))}
     assert kind in kinds
+
+
+class TestCallerCannotForgeAdvice:
+    """Red-team regression: a negation the caller puts in front of a request ("don't worry",
+    "no,") must not turn the request into protective advice and hide the OTP keyword."""
+
+    @pytest.mark.parametrize(
+        ("text", "kind"),
+        [
+            ("No, just read out the OTP.", K.CREDENTIAL_REQUEST),
+            ("No no, share the OTP now.", K.CREDENTIAL_REQUEST),
+            ("Don't panic, share the OTP quickly.", K.CREDENTIAL_REQUEST),
+            ("Don't worry, send the OTP.", K.CREDENTIAL_REQUEST),
+            ("don't worry send the OTP", K.CREDENTIAL_REQUEST),  # no punctuation from ASR
+            ("Nahi nahi, OTP batao.", K.CREDENTIAL_REQUEST),
+            ("nahi nahi OTP batao", K.CREDENTIAL_REQUEST),
+            ("Mat ghabraiye, OTP bataiye.", K.CREDENTIAL_REQUEST),
+            ("No, no, install AnyDesk.", K.REMOTE_ACCESS_REQUEST),
+            ("Don't worry, transfer the amount.", K.MONEY_REQUEST),
+        ],
+    )
+    def test_reassurance_before_a_request_keeps_the_request(
+        self, extractor: SignalExtractor, text: str, kind: SignalKind
+    ) -> None:
+        assert tiers(extractor.extract(segment(Stream.CALLER, text))).get(kind) is Tier.FAST_PATH
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Please never ever share your OTP.",
+            "Do not share the OTP with anyone.",
+            "Kabhi bhi OTP mat batana.",
+            "Never, ever share your OTP.",  # a comma inside the advice itself
+        ],
+    )
+    def test_real_advice_is_still_advice(self, extractor: SignalExtractor, text: str) -> None:
+        assert K.CREDENTIAL_REQUEST not in tiers(extractor.extract(segment(Stream.CALLER, text)))

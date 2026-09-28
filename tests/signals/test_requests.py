@@ -4,7 +4,7 @@ import pytest
 
 from chaukas.core.models import SignalKind
 from chaukas.signals.lexicon import Lexicon
-from chaukas.signals.normalise import tokenize
+from chaukas.signals.normalise import tokenize, tokenize_clauses
 from chaukas.signals.requests import RequestHit, find_requests, inside_any
 
 CREDENTIAL = SignalKind.CREDENTIAL_REQUEST
@@ -71,3 +71,15 @@ def test_inside_any() -> None:
     assert inside_any(2, 4, [(0, 1), (2, 5)])
     assert not inside_any(2, 6, [(2, 5)])
     assert not inside_any(0, 1, [])
+
+
+def test_negation_does_not_cross_a_clause_boundary(lexicon: Lexicon) -> None:
+    tokens, breaks = tokenize_clauses("No, share the OTP")
+    [hit] = find_requests(tokens, lexicon, window=6, clause_starts=breaks)
+    assert not hit.negated
+
+
+def test_only_filler_words_may_sit_between_negator_and_verb(lexicon: Lexicon) -> None:
+    # "worry" is what is negated in "don't worry send ...", not "send".
+    assert [hit.negated for hit in hits(lexicon, "do not worry send the OTP")] == [False]
+    assert [hit.negated for hit in hits(lexicon, "never ever share the OTP")] == [True]

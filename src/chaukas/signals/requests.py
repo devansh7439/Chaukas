@@ -15,6 +15,11 @@ the same kind in the window is aimed at the speaker ("kisi ko mat batana, sirf *
 batao", "never share it with anyone, just read it out *to me*"), the pair is a request and
 no advice span is returned (the "don't tell anyone" part is then isolation, not advice).
 
+For the same reason the caller must not be able to forge advice: a negator counts only
+inside the verb's clause, with at most filler words ("never *ever* share") in between. So
+"No, read out the OTP", "Don't panic, share the OTP" and "don't worry send the OTP" stay
+requests: what is negated there is the reassurance, not the request.
+
 Cost: one automaton scan, then O(objects * verbs) pairing; both are tiny per segment.
 """
 
@@ -49,8 +54,10 @@ def find_requests(
     *,
     window: int,
     excluded: Sequence[Span] = (),
+    clause_starts: frozenset[int] = frozenset(),
 ) -> list[RequestHit]:
-    """Pair request objects with verbs. Words inside ``excluded`` spans are ignored."""
+    """Pair request objects with verbs. Words inside ``excluded`` spans are ignored;
+    ``clause_starts`` (from ``tokenize_clauses``) keeps negation inside its clause."""
     verbs: list[Match[RequestWord]] = []
     objects: list[Match[RequestWord]] = []
     for match in lexicon.request_words.find(tokens):
@@ -61,7 +68,7 @@ def find_requests(
     hits: list[RequestHit] = []
     for obj in objects:
         candidates = [
-            (_gap(verb, obj), _is_negated(tokens, verb, lexicon), verb)
+            (_gap(verb, obj), _is_negated(tokens, verb, lexicon, clause_starts), verb)
             for verb in verbs
             if verb.payload.kind is obj.payload.kind and _gap(verb, obj) <= window
         ]
@@ -110,11 +117,26 @@ def _gap(a: Match[RequestWord], b: Match[RequestWord]) -> int:
     return max(0, max(a.start, b.start) - min(a.end, b.end))
 
 
-def _is_negated(tokens: Sequence[str], verb: Match[RequestWord], lexicon: Lexicon) -> bool:
-    lo = max(0, verb.start - 1 - lexicon.negation_gap)
-    if any(tokens[i] in lexicon.negators_before for i in range(lo, verb.start)):
-        return True
-    return verb.end < len(tokens) and tokens[verb.end] in lexicon.negators_after
+def _is_negated(
+    tokens: Sequence[str],
+    verb: Match[RequestWord],
+    lexicon: Lexicon,
+    clause_starts: frozenset[int],
+) -> bool:
+    if verb.start not in clause_starts:
+        for gap in range(lexicon.negation_gap + 1):
+            i = verb.start - 1 - gap
+            if i < 0:
+                break
+            if tokens[i] in lexicon.negators_before:
+                return True
+            if tokens[i] not in lexicon.negation_fillers:
+                break  # "do not worry send": the negator belongs to another word
+    return (
+        verb.end < len(tokens)
+        and verb.end not in clause_starts
+        and tokens[verb.end] in lexicon.negators_after
+    )
 
 
 def inside_any(start: int, end: int, spans: Sequence[Span]) -> bool:

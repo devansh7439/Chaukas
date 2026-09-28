@@ -20,7 +20,7 @@ from chaukas.core.models import Segment, Signal, SignalKind, SignalSource, Strea
 from chaukas.core.window import TimeWindow
 from chaukas.signals.digits import find_codes
 from chaukas.signals.lexicon import Lexicon
-from chaukas.signals.normalise import tokenize
+from chaukas.signals.normalise import tokenize, tokenize_clauses
 from chaukas.signals.requests import RequestHit, Span, find_requests, inside_any
 from chaukas.signals.semantic import SemanticDetector
 
@@ -49,10 +49,10 @@ class SignalExtractor:
 
     def extract(self, segment: Segment) -> list[Signal]:
         """Signals for one segment, in ``SignalKind`` declaration order."""
-        tokens = tokenize(segment.text)
         if segment.stream is Stream.USER:
-            return self._user_signals(segment, tokens)
-        signals = self._caller_signals(segment, tokens)
+            return self._user_signals(segment, tokenize(segment.text))
+        tokens, clause_starts = tokenize_clauses(segment.text)
+        signals = self._caller_signals(segment, tokens, clause_starts)
         for signal in signals:
             self.observe(signal)
         return signals
@@ -73,13 +73,16 @@ class SignalExtractor:
         """Forget everything (session end)."""
         self._credential_requests.clear()
 
-    def _caller_signals(self, segment: Segment, tokens: Sequence[str]) -> list[Signal]:
+    def _caller_signals(
+        self, segment: Segment, tokens: Sequence[str], clause_starts: frozenset[int]
+    ) -> list[Signal]:
         suppressed: list[Span] = [(m.start, m.end) for m in self._lexicon.suppressions.find(tokens)]
         requests = find_requests(
             tokens,
             self._lexicon,
             window=self._config.fast_path_window_tokens,
             excluded=suppressed,
+            clause_starts=clause_starts,
         )
         advice = [hit for hit in requests if hit.negated]
 

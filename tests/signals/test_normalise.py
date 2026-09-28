@@ -4,7 +4,7 @@ import unicodedata
 
 import pytest
 
-from chaukas.signals.normalise import normalise, tokenize
+from chaukas.signals.normalise import normalise, tokenize, tokenize_clauses
 
 
 def test_casefolds_latin_and_splits_on_punctuation() -> None:
@@ -83,3 +83,24 @@ def test_ordinary_phrases_with_number_words_are_left_alone(text: str) -> None:
 def test_empty_and_punctuation_only_input() -> None:
     assert tokenize("") == []
     assert tokenize(" ... !!! ") == []
+
+
+class TestClauses:
+    def test_tokens_match_tokenize(self) -> None:
+        text = "Don't worry, OTP batao! Four five six seven. मत बताना। ठीक"
+        tokens, _ = tokenize_clauses(text)
+        assert tokens == tokenize(text)
+
+    def test_clause_starts_follow_punctuation(self) -> None:
+        # don't -> "do not": the break index points at the first token after the comma.
+        _, starts = tokenize_clauses("Don't worry, send it. Ok; fine। ठीक")
+        assert starts == frozenset({3, 5, 6, 7})
+
+    def test_no_break_between_plain_words_or_apostrophes(self) -> None:
+        _, starts = tokenize_clauses("don't share the OTP with anyone")
+        assert starts == frozenset()
+
+    def test_spoken_digit_run_keeps_its_first_break(self) -> None:
+        tokens, starts = tokenize_clauses("code is, four, five, six, seven")
+        assert tokens == ["code", "is", "4", "5", "6", "7"]
+        assert starts == frozenset({2})

@@ -48,6 +48,7 @@ class NegationSpec(_Strict):
     gap: int = Field(ge=0)
     before: list[str]
     after: list[str]
+    fillers: list[str] = []  # may sit between a negator and its verb ("never *ever* share")
     connectors: list[str] = []  # join objects into one list ("OTP ya PIN")
     redirect: list[str] = []  # first-person recipients ("mujhe", "me")
 
@@ -93,6 +94,7 @@ class Lexicon:
 
     __slots__ = (
         "negation_connectors",
+        "negation_fillers",
         "negation_gap",
         "negators_after",
         "negators_before",
@@ -132,6 +134,7 @@ class Lexicon:
         self.negators_after: frozenset[str] = _single_tokens(spec.negation.after)
         self.negation_gap: int = spec.negation.gap
         self.negation_connectors: frozenset[str] = _single_tokens(spec.negation.connectors)
+        self.negation_fillers: frozenset[str] = _single_tokens(spec.negation.fillers)
         self.redirect_recipients: frozenset[str] = _single_tokens(spec.negation.redirect)
 
     @classmethod
