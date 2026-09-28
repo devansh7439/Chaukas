@@ -20,6 +20,10 @@ inside the verb's clause, with at most filler words ("never *ever* share") in be
 "No, read out the OTP", "Don't panic, share the OTP" and "don't worry send the OTP" stay
 requests: what is negated there is the reassurance, not the request.
 
+A negator *after* the verb ("OTP batana nahi", "share mat karna") counts only when a
+helper verb or the end of the clause follows it. In "OTP batao nahi toh account band ho
+jayega" the "nahi toh" means "otherwise": that is a threat around a request.
+
 Cost: one automaton scan, then O(objects * verbs) pairing; both are tiny per segment.
 """
 
@@ -132,10 +136,18 @@ def _is_negated(
                 return True
             if tokens[i] not in lexicon.negation_fillers:
                 break  # "do not worry send": the negator belongs to another word
+    after = verb.end
+    if (
+        after >= len(tokens)
+        or after in clause_starts
+        or tokens[after] not in lexicon.negators_after
+    ):
+        return False
+    following = after + 1
     return (
-        verb.end < len(tokens)
-        and verb.end not in clause_starts
-        and tokens[verb.end] in lexicon.negators_after
+        following >= len(tokens)
+        or following in clause_starts
+        or tokens[following] in lexicon.negation_helpers
     )
 
 

@@ -81,6 +81,8 @@ requests:
             bhejo, bhej do, share karo,
             padh, padhiye, padh kar sunaiye, sunaiye, bol dijiye, confirm,
             बताओ, बताइए, बताएं, बता दो, बताना, बोलो, भेजो, भेज दो]
+    stems: {give: [bata, bhej, bol, padh, suna, padh kar suna],
+            do: [share, confirm, send, forward, verify]}
     objects: [otp, one time password, cvv, password, pin, atm pin, upi pin,
               verification code, code you received, digit number, six digit, 6 digit, chhe ank,
               code you got, code we sent, code sent to, sms code, code aaya, code aayega,
@@ -92,6 +94,7 @@ requests:
     verbs: [install, download, run, share, install karo, download karo, share karo,
             install kijiye, install kariye, download kijiye, daal dijiye, daaliye,
             इंस्टॉल करो, डाउनलोड करो, शेयर करो]
+    stems: {do: [install, download, share, open]}
     objects: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
               any desk, team viewer, rust desk, ultra viewer,
               app, application, software, screen, code on screen, code on your screen,
@@ -102,6 +105,7 @@ requests:
     verbs: [transfer, send, pay, deposit, transfer karo, bhejo, bhej do, jama karo, daalo,
             transfer kijiye, bhej dijiye, bhejiye, jama kijiye, jama karni,
             ट्रांसफर करो, भेजो, भेज दो, जमा करो, डालो]
+    stems: {give: [bhej, daal], do: [transfer, jama, deposit, pay, send]}
     objects: [money, amount, funds, payment, paise, paisa, rupees, rupaye, rs, ₹,
               hazaar, hazar, lakh, deposit, duty, fee,
               पैसे, रकम, रुपये]
@@ -112,11 +116,23 @@ negation:
   # "worry", so the request stays a request (the caller must not be able to forge advice).
   fillers: [ever, even, please, kabhi, bhi, कभी, भी]
   before: [not, never, "no", mat, nahi, nahin, na, मत, नहीं, न]   # quoted: bare no is a YAML boolean
-  after: [nahi, nahin, नहीं]                # "batana nahi"
+  after: [nahi, nahin, mat, नहीं, मत]      # "batana nahi", "share mat karna"
+  # ...only when one of these, or the end of the clause, follows the negator: in "OTP batao
+  # nahi toh account band" the "nahi toh" means "otherwise", so it stays a request
+  helpers: [karna, karo, kariye, kijiye, karein, karen, kare, kar, dena, do, dijiye, dijie,
+            dein, de, lena, lijiye, hai, hain, chahiye,
+            करना, करो, करें, कर, देना, दें, है, चाहिए]
   # "OTP ya PIN ... mat bataiye": advice covers every object in a list joined by these
   connectors: [or, and, ya, aur, या, और]
   # "kisi ko mat batana, sirf mujhe batao": a request aimed at the speaker is a request even
   # beside "don't tell anyone" (singular only: a real bank says "tell us if anyone asks")
   redirect: [me, mujhe, mujhko, मुझे, मुझको]
+
+# Hindi compound verbs: a request stem plus a helper is the request itself ("OTP bata
+# dijiye", "code confirm kariye", "paise jama kar dijiye"). Stems are listed per request.
+compounds:
+  give: [do, de do, dijiye, dijie, dijiyega, dein, dena, de dijiye]
+  do: [karo, kariye, kijiye, karein, karen, karna, kar do, kar dijiye, kar dein, kar dena,
+       kar lijiye, kar lo, kar dijiyega]
 
 suppress: [pin code, pincode, postal code, पिन कोड]

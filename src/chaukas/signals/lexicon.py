@@ -42,6 +42,9 @@ class TacticSpec(_Strict):
 class RequestSpec(_Strict):
     verbs: list[str] = Field(min_length=1)
     objects: list[str] = Field(min_length=1)
+    # stems that form Hindi compound verbs with the helpers in ``compounds``:
+    # {give: [bata], do: [confirm]} -> "bata dijiye", "confirm kar dijiye", ...
+    stems: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class NegationSpec(_Strict):
@@ -49,6 +52,7 @@ class NegationSpec(_Strict):
     before: list[str]
     after: list[str]
     fillers: list[str] = []  # may sit between a negator and its verb ("never *ever* share")
+    helpers: list[str] = []  # an after-verb negator needs one of these (or clause end) next
     connectors: list[str] = []  # join objects into one list ("OTP ya PIN")
     redirect: list[str] = []  # first-person recipients ("mujhe", "me")
 
@@ -60,6 +64,7 @@ class LexiconSpec(_Strict):
     tactics: dict[SignalKind, TacticSpec]
     requests: dict[SignalKind, RequestSpec]
     negation: NegationSpec
+    compounds: dict[str, list[str]] = Field(default_factory=dict)  # helper forms per stem type
     suppress: list[str]
 
     @model_validator(mode="after")
@@ -69,6 +74,11 @@ class LexiconSpec(_Strict):
         not_requests = sorted(kind for kind in self.requests if not kind.is_request)
         if not_requests:
             raise ValueError(f"requests may only define request kinds, got {not_requests}")
+        unknown = sorted(
+            {t for r in self.requests.values() for t in r.stems} - self.compounds.keys()
+        )
+        if unknown:
+            raise ValueError(f"stems use undefined compound types: {unknown}")
         return self
 
 
@@ -96,6 +106,7 @@ class Lexicon:
         "negation_connectors",
         "negation_fillers",
         "negation_gap",
+        "negation_helpers",
         "negators_after",
         "negators_before",
         "redirect_recipients",
@@ -120,6 +131,11 @@ class Lexicon:
         for kind, request in spec.requests.items():
             for text in request.verbs:
                 _add_inflected(self.request_words, _tokens(text), RequestWord(kind, "verb"))
+            for compound, stems in request.stems.items():
+                for stem in stems:
+                    for helper in spec.compounds[compound]:
+                        verb = RequestWord(kind, "verb")
+                        self.request_words.add(_tokens(f"{stem} {helper}"), verb)
             for text in request.objects:
                 _add_inflected(self.request_words, _tokens(text), RequestWord(kind, "object"))
         self.request_words.build()
@@ -135,6 +151,7 @@ class Lexicon:
         self.negation_gap: int = spec.negation.gap
         self.negation_connectors: frozenset[str] = _single_tokens(spec.negation.connectors)
         self.negation_fillers: frozenset[str] = _single_tokens(spec.negation.fillers)
+        self.negation_helpers: frozenset[str] = _single_tokens(spec.negation.helpers)
         self.redirect_recipients: frozenset[str] = _single_tokens(spec.negation.redirect)
 
     @classmethod

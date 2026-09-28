@@ -235,3 +235,43 @@ class TestCallerCannotForgeAdvice:
     )
     def test_real_advice_is_still_advice(self, extractor: SignalExtractor, text: str) -> None:
         assert K.CREDENTIAL_REQUEST not in tiers(extractor.extract(segment(Stream.CALLER, text)))
+
+
+class TestHindiCompounds:
+    """Red-team regressions in Hinglish: a negator after the verb negates it only when a
+    helper verb or the end of the clause follows ("share mat karna", "batana nahi"); in
+    "batao nahi toh ..." the "nahi" means "otherwise". Polite compounds ("bata dijiye",
+    "confirm kariye") are the verb itself."""
+
+    @pytest.mark.parametrize(
+        ("text", "kind"),
+        [
+            ("OTP batao nahi toh account band ho jayega", K.CREDENTIAL_REQUEST),
+            ("Abhi OTP batana nahi to arrest hoga", K.CREDENTIAL_REQUEST),
+            ("Paise bhejo nahi to case darj hoga", K.MONEY_REQUEST),
+            ("OTP batao mat ghabrao", K.CREDENTIAL_REQUEST),
+            ("OTP bata dijiye", K.CREDENTIAL_REQUEST),
+            ("OTP bhej dijiye", K.CREDENTIAL_REQUEST),
+            ("OTP confirm kariye", K.CREDENTIAL_REQUEST),
+            ("Jo code aaya hai woh confirm kar dijiye", K.CREDENTIAL_REQUEST),
+            ("Paise jama kar dijiye", K.MONEY_REQUEST),
+            ("AnyDesk install kar lijiye", K.REMOTE_ACCESS_REQUEST),
+        ],
+    )
+    def test_requests(self, extractor: SignalExtractor, text: str, kind: SignalKind) -> None:
+        assert tiers(extractor.extract(segment(Stream.CALLER, text))).get(kind) is Tier.FAST_PATH
+
+    @pytest.mark.parametrize(
+        ("text", "kind"),
+        [
+            ("OTP share mat karna", K.CREDENTIAL_REQUEST),
+            ("OTP kisi ke saath share mat kijiye", K.CREDENTIAL_REQUEST),
+            ("OTP batana nahi hai", K.CREDENTIAL_REQUEST),
+            ("OTP kisi ko batana nahi chahiye", K.CREDENTIAL_REQUEST),
+            ("Paise kisi ko transfer mat karna", K.MONEY_REQUEST),
+            ("AnyDesk install mat karna", K.REMOTE_ACCESS_REQUEST),
+            ("OTP batana mat", K.CREDENTIAL_REQUEST),
+        ],
+    )
+    def test_advice(self, extractor: SignalExtractor, text: str, kind: SignalKind) -> None:
+        assert kind not in tiers(extractor.extract(segment(Stream.CALLER, text)))
