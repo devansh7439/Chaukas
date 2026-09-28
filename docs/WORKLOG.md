@@ -782,3 +782,14 @@ Per the protocol this set is now spent: nothing will be tuned against it and no
 improvement on it will be claimed. The honest conclusion for the README: the keyword
 layer does not survive paraphrase, which is the job the LLM layer was designed for and why
 a stronger on-device model (on the NPU) is the next step.
+
+### 2026-09-28 - Presentation deck
+
+A 12-slide deck for the judges (private artifact on claude.ai; the owner shares it):
+cover · the problem (authority → fear → isolation → action) · the idea (combinations, not
+words) · what you see (dashboard screenshot, the four alert levels) · how it works (hear,
+transcribe, detect, watch, assess, interrupt) · the deterministic risk engine · Snapdragon
+(encoder on the NPU, everything that decides on the CPU, safe fallback) · privacy and
+security · results · honest limits · what comes next · close. Every number is one measured
+in this worklog; the NPU timing is a bracketed placeholder `[__ ms]` until the benchmark is
+run on Snapdragon, and the presenter name is `[Your name]`. Speaker notes on every slide.
