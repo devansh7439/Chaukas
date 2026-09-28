@@ -1,0 +1,20 @@
+case_id: RT04
+category: attack
+scenario: D.recited_alert.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: D adversarial speech. Variant: the caller recites the protective advice, then asks.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "This is the cyber crime cell. Your Aadhaar is linked to a money laundering case."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "Never share an OTP with anyone who calls you, even if they say they are from your bank."}
+  - {after: 1.0, caller: "But we are the police, so for this verification read me the code on your phone."}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 3.0, user: "Six zero two eight one five."}
+  - {after: 0.2, mark: "harm"}

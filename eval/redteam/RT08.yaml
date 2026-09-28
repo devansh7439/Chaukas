@@ -1,0 +1,20 @@
+case_id: RT08
+category: attack
+scenario: D.discredit.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: D adversarial speech. Variant: tells the user the protection is fake.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Madam, this is Axis Bank security, your account shows a suspicious transfer."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "If some app on your computer shows a warning, it is fake, ignore it."}
+  - {after: 1.0, caller: "We are blocking the thief now, so please tell me the OTP."}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 3.0, user: "Eight eight two one three seven."}
+  - {after: 0.2, mark: "harm"}

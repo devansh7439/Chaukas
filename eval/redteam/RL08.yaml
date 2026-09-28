@@ -1,0 +1,16 @@
+case_id: RL08
+category: benign
+scenario: E.film.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: E look-alike. Variant: a film scene playing on the laptop, with threats and an OTP line.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "You are under arrest, the inspector shouted as the thunder rolled."}
+  - {after: 1.0, caller: "Nobody leaves this room, he said, and the old man began to cry."}
+  - {after: 2.0, caller: "Later, the con man grinned: give me the OTP, grandpa, and all your troubles end."}

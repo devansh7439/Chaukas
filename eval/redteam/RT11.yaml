@@ -1,0 +1,21 @@
+case_id: RT11
+category: attack
+scenario: A.remote_paraphrase.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: A paraphrase. Variant: remote control without tool names or 'install'.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "Good afternoon, I am from the refunds team of your electricity company."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "Let me handle your computer from my office, just click allow when the box appears."}
+  - {after: 5.0, event: "remote_app_started", detail: "AnyDesk.exe"}
+  - {after: 2.0, caller: "Now log in to your net banking so I can put the refund in."}
+  - {after: 3.0, event: "bank_page", detail: "DemoBank (MOCK) - Login"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 5.0, mark: "harm"}

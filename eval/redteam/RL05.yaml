@@ -1,0 +1,16 @@
+case_id: RL05
+category: benign
+scenario: E.family_money.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: E look-alike. Variant: a real family request, no threat.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Hello papa, rent ke liye paanch hazaar chahiye the."}
+  - {after: 1.0, caller: "Aap GPay se paise bhej do, main agle hafte lauta dunga."}
+  - {after: 1.0, user: "Theek hai beta, abhi bhejta hoon."}

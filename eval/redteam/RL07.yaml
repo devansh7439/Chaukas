@@ -1,0 +1,16 @@
+case_id: RL07
+category: benign
+scenario: E.delivery_info.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: E look-alike. Variant: a delivery call that does not ask for the code.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Hello, I am outside your building with your parcel."}
+  - {after: 1.0, caller: "The delivery code is in your app, just show it to me at the gate."}
+  - {after: 1.0, user: "Okay, coming down."}

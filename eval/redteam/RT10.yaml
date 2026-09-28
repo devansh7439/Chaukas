@@ -1,0 +1,22 @@
+case_id: RT10
+category: attack
+scenario: H.long_call.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: H temporal correlation. Variant: authority at the start, a long stretch of talk, then the request.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "This is officer Rao from the CBI, you are under investigation."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 10.0, caller: "Stay on the line. I am checking the documents in your file one by one."}
+  - {after: 60.0, caller: "The file is long. I will read out the list of transactions to you."}
+  - {after: 120.0, caller: "We are almost done with the documents now, please keep holding."}
+  - {after: 120.0, caller: "Last step: read me the code that has just arrived on your phone."}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 4.0, user: "One three three seven two six."}
+  - {after: 0.2, mark: "harm"}

@@ -1,0 +1,17 @@
+case_id: RL06
+category: benign
+scenario: E.helpdesk_offer.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: E look-alike. Variant: IT helpdesk the user called; the agent sends a code.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Hi, this is Arjun, my VPN is not connecting, I raised a ticket."}
+  - {after: 1.0, caller: "Hi Arjun, I am sending you a Quick Assist code now, please type it in."}
+  - {after: 4.0, event: "remote_app_started", detail: "QuickAssist.exe"}
+  - {after: 2.0, caller: "Fixed, your VPN profile was corrupted. You are good to go."}

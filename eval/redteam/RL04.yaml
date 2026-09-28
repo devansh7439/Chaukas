@@ -1,0 +1,16 @@
+case_id: RL04
+category: benign
+scenario: E.news.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: E look-alike. Variant: a news report about scams.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Aaj ki khabar: police ne ek giroh pakda jo khud ko CBI officer batata tha."}
+  - {after: 1.0, caller: "Yeh log logon ko digital arrest ki dhamki dekar OTP maangte the."}
+  - {after: 1.0, caller: "Police ki salah hai ki aisi kisi call par OTP na batayein."}

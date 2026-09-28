@@ -1,0 +1,16 @@
+case_id: RL02
+category: benign
+scenario: E.advice.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: E look-alike. Variant: Hinglish bank advice with 'mat karna'.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Namaskar, yeh aapke bank ki taraf se ek suraksha sandesh hai."}
+  - {after: 1.0, caller: "OTP kisi ke saath share mat karna, aur paise kisi anjaan ko transfer mat karna."}
+  - {after: 1.0, caller: "AnyDesk jaisa koi app kisi ke kehne par install mat karna. Dhanyavaad."}

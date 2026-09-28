@@ -1,0 +1,19 @@
+case_id: RT02
+category: attack
+scenario: B.nahi_toh.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: B indirect. Variant: 'otherwise' threat around the request.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Main SBI head office se bol raha hoon, aapka KYC pending hai."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "Abhi jo message aaya hai uska OTP batao nahi toh account freeze ho jayega."}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 3.0, user: "Paanch do saat nau ek chaar."}
+  - {after: 0.2, mark: "harm"}

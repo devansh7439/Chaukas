@@ -1,0 +1,20 @@
+case_id: RT05
+category: attack
+scenario: C.reordered.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: C reordered. Variant: request first, authority and threat afterwards.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Tell me the six digit code that just came to your phone."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "I am an inspector from the cyber police, this is an official matter."}
+  - {after: 1.0, caller: "If you do not cooperate a warrant will be issued in your name today."}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 4.0, user: "Okay, nine one one four zero two."}
+  - {after: 0.2, mark: "harm"}

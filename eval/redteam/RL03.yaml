@@ -1,0 +1,16 @@
+case_id: RL03
+category: benign
+scenario: E.presenter.en
+split: test
+author: me
+language: english
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: E look-alike. Variant: a colleague shares their own screen.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Morning everyone, let us go through the quarterly numbers."}
+  - {after: 1.0, caller: "I will share my screen so you can see the sales dashboard."}
+  - {after: 2.0, user: "Yes, I can see it now."}

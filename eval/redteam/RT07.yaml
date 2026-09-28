@@ -1,0 +1,20 @@
+case_id: RT07
+category: attack
+scenario: A.money.devanagari
+split: test
+author: me
+language: hindi
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: A paraphrase. Variant: Hindi in Devanagari, no 'transfer'.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "मैं सीबीआई दफ़्तर से अधिकारी बोल रहा हूँ, आपके नाम पर गिरफ़्तारी का वारंट है।"}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "यह बात किसी को मत बताइए, वरना मामला और बिगड़ जाएगा।"}
+  - {after: 1.0, caller: "अपनी सारी जमा राशि जाँच के लिए इस सुरक्षित खाते में डाल दीजिए।"}
+  - {after: 2.0, event: "transfer_page", detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 5.0, mark: "harm"}

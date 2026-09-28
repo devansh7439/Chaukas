@@ -1,0 +1,20 @@
+case_id: RT03
+category: attack
+scenario: B.polite.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Red-team set D. Written after the red-team hardening commits and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built and hardened the detector, knowing its rules. Class: B indirect. Variant: polite compound verb, no 'batao'.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Namaste ji, HDFC credit card department se Priya bol rahi hoon."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "Aapke card par reward points expire ho rahe hain, aaj hi redeem karne honge."}
+  - {after: 1.0, caller: "Aapke phone par ek code aaya hoga, woh OTP confirm kar dijiye."}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 3.0, user: "Haan, teen aath do ek chhe saat."}
+  - {after: 0.2, mark: "harm"}
