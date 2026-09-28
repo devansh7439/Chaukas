@@ -183,12 +183,14 @@ keywords + semantic layer + engine + screen, no LLM):**
 | Set | Status of the set | Scams detected | Critical before harm | False alarms |
 |---|---|---|---|---|
 | Red-team set D (12 attacks, 8 hard look-alikes) | Fresh: committed before its only run | **11/12** | 9/12 | **3/8** |
+| Set E: remote control (8 attacks, 8 look-alikes) | Fresh: committed before its only run | **6/8** (1/8 before the organisation-claim rule) | 1/8 | **0/8** |
 | Held-out AT/BT (8 + 8) | Seen twice before | 7/8 | 5/8 | 1/8 |
 | Robustness matrix (18 + 8) | Seen before | 14/18 | 10/18 | 1/8 |
 | Paraphrase sets B and C (12 + 8) | Seen before | 6/12 | 2/12 | 1/8 |
 | Dev (15 + 11) | Used for development | 13/15 | 10/15 | 1/11 |
 
-Only set D is a clean measurement. The tables below keep the history in the order it
+Only sets D and E are clean measurements (set E: the same fresh set, run once on the code
+before and once after the rule it tests). The tables below keep the history in the order it
 happened, including each set's first, clean run.
 
 **History.** Detection (configuration E):
@@ -331,13 +333,13 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 | Triggered OCR of the active window (Windows OCR), only while a call is suspicious | Built, tested on real rendered text |
 | The window: dashboard, alerts, Why / Privacy / Settings, English and Hindi | Built, tested |
 | Semantic intent layer for paraphrases (on-device embeddings; English and Devanagari) | Built, measured on fresh sets |
-| Evaluation: 108 cases (26 dev, 16 held-out, 26 robustness, 20 paraphrase, 20 red-team), replay, metrics with confidence intervals and breakdowns by language / intent / set, ablations A-E, `--no-semantic` | Built |
+| Evaluation: 124 cases (26 dev, 16 held-out, 26 robustness, 20 paraphrase, 20 red-team, 16 remote control), replay, metrics with confidence intervals and breakdowns by language / intent / set, ablations A-E, `--no-semantic` | Built |
 | Decision trace per alert (source, confidence, decay, contribution, chain step, rule); the Why panel is built from it | Built, tested |
 | Optional local LLM (llama.cpp, managed by Chaukas; evidence guard; schema-constrained) | Built, measured; off by default, not wired into live mode |
 | Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; CPU fallback tested |
 | Tray icon, spoken alerts, onboarding | **Not built** |
 
-Quality: 849 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
+Quality: 875 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on
 every push.
 
@@ -451,7 +453,7 @@ src/chaukas/
   evaluation/    case scripts, session pipeline, replay, metrics, ablations
   ui/            window: live session, services, presenter, Qt bridge, QML views
   resources/     default.yaml, lexicon.yaml, templates.yaml, context.yaml
-eval/            case scripts (YAML): cases/ (dev, held-out), robustness/, paraphrase/, redteam/
+eval/            case scripts (YAML): cases/ (dev, held-out), robustness/, paraphrase/, redteam/, remote/
 docs/            ARCHITECTURE.md, DATA_MODEL.md, REDTEAM.md, WORKLOG.md, diagrams, images
 tests/           one folder per package
 ```
@@ -477,9 +479,11 @@ tests/           one folder per package
 - **Friction, not a wall.** Someone with remote control of the PC can close Chaukas, and a
   frightened person can click through warnings.
 - **Paraphrases are only partly covered.** The semantic layer caught 6 of 12 fresh
-  paraphrased scams (keywords alone: 1); remote-control paraphrases without a tool name
-  are the weakest (missed in the red-team set), and Roman-script Hinglish paraphrases
-  depend on the lexicon (see [Results](#results)).
+  paraphrased scams (keywords alone: 1), and Roman-script Hinglish paraphrases depend on
+  the lexicon. Remote-control scams are caught when the caller claims to be from an
+  organisation (6 of 8 fresh cases, as warnings); missed when there is no claim at all, or
+  when the screen is shared inside a browser meeting, where no remote tool starts (see
+  [Results](#results)).
 - **OTP false alarms:** a stranger asking for an OTP is a warning even when legitimate: a
   delivery agent asking for the order OTP uses the same words as a scammer.
 - **Tools it doesn't know:** a rebuilt remote-access tool with new branding, or remote

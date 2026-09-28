@@ -192,7 +192,9 @@ VERIFIED (`tests/engine/test_trace.py`).
 
 **Open risks**, in priority order:
 
-1. Remote-control paraphrases without tool names (RT11) reach notice at most.
+1. Remote-control scams with no organisation claim, or with the screen shared inside a
+   browser meeting (no remote tool starts), reach notice at most (set E: RR04, RR07).
+   Remote-control scams that are caught reach warning, rarely critical.
 2. Media playing on the PC (films, news about scams) can raise warnings or a critical:
    loopback cannot tell a film from a call.
 3. Delivery-code requests are indistinguishable by wording from scam requests.
@@ -200,6 +202,9 @@ VERIFIED (`tests/engine/test_trace.py`).
    sharing their screen matches "share your screen" by meaning; notice at most).
 5. Rebuilt remote tools and browser-based remote access are not recognised.
 6. Real Hinglish speech recognition and NPU performance: NOT YET VERIFIED.
+7. OCR reads the whole active window once a call is suspicious. Reading only the text of
+   the relevant controls through Windows UI Automation, before falling back to a
+   screenshot, would expose less unrelated private content. Not built.
 
 **Q: Isn't this just keyword matching?** Keywords are one layer. Requests need a verb and
 an object of the same kind, with clause-bounded negation, offers and redirects handled;
@@ -230,3 +235,43 @@ NOT YET VERIFIED.
 **Q: Is your evaluation honest?** Every set was committed before its first run; re-runs
 are labelled; nothing was tuned on held-out, robustness, paraphrase or red-team sets.
 None of the sets is blind: the same assistant wrote the detector and the cases.
+
+## K. Follow-up: an external review (same day)
+
+A second review of the code after this report found six more issues; each was checked
+against the code before being accepted, and fixed with a test written first.
+
+| Finding | Confirmed? | Fix | Evidence |
+|---|---|---|---|
+| Ablation A ("keywords only") still used the semantic layer when the model was downloaded | Yes | `ablation.use_semantic`: off in A, on in B-E as in live mode; the ablation table has a semantic column | VERIFIED (`tests/evaluation/test_metrics.py`, `tests/test_cli.py`) |
+| The README status quoted the first robustness run (10/18) while later sections had newer numbers | Yes | Status and Results lead with the latest run of every set, each labelled fresh or seen | README |
+| Chain steps never expired within a session | Yes: a morning news video ("CBI ... arrest") completed the digital-arrest chain for an evening family call, **critical** (score 0.82) | Steps expire after `chain.step_memory_s` (1,800 s of speech) without a new sighting; a step heard again is new again | VERIFIED (`tests/engine/test_trace.py::TestStaleChainSteps`) |
+| The benchmark called everything "int8" | Yes | Per-part precision: "int8 model on the CPU"; on the NPU "fp32 model, run in fp16 on the NPU (QNN HTP)", or the backend's default if fp16 is refused | VERIFIED with a fake QNN runtime; real NPU: NOT YET VERIFIED |
+| Models were hash-checked at download, not at load | Yes | `core/integrity.py`: Whisper (hashes from Hugging Face's metadata for the pinned revision), the semantic model and tokenizer, and voice detection are checked at every load; a changed file is refused and named | VERIFIED (`tests/core/test_integrity.py`) |
+| The remote-control paraphrase was the top open risk | Partly: the trace of RT11 showed the semantic layer *had* caught the request; the missing piece was the organisation claim | `signals/claims.py`: a self-introduction on behalf of an organisation ("I am from the refunds team of ...", "... department se bol raha hoon") is a weak authority signal, which lets the remote-banking rule fire; too weak to prime the OTP rule or fill a chain step | Set E below |
+| Dates said 29 September; every commit is from 28 September | Yes | Corrected | - |
+
+**Set E** (`eval/remote/`, 8 remote-control attacks and 8 look-alikes; written after the
+rule, committed before its only run, tag `eval-remote-1`; non-blind), run once on the
+code before the rule and once after. MEASURED:
+
+| | Before the rule | After |
+|---|---|---|
+| Attacks detected | 1/8 | **6/8** |
+| Critical before harm | 1/8 | 1/8 |
+| False alarms | 0/8 | **0/8** |
+
+The look-alikes included a son remote-helping his mother before she opens her bank (no
+organisation claim: notice), a helpdesk the user called, real bank and insurance calls
+introducing themselves by department, and a remote-access tutorial. Missed: RR04 (no
+claim at all) and RR07 (a browser meeting screen share: no remote tool starts). The six
+caught reach warning, not critical: the remote-access chain's critical gate still needs
+a confident authority claim.
+
+Other sets re-run on the final code: set D 11/12 and 3/8, held-out 7/8 and 1/8,
+robustness 14/18 and 1/8, paraphrase 6/12 and 1/8, dev 13/15 and 1/11 (unchanged).
+
+Still to do by the author: run `uv run chaukas benchmark --asr-device npu --json
+npu.json` on a Snapdragon PC (after `uv run chaukas setup --asr-device npu`); it records
+whether QNN bound, per-part precision, encoder, decoder and total time, real-time factor,
+peak memory and battery state.

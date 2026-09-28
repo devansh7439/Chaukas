@@ -910,3 +910,23 @@ unchanged (6/12, 1/8).
 
 Security re-check: bandit clean, pip-audit no known vulnerabilities, no secrets, 30/30
 security tests. Tests: 849.
+
+### 2026-09-28 - External review follow-up
+
+Every finding was checked against the code first; all were confirmed and fixed test-first
+(details and evidence in [REDTEAM.md](REDTEAM.md#k-follow-up-an-external-review-same-day)):
+
+- Ablation A used the semantic layer: `ablation.use_semantic` (off in A, on in B-E).
+- README status quoted old numbers: it now leads with the latest run of every set.
+- Chain steps never expired: a morning news video completed an evening call's chain
+  (critical, 0.82). Steps now expire after 1,800 s of speech without a new sighting.
+- Benchmark precision per part (int8 CPU; fp32 run in fp16 on the NPU).
+- Models hash-checked at every load, not only at download (`core/integrity.py`).
+- Remote control: RT11's trace showed the missing piece was the organisation claim, not
+  the paraphrase. Organisation claims are now a weak authority signal. Fresh set E
+  (committed before its only run, tag `eval-remote-1`): detected 1/8 -> **6/8**, false
+  alarms 0/8 -> 0/8. Missed: no claim at all; browser screen share.
+- Dates: 29 September corrected to 28 September everywhere.
+
+Not done: real Snapdragon measurements (needs the hardware); OCR via UI Automation before
+screenshots (documented as an open risk).
