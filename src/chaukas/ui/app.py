@@ -7,6 +7,7 @@ headless with the software renderer and saves one PNG per visible window.
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from collections.abc import Mapping, Sequence
@@ -21,6 +22,7 @@ from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 
 from chaukas.core.config import ChaukasConfig
 from chaukas.core.errors import ChaukasError
+from chaukas.core.integrity import ModelIntegrityError
 from chaukas.engine.templates import load_templates
 from chaukas.evaluation.ablation import config_for
 from chaukas.evaluation.cases import load_case
@@ -30,6 +32,8 @@ from chaukas.ui.bridge import DashboardBridge
 from chaukas.ui.icons import IconProvider
 from chaukas.ui.live import LiveSession
 from chaukas.ui.settings import load_settings, settings_path
+
+logger = logging.getLogger(__name__)
 
 HERE: Final = Path(__file__).resolve().parent
 ASSETS: Final = HERE / "assets"
@@ -109,6 +113,9 @@ def load_ui(
         try:
             detector = load_semantic(config.signals.semantic)
         except ImportError:  # onnxruntime or tokenizers not installed
+            detector = None
+        except ModelIntegrityError as exc:  # changed on disk: keywords carry on without it
+            logger.warning("semantic layer off: %s", exc)
             detector = None
     templates = load_templates()
     live = LiveSession(config, Lexicon.load(), templates,

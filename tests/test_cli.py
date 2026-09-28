@@ -336,3 +336,15 @@ def test_devices_also_reports_screen_reading(capsys: pytest.CaptureFixture[str])
     pytest.importorskip("soundcard")
     assert main(["devices"]) == EXIT_OK
     assert "Screen text (OCR):" in capsys.readouterr().out
+
+
+def test_a_tampered_semantic_model_is_refused_and_keywords_carry_on(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from chaukas.signals import semantic
+
+    if semantic.find_model() is None:
+        pytest.skip("the semantic model is not downloaded")
+    monkeypatch.setattr(semantic, "TOKENIZER_SHA256", "0" * 64)
+    assert main(["eval", str(CASES_DIR), "--split", "dev"]) == EXIT_OK
+    assert "semantic layer: off (tokenizer.json has changed" in capsys.readouterr().err

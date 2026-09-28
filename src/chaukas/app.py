@@ -14,6 +14,7 @@ from typing import Final
 from chaukas import __version__
 from chaukas.core.config import ChaukasConfig, LLMConfig, load_config
 from chaukas.core.errors import ChaukasError
+from chaukas.core.integrity import ModelIntegrityError
 from chaukas.evaluation.ablation import ABLATIONS, config_for
 from chaukas.evaluation.cases import Case, Split, load_case, load_cases
 from chaukas.evaluation.metrics import CaseOutcome, Summary, breakdown, score_case, summarise
@@ -201,12 +202,17 @@ def _semantic(args: argparse.Namespace, config: ChaukasConfig) -> SemanticDetect
         print(f"semantic layer: off (configuration {args.ablation})", file=sys.stderr)
         return None
     detector = None
+    refused = ""
     if not args.no_semantic:
         try:
             detector = load_semantic(config.signals.semantic)
         except ImportError:  # onnxruntime or tokenizers not installed
             detector = None
-    note = describe(detector) if detector or args.no_semantic else "off (model not downloaded)"
+        except ModelIntegrityError as exc:  # changed on disk: never load it
+            refused = f"off ({exc})"
+    note = refused or (
+        describe(detector) if detector or args.no_semantic else "off (model not downloaded)"
+    )
     print(f"semantic layer: {note}", file=sys.stderr)
     return detector
 

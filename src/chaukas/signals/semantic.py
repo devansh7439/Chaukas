@@ -28,6 +28,7 @@ import numpy.typing as npt
 
 from chaukas.core.config import SemanticConfig
 from chaukas.core.errors import ConfigError
+from chaukas.core.integrity import verify
 from chaukas.core.models import Segment, Signal, SignalKind, SignalSource, Stream, Tier
 from chaukas.core.yamlio import read_resource_mapping
 
@@ -41,6 +42,7 @@ MODELS: Final[Mapping[str, tuple[str, str]]] = {
               "783fea82d71a58179b830a4dbd2d58447e640609e98eedf9ffa12622d375a672"),
 }  # fmt: skip
 TOKENIZER: Final = "tokenizer.json"
+TOKENIZER_SHA256 = "2c3387be76557bd40970cec13153b3bbf80407865484b209e655e5e4729076b8"
 _MAX_TOKENS: Final = 128
 
 Vectors = npt.NDArray[np.float32]
@@ -206,6 +208,8 @@ def load_semantic(config: SemanticConfig) -> SemanticDetector | None:
     name = model_file()
     if folder is None or name is None:
         return None
+    verify(folder / TOKENIZER, sha256=TOKENIZER_SHA256)  # at every load, not only download
+    verify(folder / name, sha256=MODELS[platform.machine()][1])
     return SemanticDetector(OnnxEmbedder(folder, name), Intents.load(), config)
 
 

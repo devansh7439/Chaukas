@@ -20,6 +20,7 @@ import onnxruntime as ort
 
 from chaukas.audio.convert import Samples
 from chaukas.core.errors import ChaukasError
+from chaukas.core.integrity import verify
 from chaukas.core.paths import models_dir
 
 WINDOW: Final = 512
@@ -79,6 +80,7 @@ class SileroVad:
     __slots__ = ("_c", "_context", "_h", "_pending", "_session")
 
     def __init__(self, model: Path) -> None:
+        verify(model, sha256=MODEL_SHA256)  # at every load, not only download
         options = ort.SessionOptions()
         options.intra_op_num_threads = 1
         options.inter_op_num_threads = 1

@@ -32,6 +32,7 @@ import logging
 import os
 import time
 import zlib
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Final, Literal
@@ -42,6 +43,7 @@ import numpy.typing as npt
 from chaukas.asr.base import ModelMissingError, Transcript
 from chaukas.asr.features import log_mel
 from chaukas.audio.convert import TARGET_RATE, Samples
+from chaukas.core.integrity import verify
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,16 @@ ENCODER: Final = "onnx/encoder_model_int8.onnx"
 ENCODER_NPU: Final = "onnx/encoder_model.onnx"  # fp32: the NPU runs it in fp16
 DECODER: Final = "onnx/decoder_model_merged_int8.onnx"
 FILES: Final = (ENCODER, DECODER, "tokenizer.json", "config.json", "generation_config.json")
+# Hashes published by Hugging Face for the pinned revision of whisper-small (LFS SHA-256 for
+# the models, git blob ids for the small files). Checked at every load, not only download.
+FILE_HASHES: Final[dict[str, tuple[str, str]]] = {
+    ENCODER: ("sha256", "2601c9eb2d345c5916d4576d36f663a7c96589740fb2273828c48c3fc2c7db75"),
+    ENCODER_NPU: ("sha256", "b37cd6625dc36f9178ec7539a1876b9680ea26a910097e092be39dc766320c7b"),
+    DECODER: ("sha256", "ec07c3cbb64172c39791e26ee870a65ac22b458c36722bfe2776b3dbf741e0c9"),
+    "tokenizer.json": ("git_sha1", "1e95340ff836fad1b5932e800fb7b8c5e6d78a74"),
+    "config.json": ("git_sha1", "b0447377b1ade057f991a6a0870d2a91de762f7f"),
+    "generation_config.json": ("git_sha1", "703dc78ee83e87fca3ace72170253cdfe4cd2d13"),
+}
 CPU_PROVIDER: Final = "CPUExecutionProvider"
 CPU_PRECISION: Final = "int8 model on the CPU"
 NPU_FP16: Final = "fp32 model, run in fp16 on the NPU (QNN HTP)"
@@ -141,6 +153,11 @@ class WhisperOnnx:
         import onnxruntime as ort
         from tokenizers import Tokenizer
 
+        if folder.name == REVISIONS["small"]:  # the pinned snapshot: hashes are known
+            verify_files(folder, (*FILES, *((ENCODER_NPU,) if device == "npu" else ())),
+                         optional={ENCODER_NPU})  # fmt: skip
+        else:
+            logger.warning("no pinned hashes for the Whisper model in %s; not verified", folder)
         options = _session_options(ort, cpu_threads)
         note = ""
         encoder = None
@@ -320,6 +337,19 @@ def download(size: str, device: Device = "cpu") -> Path:
     files = [*FILES, ENCODER_NPU] if device == "npu" else list(FILES)
     return Path(snapshot_download(REPO.format(size=size), allow_patterns=files,
                                   revision=REVISIONS[size], max_workers=2))  # fmt: skip
+
+
+def verify_files(folder: Path, files: Sequence[str], *, optional: Collection[str] = ()) -> None:
+    """Check each pinned file in ``folder`` (ModelIntegrityError if one differs). A file in
+    ``optional`` may be absent (the NPU encoder: its absence means a CPU fallback)."""
+    for name in files:
+        if name in optional and not (folder / name).is_file():
+            continue
+        kind, expected = FILE_HASHES[name]
+        if kind == "sha256":
+            verify(folder / name, sha256=expected)
+        else:
+            verify(folder / name, git_sha1=expected)
 
 
 def _npu_encoder(ort: Any, path: Path, cpu_threads: int) -> tuple[Any, str]:
