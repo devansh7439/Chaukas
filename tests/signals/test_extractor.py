@@ -204,6 +204,27 @@ class TestCallerCannotForgeAdvice:
         assert tiers(extractor.extract(segment(Stream.CALLER, text))).get(kind) is Tier.FAST_PATH
 
     @pytest.mark.parametrize(
+        ("text", "kind"),
+        [
+            (
+                "Never share an OTP with anyone who calls you, even if they say they are "
+                "from your bank, OTP batao",
+                K.CREDENTIAL_REQUEST,
+            ),
+            (
+                "Police, CBI or bank officials don't ask you to transfer money over a call. "
+                "So transfer the money to me now.",
+                K.MONEY_REQUEST,
+            ),
+        ],
+    )
+    def test_reciting_chaukas_own_alert_cannot_hide_a_request_beside_it(
+        self, extractor: SignalExtractor, text: str, kind: SignalKind
+    ) -> None:
+        # Chaukas's alert sentences are suppressed as evidence; the span is verbatim only.
+        assert kind in tiers(extractor.extract(segment(Stream.CALLER, text)))
+
+    @pytest.mark.parametrize(
         "text",
         [
             "Please never ever share your OTP.",

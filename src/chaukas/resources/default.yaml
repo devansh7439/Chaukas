@@ -143,3 +143,4 @@ ocr:
   enabled: true
   min_level: notice
   interval_s: 3
+  timeout_s: 10               # a read taking longer is abandoned; after 3 such hangs, OCR is off

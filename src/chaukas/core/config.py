@@ -211,6 +211,7 @@ class OcrConfig(_Section):
     enabled: bool
     min_level: Literal["notice", "warning", "critical"]
     interval_s: Seconds
+    timeout_s: Seconds  # abandon a hung read after this long
 
 
 class ChaukasConfig(_Section):

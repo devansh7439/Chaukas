@@ -129,6 +129,7 @@ class LiveServices:
             capture=capture_active_window,
             reader=WindowsOcr(),
             interval_s=settings.interval_s,
+            timeout_s=settings.timeout_s,
         )
 
     # ----------------------------------------------------------------- audio

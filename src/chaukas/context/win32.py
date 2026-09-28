@@ -49,6 +49,17 @@ def foreground_window() -> tuple[int, str] | None:
     return int(hwnd), buffer.value
 
 
+def window_process_id(hwnd: int) -> int:
+    """Id of the process that owns window ``hwnd``; 0 if unknown."""
+    if sys.platform != "win32":
+        return 0
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.GetWindowThreadProcessId.argtypes = (wintypes.HWND, ctypes.POINTER(wintypes.DWORD))
+    pid = wintypes.DWORD(0)
+    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+    return int(pid.value)
+
+
 def window_rect(hwnd: int) -> tuple[int, int, int, int] | None:
     """(left, top, right, bottom) of a visible, non-minimised window in screen pixels, or
     None. Uses the DWM frame bounds (without the invisible resize border) when available."""

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import sys
+import threading
+from collections.abc import Callable
 
 import pytest
 
@@ -71,7 +74,9 @@ class TestTrigger:
 
     def test_chaukas_never_reads_its_own_window(self) -> None:
         reader = FakeReader("Enter OTP")
-        watcher = ocr(reader, suspicious=[True], window=image(title="Chaukas"))
+        own = WindowImage(handle=7, title="Chaukas", width=10, height=10, bgra=b"\0" * 400,
+                          pid=os.getpid())  # fmt: skip
+        watcher = ocr(reader, suspicious=[True], window=own)
         assert watcher.poll(1.0) == []
         assert reader.reads == 0
 
@@ -123,6 +128,7 @@ class TestWindowsOcr:
         shot = capture_active_window()
         if shot is not None:
             assert len(shot.bgra) == shot.width * shot.height * 4
+            assert shot.pid > 0  # the owner process is known, so our own windows are skipped
 
     def test_ocr_then_qt_does_not_crash(self) -> None:
         # winrt ships an older msvcp140.dll: if it loads before Qt's, importing Qt crashes
@@ -236,4 +242,95 @@ class TestNeverBlocksTheMonitor:
         watcher.reset()  # the session ends while the read is in flight
         time.sleep(0.5)
         assert all(e.t != 1.0 for e in watcher.poll(2.0))
+        watcher.close()
+
+
+class TestHardening:
+    """Red-team regressions: spoofed titles, hung OCR, malformed output, window switches."""
+
+    def test_a_page_titled_chaukas_in_another_process_is_still_read(self) -> None:
+        # A phishing page can call itself "Chaukas"; only our own process is skipped.
+        spoof = WindowImage(handle=9, title="Chaukas - verify your OTP", width=10, height=10,
+                            bgra=b"\0" * 400, pid=os.getpid() + 1)  # fmt: skip
+        (event,) = ocr(FakeReader("Enter OTP"), suspicious=[True], window=spoof).poll(1.0)
+        assert event.kind is ContextKind.OTP_FIELD_VISIBLE
+
+    def test_our_own_process_is_never_read_whatever_its_title(self) -> None:
+        reader = FakeReader("Enter OTP")
+        own = WindowImage(handle=9, title="Dashboard", width=10, height=10, bgra=b"\0" * 400,
+                          pid=os.getpid())  # fmt: skip
+        assert ocr(reader, suspicious=[True], window=own).poll(1.0) == []
+        assert reader.reads == 0
+
+    @pytest.mark.parametrize("bad", [None, 42, b"Enter OTP"])
+    def test_malformed_reader_output_is_ignored(self, bad: object) -> None:
+        reader = FakeReader("")
+        reader.text = bad  # type: ignore[assignment]
+        assert ocr(reader, suspicious=[True]).poll(1.0) == []
+
+    def test_huge_text_is_capped_and_classified_quickly(self) -> None:
+        import time
+
+        start = time.perf_counter()
+        (event,) = ocr(FakeReader("Enter OTP " + "x " * 3_000_000),
+                       suspicious=[True]).poll(1.0)  # fmt: skip
+        assert event.kind is ContextKind.OTP_FIELD_VISIBLE
+        assert time.perf_counter() - start < 1.0
+
+    def test_the_event_names_the_window_that_was_captured(self) -> None:
+        windows = iter([image(title="MyBank - Verify", handle=1), image(title="Notepad", handle=2)])
+        watcher = TriggeredOcr(RULES, should_read=lambda: True, capture=lambda: next(windows),
+                               reader=FakeReader("Enter OTP"), interval_s=0.0,
+                               synchronous=True)  # fmt: skip
+        (event,) = watcher.poll(1.0)
+        assert "MyBank - Verify" in event.detail
+
+
+class StuckReader(FakeReader):
+    def __init__(self, text: str) -> None:
+        super().__init__(text)
+        self.release = threading.Event()
+
+    def read(self, window: WindowImage) -> str:
+        self.reads += 1
+        self.release.wait(10.0)
+        return str(self.text)
+
+
+class TestTimeouts:
+    def _watcher(self, reader: FakeReader, timeout_s: float = 2.0) -> TriggeredOcr:
+        return TriggeredOcr(RULES, should_read=lambda: True, capture=image, reader=reader,
+                            interval_s=0.0, timeout_s=timeout_s)  # fmt: skip
+
+    @staticmethod
+    def _wait_for(condition: Callable[[], bool]) -> None:
+        import time
+
+        deadline = time.perf_counter() + 5.0
+        while not condition() and time.perf_counter() < deadline:
+            time.sleep(0.02)
+
+    def test_a_hung_read_is_abandoned_and_reading_resumes(self) -> None:
+        reader = StuckReader("Enter OTP")
+        watcher = self._watcher(reader)
+        watcher.poll(0.0)
+        self._wait_for(lambda: reader.reads == 1)
+        watcher.poll(1.0)  # still within the timeout: no second read
+        assert reader.reads == 1
+        watcher.poll(3.0)  # past it: the hung read is abandoned, a new one starts
+        self._wait_for(lambda: reader.reads == 2)
+        assert (reader.reads, watcher.timeouts) == (2, 1)
+        reader.release.set()
+        watcher.close()
+
+    def test_gives_up_after_repeated_hangs_and_says_why(self) -> None:
+        reader = StuckReader("Enter OTP")
+        watcher = self._watcher(reader, timeout_s=1.0)
+        for t in range(0, 20, 2):
+            watcher.poll(float(t))
+            self._wait_for(lambda: reader.reads >= min(3, t // 2 + 1))
+        assert watcher.timeouts == 3
+        assert reader.reads == 3  # no further read is started
+        assert watcher.disabled is not None and "stopped responding" in watcher.disabled
+        reader.release.set()
         watcher.close()
