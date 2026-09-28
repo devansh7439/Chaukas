@@ -38,6 +38,7 @@ def test_reports_timings_providers_and_real_time_factor(
     assert result["fallback"] is False
     assert "OTP" in result["text"]
     assert result["on_battery"] in (True, False, None)  # recorded: it changes the numbers
+    assert result["peak_memory_mb"] is None or result["peak_memory_mb"] > 100.0  # the model
     json.dumps(result)  # serialisable as it is
 
 
@@ -55,3 +56,16 @@ def test_a_requested_npu_that_is_not_available_is_reported_as_a_fallback(
     assert result["device"] == "cpu"
     assert result["fallback"] is True
     assert "QNN" in result["note"]
+
+
+def test_peak_memory_is_reported_where_windows_can_measure_it() -> None:
+    import sys
+
+    from chaukas.asr.benchmark import peak_memory_mb
+
+    peak = peak_memory_mb()
+    if sys.platform == "win32":
+        assert peak is not None
+        assert peak > 10.0  # this Python process with numpy and onnxruntime loaded
+    else:
+        assert peak is None

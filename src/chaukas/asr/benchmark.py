@@ -72,8 +72,45 @@ def benchmark(whisper: WhisperOnnx, audio: Samples, *, runs: int, model: str) ->
         "encoder_ms": round(statistics.median(encoder), 1),
         "decoder_ms": round(statistics.median(decoder), 1),
         "rtf": round(total_ms / 1000 / audio_s, 4),
+        "peak_memory_mb": peak_memory_mb(),
         "text": text,
     }
+
+
+def peak_memory_mb() -> float | None:
+    """This process's peak working set in MB (models, runtime and audio included), or None
+    where it cannot be read (not Windows)."""
+    if sys.platform != "win32":
+        return None
+    import ctypes
+    from ctypes import wintypes
+
+    class _Counters(ctypes.Structure):
+        _fields_ = [
+            ("cb", wintypes.DWORD),
+            ("page_fault_count", wintypes.DWORD),
+            ("peak_working_set_size", ctypes.c_size_t),
+            ("working_set_size", ctypes.c_size_t),
+            ("quota_peak_paged_pool_usage", ctypes.c_size_t),
+            ("quota_paged_pool_usage", ctypes.c_size_t),
+            ("quota_peak_non_paged_pool_usage", ctypes.c_size_t),
+            ("quota_non_paged_pool_usage", ctypes.c_size_t),
+            ("pagefile_usage", ctypes.c_size_t),
+            ("peak_pagefile_usage", ctypes.c_size_t),
+        ]
+
+    counters = _Counters()
+    counters.cb = ctypes.sizeof(counters)
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE  # a 64-bit pseudo-handle
+    psapi = ctypes.WinDLL("psapi", use_last_error=True)
+    psapi.GetProcessMemoryInfo.argtypes = (wintypes.HANDLE, ctypes.POINTER(_Counters),
+                                           wintypes.DWORD)  # fmt: skip
+    psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+    if not psapi.GetProcessMemoryInfo(kernel32.GetCurrentProcess(), ctypes.byref(counters),
+                                      counters.cb):  # fmt: skip
+        return None
+    return round(float(counters.peak_working_set_size) / 1_048_576, 1)
 
 
 def on_battery() -> bool | None:
@@ -113,6 +150,7 @@ def describe(result: dict[str, Any]) -> str:
         f"Speech-to-text:    {result['total_ms']:.0f} ms"
         f"  (encoder {result['encoder_ms']:.0f} ms, decoder {result['decoder_ms']:.0f} ms)",
         f"Real-time factor:  {result['rtf']:.3f}  (below 1 is faster than real time)",
+        f"Peak memory:       {result['peak_memory_mb'] or '-'} MB  (whole process)",
         f"Heard:             {result['text']!r}",
     ])  # fmt: skip
 
