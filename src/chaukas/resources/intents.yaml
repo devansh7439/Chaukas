@@ -77,7 +77,10 @@ intents:
       - let me connect to your laptop remotely to fix it
       - share your screen with me now
       - download the support program and tell me the number it shows
+      - give me control of your computer for a while
+      - accept the access request so our technician can work on your system from here
       - कंप्यूटर पर यह ऐप डाल दीजिए ताकि मैं देख सकूँ
+      - रिमोट एक्सेस की अनुमति दे दीजिए
     not:
       - I will share my screen to show you the report
       - can you see my screen now

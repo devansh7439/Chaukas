@@ -24,6 +24,12 @@ A negator *after* the verb ("OTP batana nahi", "share mat karna") counts only wh
 helper verb or the end of the clause follows it. In "OTP batao nahi toh account band ho
 jayega" the "nahi toh" means "otherwise": that is a threat around a request.
 
+The speaker sending something is an offer, not a request: "we will send an OTP to your
+registered mobile", "I am sending you an OTP". A transmission verb with a first-person
+subject just before it, in the same clause, does not pair, unless its recipient is the
+speaker ("we will send ... send it back to me" still pairs with the second verb). The
+object itself still counts as keyword evidence.
+
 Cost: one automaton scan, then O(objects * verbs) pairing; both are tiny per segment.
 """
 
@@ -67,6 +73,8 @@ def find_requests(
     for match in lexicon.request_words.find(tokens):
         if inside_any(match.start, match.end, excluded):
             continue
+        if match.payload.role == "verb" and _is_offer(tokens, match, lexicon, clause_starts):
+            continue
         (verbs if match.payload.role == "verb" else objects).append(match)
 
     hits: list[RequestHit] = []
@@ -90,6 +98,23 @@ def find_requests(
             start = _extend_over_list(tokens, objects, obj.payload.kind, start, lexicon)
         hits.append(RequestHit(obj.payload.kind, start, end, negated))
     return hits
+
+
+def _is_offer(
+    tokens: Sequence[str],
+    verb: Match[RequestWord],
+    lexicon: Lexicon,
+    clause_starts: frozenset[int],
+) -> bool:
+    """ "we will send", "I am sending you": the speaker is the sender."""
+    if tokens[verb.start] not in lexicon.offer_verbs or _aimed_at_speaker(tokens, verb, lexicon):
+        return False
+    for i in range(verb.start - 1, max(-1, verb.start - 4), -1):
+        if tokens[i] in lexicon.offer_subjects:
+            return True
+        if i in clause_starts:
+            break
+    return False
 
 
 def _aimed_at_speaker(tokens: Sequence[str], verb: Match[RequestWord], lexicon: Lexicon) -> bool:

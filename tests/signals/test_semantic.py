@@ -23,9 +23,11 @@ class TableEmbedder:
         self.table = {text: np.asarray(v, dtype=np.float32) / np.linalg.norm(v)
                       for text, v in table.items()}  # fmt: skip
         self.calls = 0
+        self.batch_sizes: list[int] = []
 
     def embed(self, texts: Sequence[str]) -> object:
         self.calls += 1
+        self.batch_sizes.append(len(texts))
         return np.stack([self.table[text] for text in texts])
 
 
@@ -82,9 +84,19 @@ class TestSemanticDetector:
     def test_the_examples_are_embedded_once(self) -> None:
         embedder = TableEmbedder(TABLE)
         semantic = SemanticDetector(embedder, INTENTS, CONFIG)
+        examples = embedder.calls
+        assert examples == 3  # each example once, at construction
         semantic.detect(caller("the meeting is at five"))
         semantic.detect(caller("read me the digits we sent you"))
-        assert embedder.calls == 3  # the examples, then one call per line
+        assert embedder.calls == examples + 2  # then one call per line
+
+    def test_every_text_is_embedded_alone_like_a_live_line(self) -> None:
+        # The int8 model quantises activations per batch: a sentence's vector shifted by
+        # ~0.003 cosine with the other examples in its batch, so adding one example moved
+        # every decision. Examples are embedded one at a time, exactly like live lines.
+        embedder = TableEmbedder(TABLE)
+        SemanticDetector(embedder, INTENTS, CONFIG).detect(caller("the meeting is at five"))
+        assert set(embedder.batch_sizes) == {1}
 
     def test_requests_are_strong_enough_for_the_otp_rule(self) -> None:
         rules = load_config().engine.rules

@@ -55,6 +55,8 @@ class NegationSpec(_Strict):
     helpers: list[str] = []  # an after-verb negator needs one of these (or clause end) next
     connectors: list[str] = []  # join objects into one list ("OTP ya PIN")
     redirect: list[str] = []  # first-person recipients ("mujhe", "me")
+    offer_subjects: list[str] = []  # "we will send": the speaker sends, it is not a request
+    offer_verbs: list[str] = []
 
 
 class LexiconSpec(_Strict):
@@ -109,6 +111,8 @@ class Lexicon:
         "negation_helpers",
         "negators_after",
         "negators_before",
+        "offer_subjects",
+        "offer_verbs",
         "redirect_recipients",
         "request_words",
         "suppressions",
@@ -153,6 +157,8 @@ class Lexicon:
         self.negation_fillers: frozenset[str] = _single_tokens(spec.negation.fillers)
         self.negation_helpers: frozenset[str] = _single_tokens(spec.negation.helpers)
         self.redirect_recipients: frozenset[str] = _single_tokens(spec.negation.redirect)
+        self.offer_subjects: frozenset[str] = _single_tokens(spec.negation.offer_subjects)
+        self.offer_verbs: frozenset[str] = _single_tokens(spec.negation.offer_verbs)
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> Lexicon:

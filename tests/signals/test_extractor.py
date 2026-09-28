@@ -275,3 +275,55 @@ class TestHindiCompounds:
     )
     def test_advice(self, extractor: SignalExtractor, text: str, kind: SignalKind) -> None:
         assert kind not in tiers(extractor.extract(segment(Stream.CALLER, text)))
+
+
+class TestOffers:
+    """The speaker sending something is an offer, not a request: "we will send an OTP to
+    your registered mobile" was a full-strength credential request."""
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "We will send an OTP to your registered mobile.",
+            "I am sending you an OTP now.",
+            "Hum aapko OTP bhej rahe hain.",
+            "I will share my screen so you can follow along.",
+        ],
+    )
+    def test_the_speaker_sending_is_not_a_request(
+        self, extractor: SignalExtractor, text: str
+    ) -> None:
+        found = tiers(extractor.extract(segment(Stream.CALLER, text)))
+        assert Tier.FAST_PATH not in found.values()
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Send me the OTP.",
+            "We need you to send the OTP.",
+            "I will send you a link, then send the OTP to this number.",
+            "We have sent the OTP, please read it out to me.",
+            "We will send you an OTP, send it back to me.",
+        ],
+    )
+    def test_requests_around_an_offer_are_still_requests(
+        self, extractor: SignalExtractor, text: str
+    ) -> None:
+        found = tiers(extractor.extract(segment(Stream.CALLER, text)))
+        assert found.get(K.CREDENTIAL_REQUEST) is Tier.FAST_PATH
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Install this utility so I can complete the refund.",
+        "Download the support tool from the link I sent.",
+        "Please install the apk I sent on WhatsApp.",
+        "Share your screen with me.",
+    ],
+)
+def test_install_requests_name_the_software_generically(
+    extractor: SignalExtractor, text: str
+) -> None:
+    found = tiers(extractor.extract(segment(Stream.CALLER, text)))
+    assert found.get(K.REMOTE_ACCESS_REQUEST) is Tier.FAST_PATH

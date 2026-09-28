@@ -90,7 +90,10 @@ class SemanticDetector:
             texts.extend(means)
             texts.extend(negatives)
             spans.append((kind, start, start + len(means), start + len(means) + len(negatives)))
-        vectors = embedder.embed(texts)
+        # One text per call, exactly like a live line: the int8 model quantises activations
+        # per batch, so in a shared batch every example's vector depended on the others.
+        vectors = np.concatenate([embedder.embed([text]) for text in texts]) if texts else (
+            np.zeros((0, 0), dtype=np.float32))  # fmt: skip
         self._kinds = [
             (kind, vectors[a:b], tuple(texts[a:b]), vectors[b:c]) for kind, a, b, c in spans
         ]

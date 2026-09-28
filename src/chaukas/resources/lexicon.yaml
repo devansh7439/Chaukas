@@ -98,6 +98,7 @@ requests:
     objects: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
               any desk, team viewer, rust desk, ultra viewer,
               app, application, software, screen, code on screen, code on your screen,
+              utility, tool, support tool, remote tool, apk, program, extension,
               id shown on the screen, id on the screen, id on screen,
               एनीडेस्क, टीमव्यूअर, ऐप, स्क्रीन]
 
@@ -127,6 +128,11 @@ negation:
   # "kisi ko mat batana, sirf mujhe batao": a request aimed at the speaker is a request even
   # beside "don't tell anyone" (singular only: a real bank says "tell us if anyone asks")
   redirect: [me, mujhe, mujhko, मुझे, मुझको]
+  # "We will send an OTP to your mobile", "I am sending you an OTP": a first-person subject
+  # up to three words before one of these verbs makes it an offer, not a request
+  offer_subjects: [we, i, hum, main, हम, मैं]
+  offer_verbs: [send, sending, sends, forward, forwarding, share, sharing, bhej, bhejenge, bhejte,
+                भेज]
 
 # Hindi compound verbs: a request stem plus a helper is the request itself ("OTP bata
 # dijiye", "code confirm kariye", "paise jama kar dijiye"). Stems are listed per request.
