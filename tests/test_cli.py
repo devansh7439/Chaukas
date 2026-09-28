@@ -74,6 +74,14 @@ def test_ablate_prints_a_comparison_table(capsys: pytest.CaptureFixture[str]) ->
     assert "config" in out
     for name in ("A", "B", "C", "D", "E"):
         assert f"\n{name}  " in out or out.startswith(f"{name}  ")
+    assert "semantic" in out.splitlines()[0]  # the table says which configs use it
+
+
+def test_configuration_a_never_loads_the_semantic_layer(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["eval", str(CASES_DIR), "--split", "dev", "--ablation", "A"]) == EXIT_OK
+    assert "semantic layer: off (configuration A)" in capsys.readouterr().err
 
 
 SCRIPTED_NOTE = "script the LLM's verdict"

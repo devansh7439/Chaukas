@@ -140,6 +140,13 @@ class TestAblationConfigs:
             assert ablation.use_llm is flags["use_llm"], name
             assert ablation.use_action_gate is flags["use_action_gate"], name
             assert ablation.use_sequence is flags["use_sequence"], name
+            assert ablation.use_semantic is flags["use_semantic"], name
+
+    def test_a_is_truly_keywords_only_and_the_rest_match_live_mode(self) -> None:
+        # Review finding: no configuration switched the semantic layer off, so "A, keywords
+        # only" included it whenever the model was downloaded.
+        assert config_for("A").ablation.use_semantic is False
+        assert all(config_for(name).ablation.use_semantic for name in "BCDE")
 
     def test_ablation_wins_over_other_overrides(self) -> None:
         config = config_for("A", {"ablation": {"use_llm": True}})

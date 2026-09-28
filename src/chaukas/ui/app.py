@@ -105,7 +105,7 @@ def load_ui(
     paraphrase layer (live mode); scripted demos run keywords only, so they stay the same."""
     config = config_for(ablation, *config_paths, *config_overrides)
     detector = None
-    if semantic:
+    if semantic and config.ablation.use_semantic:
         try:
             detector = load_semantic(config.signals.semantic)
         except ImportError:  # onnxruntime or tokenizers not installed

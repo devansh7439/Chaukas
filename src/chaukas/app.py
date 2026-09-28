@@ -197,6 +197,9 @@ def _add_semantic_option(parser: argparse.ArgumentParser) -> None:
 
 def _semantic(args: argparse.Namespace, config: ChaukasConfig) -> SemanticDetector | None:
     """The semantic layer for replay / eval / ablate, loaded once; says on stderr if it is on."""
+    if not config.ablation.use_semantic:
+        print(f"semantic layer: off (configuration {args.ablation})", file=sys.stderr)
+        return None
     detector = None
     if not args.no_semantic:
         try:
@@ -294,10 +297,13 @@ def _ablate(args: argparse.Namespace) -> str:
     semantic = _semantic(args, config_for(DEFAULT_ABLATION, *args.config))
     for name in sorted(ABLATIONS):
         config = config_for(name, *args.config)
-        summaries[name] = summarise(_score_all(cases, config, _reasoner(args, config), semantic))
+        detector = semantic if config.ablation.use_semantic else None
+        summaries[name] = summarise(_score_all(cases, config, _reasoner(args, config), detector))
         if config.ablation.use_llm and not args.llm:
             llm_configs.append(name)
-    return _with_llm_note(format_ablation(summaries), cases, llm_configs)
+    uses_semantic = {name: semantic is not None and config_for(name).ablation.use_semantic
+                     for name in summaries}  # fmt: skip
+    return _with_llm_note(format_ablation(summaries, uses_semantic), cases, llm_configs)
 
 
 _OFFLINE_COMMANDS: Final[Mapping[str, Callable[[argparse.Namespace], str]]] = MappingProxyType(

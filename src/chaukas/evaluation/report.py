@@ -119,17 +119,23 @@ def format_summary(summary: Summary) -> str:
     return "\n".join(f"{name:>21}: {value}" for name, value in rows)
 
 
-def format_ablation(summaries: Mapping[str, Summary]) -> str:
-    """The A-E table from blueprint 8.5."""
+def format_ablation(
+    summaries: Mapping[str, Summary], uses_semantic: Mapping[str, bool] | None = None
+) -> str:
+    """The A-E table from blueprint 8.5, saying which configurations used the semantic
+    layer (so "keywords only" is never ambiguous)."""
     width = 28  # a proportion with its confidence interval needs the room
+    semantic = uses_semantic or {}
     header = (
-        f"{'config':<7} {'detection':<{width}} {'critical before harm':<{width}}"
-        f" {'false alarms':<{width}} latency"
+        f"{'config':<7} {'semantic':<9} {'detection':<{width}}"
+        f" {'critical before harm':<{width}} {'false alarms':<{width}} latency"
     )
     lines = [header, "-" * len(header)]
     for name, summary in summaries.items():
+        used = "yes" if semantic.get(name) else "no"
         lines.append(
-            f"{name:<7} {summary.detection!s:<{width}} {summary.critical_before_harm!s:<{width}}"
+            f"{name:<7} {used:<9} {summary.detection!s:<{width}}"
+            f" {summary.critical_before_harm!s:<{width}}"
             f" {summary.false_alarms!s:<{width}} {_latency(summary)}"
         )
     return "\n".join(lines)

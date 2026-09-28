@@ -128,6 +128,7 @@ ablation:
   use_llm: true
   use_action_gate: true
   use_sequence: true
+  use_semantic: true
 
 ui:
   capture_exclusion: false     # also hides Chaukas from screen recorders; see blueprint 6.8

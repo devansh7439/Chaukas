@@ -193,6 +193,7 @@ class AblationConfig(_Section):
     use_llm: bool
     use_action_gate: bool
     use_sequence: bool
+    use_semantic: bool  # the paraphrase layer (on-device embeddings) next to the keywords
 
 
 class UIConfig(_Section):
