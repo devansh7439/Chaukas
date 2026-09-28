@@ -867,3 +867,46 @@ your laptop", "allow me to connect to your desktop"), which reach notice at best
 likely cause is that the "I'll share my screen" counter-examples pull them down. Not tuned
 further: these sets are now spent. The reordered case reached critical, so the chain
 engine was left as it is. README and deck updated with these numbers.
+
+### 2026-09-29 - Red-team review and hardening
+
+Tried to break Chaukas across attack classes A-M (paraphrase, indirect, reordered,
+adversarial speech, look-alikes, screen and process spoofing, temporal correlation,
+speaker confusion, transcription and OCR failure, attacks on Chaukas, prompt injection).
+Full report with evidence labels: [REDTEAM.md](REDTEAM.md). Eight defects found, each fixed
+with a regression test written first:
+
+1. Forged advice: "Don't worry, send the OTP", "No, just read out the OTP" gave no signal
+   (a negator within a word of the verb made it advice and hid the OTP keyword). Negation
+   now stays in its clause, with only filler words between.
+2. "OTP batao nahi toh account band ho jayega" gave no request ("nahi toh" = otherwise).
+3. "OTP share mat karna" (bank advice) was a full request. A negator after the verb now
+   needs a helper verb or the clause end next. Polite compounds ("bata dijiye", "confirm
+   kariye") are generated from stems x helpers.
+4. Stale priming: authority heard an hour of speech earlier made an OTP request critical.
+   Now `priming_window_s` (1,800 s of speech). Each alert carries a decision trace
+   (source, confidence, decay, contribution, chain step, rule); the Why panel shows how each
+   reason was detected; `replay` prints the trace.
+5. OCR: a hung read silently ended screen reading; a window titled "Chaukas" was skipped.
+   Now a 10 s timeout, off after 3 hangs with a reason, own process by pid, malformed and
+   huge output handled.
+6. Unbounded score history (copied on every refresh) and speech backlog. Now bounded;
+   six-hour soak test (~1 MB growth, mostly the speech clock).
+7. "We will send an OTP", "I will share my screen" were requests: offers now don't pair.
+8. Semantic examples embedded in one batch: the int8 model quantises per batch, so every
+   example depended on the others (~0.003 cosine). Now one at a time. Dev DP06 drops
+   below the unchanged 0.6 threshold (dev 14/15 -> 13/15); not re-tuned.
+
+Also: eval reports warning-before-harm, p95 and breakdowns by language / intent / set;
+the benchmark reports peak memory (926 MB, whisper-small, on battery, RTF 1.36).
+
+Fresh red-team set D (`eval/redteam/`, 12 attacks + 8 look-alikes, non-blind), committed
+before its only run (tag `eval-redteam-1`): keywords only 8/12 detected, 2/8 false alarms;
+with the semantic layer **11/12 detected, 9/12 critical before harm, 3/8 false alarms**
+(film scene, news report, delivery code). Missed: a remote-control paraphrase. Re-runs of
+seen sets: held-out 7/8 and 1/8 false alarms (was 0/8: "order ka OTP bata dijiye" is now a
+request, the same words a scammer uses), robustness 14/18 and 1/8, paraphrase B/C
+unchanged (6/12, 1/8).
+
+Security re-check: bandit clean, pip-audit no known vulnerabilities, no secrets, 30/30
+security tests. Tests: 849.

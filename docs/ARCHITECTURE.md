@@ -68,7 +68,13 @@ replay, evaluation and the tests share one code path.
    start and end times. It is available when it *ends*, so replay schedules it at its end
    time.
 3. **The extractor** normalises it ("don't" → "do not", "ek do teen char" → "1234") and
-   finds evidence. Each signal is timed at the *start* of its line, whoever reports it and
+   finds evidence. A request is a verb and an object of the same kind. Negation turns it
+   into protective advice only inside its own clause, with at most filler words between
+   ("never *ever* share"); a negator after the verb needs a helper verb or the clause end
+   next ("share mat karna" is advice, "batao nahi toh ..." is a request); "we will send
+   an OTP" is an offer, not a request; polite Hindi compounds ("bata dijiye", "confirm kar
+   dijiye") are the verb itself. The caller cannot forge advice with a reassurance ("Don't
+   worry, send the OTP"). Each signal is timed at the *start* of its line, whoever reports it and
    however late, so the order of an attack is never scrambled.
 4. **The engine** updates decaying evidence and the attack chains, then computes the risk
    score and level.
@@ -123,10 +129,12 @@ time (a silent "stay on camera, don't speak" hold does not erase what was said).
 Special rules, which apply in every configuration:
 
 - **Pre-disclosure OTP rule**: a caller asking for an OTP / PIN / password / "the code you
-  got" with confidence ≥ 0.7, after claiming authority or applying pressure, is critical at
-  once, before the user answers. It holds until the session ends. Without authority or
-  pressure it is a warning (a parent asking "beta, OTP bata do"). A delivery agent asking
-  for the order OTP has neither, and stays at notice.
+  got" with confidence ≥ 0.7, after claiming authority or applying pressure within the
+  last 30 minutes of *speech* (`priming_window_s`), is critical at once, before the user
+  answers. It holds until the session ends. Without authority or pressure it is a warning
+  (a parent asking "beta, OTP bata do"; a delivery agent asking for the order OTP). The
+  window matters because the loopback hears everything: a "CBI" in a video an hour ago
+  must not make today's OTP request critical.
 - **Remote-banking rule**: a remote-control app is running, a bank or transfer page opens
   after it, and the caller claimed to be from an organisation (even a weak "customer
   care"): at least a warning. This catches refund and tech-support scams that use no
@@ -214,13 +222,19 @@ scores a set of cases; `chaukas ablate DIR` compares configurations:
 | D (full Chaukas) | ✓ | ✓ | ✓ | ✓ |
 | E (D without the LLM; default) | ✓ | | ✓ | ✓ |
 
-Metrics: detection, **critical before harm** (the headline metric), false alarms, warning
-latency, objective accuracy, LLM JSON validity, LLM evidence rejected and LLM calls per
+Metrics: detection, **critical before harm** (the headline metric), warning before harm,
+false alarms, warning latency (median, p90, p95), objective accuracy, breakdowns by
+language, intent and case set, LLM JSON validity, LLM evidence rejected and LLM calls per
 minute, each proportion with a 95 % Wilson interval.
 
-Cases (`eval/cases/`): 16 dev cases (4 build-time smoke cases, 12 written to fix failure
-modes) and 16 held-out test cases (8 scams, 8 look-alike innocent calls), committed before
-their first run. Results and the protocol are in the README and WORKLOG.
+Cases: `eval/cases/` (26 dev cases and 16 held-out test cases), `eval/robustness/` (26),
+`eval/paraphrase/` (20) and `eval/redteam/` (20), each set committed before its first run.
+Results and the protocol are in the README, [REDTEAM.md](REDTEAM.md) and the WORKLOG.
+
+**Decision trace.** Every `RiskState` carries, per reason: source (keyword, semantic,
+llm, rule, screen), confidence when heard, current decayed evidence, its weighted
+contribution to pressure and the chain step it filled; and `rule`, the rule that set the
+level. `replay` prints it; the Why panel is built from it. It lives in memory only.
 
 With a real model, `--llm --llm-cache DIR` records every answer with its measured latency;
 `--llm-offline` replays those answers with no model running (perception once, then the
@@ -264,13 +278,19 @@ Only `chaukas setup` downloads anything. Everything lands in `%LOCALAPPDATA%\Cha
 | Chaukas's own alert sentences are suppressed | An alert heard back through the speakers is never evidence |
 | Engine is a plain object, no threads | One code path for live, replay, evaluation and tests |
 | Held-out cases committed before their first run | Detection numbers are measured, not fitted |
+| Negation bounded by clause and helper verbs | The caller controls the words: "Don't worry, send the OTP" must stay a request |
+| Semantic examples embedded one at a time | The int8 model quantises per batch; shared batches made every example depend on the others |
+| Bounded history, bounded speech backlog, OCR timeout | A session can run all day; nothing may grow or hang for its length |
 | No database; conversation data in memory only | Privacy by construction (see [DATA_MODEL.md](DATA_MODEL.md#storage)) |
 | Friction, not control | The user always decides; the critical card has no countdown and blocks nothing |
 
 ## 12. Known gaps
 
-- Paraphrase: the keyword layer missed all three English paraphrases in the robustness
-  test, and two OTP phrasings raise false alarms (see the README's Results).
+- Paraphrase: remote-control paraphrases without a tool name are missed; a delivery
+  agent asking for the order OTP is a warning; film and news dialogue about scams can
+  raise alerts (see [REDTEAM.md](REDTEAM.md)).
+- Rebuilt remote tools with new branding, and browser-based remote access, are not
+  recognised.
 - The LLM is not wired into live mode (and is off by default; see section 6).
 - Speech recognition is measured on synthetic English speech only; real Hinglish is
   unmeasured.

@@ -234,6 +234,31 @@ through, mainly remote-access paraphrases ("take over your PC", "let me operate 
 laptop"), which reach notice at best. Same caveat as before: synthetic cases, written by
 the same assistant that built the detector, small samples.
 
+**Red-team review** (29 September; full report in [docs/REDTEAM.md](docs/REDTEAM.md)). We
+tried to break Chaukas and found eight defects, all now fixed with regression tests. Three
+of them let a caller hide an OTP request with ordinary speech ("Don't worry, send the
+OTP", "OTP batao *nahi toh* account band", where "nahi toh" means "otherwise"). A fourth
+made ordinary Hinglish bank advice ("OTP share *mat karna*") an alarm, and a fifth let a
+"CBI" heard in a video an hour earlier make an unrelated OTP request critical. Then a
+fresh red-team set was written, committed before its only run (tag `eval-redteam-1`), and
+run once (not blind):
+
+| Red-team set D: 12 attacks, 8 hard look-alikes | Keywords only | + semantic layer |
+|---|---|---|
+| Attacks detected | 8/12 | **11/12** |
+| Critical before harm | 4/12 | 9/12 |
+| False alarms | 2/8 | **3/8** |
+
+Caught: forged advice, "nahi toh", polite Hindi ("OTP confirm kar dijiye"), the caller
+reciting Chaukas's own advice, reordered chains, "the warning app is fake", lower-case
+transcripts without punctuation, a long call with the request 5 minutes after the claim.
+Missed: a remote-control paraphrase with no tool name. False alarms: a film scene and a
+news report playing on the laptop, and a delivery agent asking to be shown the code. Re-run
+after the fixes (seen sets, so not clean): held-out 7/8 detected, **1/8 false alarms** (was
+0/8: a delivery agent's "order ka OTP bata dijiye" is now recognised as a request, the same
+words a scammer uses); robustness 14/18 and 1/8; dev 13/15 and 1/11 (one dev case had
+passed only because of a semantic-layer bug, now fixed; the threshold was not lowered).
+
 **Speech recognition** (Whisper small int8, greedy, 8 threads; 48 synthetic English clips
 from 4 voices, 143 s):
 
@@ -288,12 +313,13 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 | Triggered OCR of the active window (Windows OCR), only while a call is suspicious | Built, tested on real rendered text |
 | The window: dashboard, alerts, Why / Privacy / Settings, English and Hindi | Built, tested |
 | Semantic intent layer for paraphrases (on-device embeddings; English and Devanagari) | Built, measured on fresh sets |
-| Evaluation: 88 cases (26 dev, 16 held-out, 26 robustness, 20 paraphrase), replay, metrics with confidence intervals, ablations A-E, `--no-semantic` | Built |
+| Evaluation: 108 cases (26 dev, 16 held-out, 26 robustness, 20 paraphrase, 20 red-team), replay, metrics with confidence intervals and breakdowns by language / intent / set, ablations A-E, `--no-semantic` | Built |
+| Decision trace per alert (source, confidence, decay, contribution, chain step, rule); the Why panel is built from it | Built, tested |
 | Optional local LLM (llama.cpp, managed by Chaukas; evidence guard; schema-constrained) | Built, measured; off by default, not wired into live mode |
 | Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; CPU fallback tested |
 | Tray icon, spoken alerts, onboarding | **Not built** |
 
-Quality: 761 automated tests (30 of them security tests), `ruff`, `mypy --strict` and
+Quality: 849 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on
 every push.
 
@@ -329,7 +355,8 @@ network service it can start (the optional LLM server). Reviewed on 28 September
 | Known vulnerabilities (`pip-audit`, all 148 locked packages) | None |
 | Secrets in the repository (all 29 commits, every branch) | None; `.env` files are git-ignored |
 | Untrusted text in the window | Rendered as plain text only: a web page titled `<a href=...>` can't inject links or formatting into an alert |
-| Caller speech can't switch off the OTP alarm | "Kisi ko OTP mat batana, sirf *mujhe* batao" ("don't tell anyone, tell *me*") is a request, not protective advice; "the warning app is fake" changes nothing |
+| Caller speech can't switch off the OTP alarm | "Kisi ko OTP mat batana, sirf *mujhe* batao" ("don't tell anyone, tell *me*") is a request, not protective advice; so are "Don't worry, send the OTP" and "OTP batao nahi toh ..." (red-team fixes, 29 Sep); "the warning app is fake" changes nothing |
+| Screen reading can't be dodged or stalled | Chaukas skips only its own process, not windows titled "Chaukas"; a hung OCR call is abandoned after 10 s |
 | Config and case files | Parsed with YAML's safe loader: a `!!python/...` tag is rejected, never run |
 | Transcripts in logs | Never: tested at debug level through the whole audio pipeline |
 | Listening sockets during live protection | None |
@@ -406,8 +433,8 @@ src/chaukas/
   evaluation/    case scripts, session pipeline, replay, metrics, ablations
   ui/            window: live session, services, presenter, Qt bridge, QML views
   resources/     default.yaml, lexicon.yaml, templates.yaml, context.yaml
-eval/cases/      case scripts (YAML): dev and held-out test splits
-docs/            ARCHITECTURE.md, DATA_MODEL.md, WORKLOG.md, diagrams, images
+eval/            case scripts (YAML): cases/ (dev, held-out), robustness/, paraphrase/, redteam/
+docs/            ARCHITECTURE.md, DATA_MODEL.md, REDTEAM.md, WORKLOG.md, diagrams, images
 tests/           one folder per package
 ```
 
@@ -422,8 +449,9 @@ tests/           one folder per package
 ## Limitations
 
 - **Calls taken on a phone are not covered.** Chaukas hears the PC's audio and microphone.
-- **It hears everything the PC plays.** A video about scams can raise a notice (film and
-  news dialogue stayed at notice in our tests). It follows the default speaker and
+- **It hears everything the PC plays.** A film or a news report about scams can raise an
+  alert: in the red-team set a film scene with a threat and an OTP line reached critical,
+  and a news report reached a warning. It follows the default speaker and
   microphone chosen at start; switching devices mid-call needs a restart.
 - **Volume:** detection works down to 2 % speaker volume on our laptop, not at 0 %.
 - **Money sent from a phone** instead of the PC reaches warning at most, because the
@@ -431,11 +459,13 @@ tests/           one folder per package
 - **Friction, not a wall.** Someone with remote control of the PC can close Chaukas, and a
   frightened person can click through warnings.
 - **Paraphrases are only partly covered.** The semantic layer caught 6 of 12 fresh
-  paraphrased scams (keywords alone: 1); remote-access paraphrases are the weakest, and
-  Roman-script Hinglish paraphrases depend on the lexicon (see [Results](#results)).
-- **OTP false alarms:** a stranger asking for an OTP is a warning even when legitimate (an
-  English-speaking delivery agent), and a bank saying it will *send* an OTP can read as a
-  request.
+  paraphrased scams (keywords alone: 1); remote-control paraphrases without a tool name
+  are the weakest (missed in the red-team set), and Roman-script Hinglish paraphrases
+  depend on the lexicon (see [Results](#results)).
+- **OTP false alarms:** a stranger asking for an OTP is a warning even when legitimate: a
+  delivery agent asking for the order OTP uses the same words as a scammer.
+- **Tools it doesn't know:** a rebuilt remote-access tool with new branding, or remote
+  access through the browser, is not recognised as a remote-control session.
 - **OCR** reads the languages Windows has OCR packs for (English by default; Hindi needs
   the Hindi language pack). It uses the classic `Windows.Media.Ocr`, which works without
   MSIX packaging (tested from a plain, unpackaged Python process). If OCR is missing on a
