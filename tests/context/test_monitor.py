@@ -184,7 +184,7 @@ class TestScreenReading:
 
         screen = TriggeredOcr(rules, should_read=lambda: True, reader=reader,  # type: ignore[arg-type]
                               capture=lambda: WindowImage(9, "Verify", 10, 10, bytes(400)),
-                              interval_s=0.0)  # fmt: skip
+                              interval_s=0.0, synchronous=True)  # fmt: skip
         return ContextMonitor(clock=VirtualClock(), publish=published.append,
                               processes=ProcessWatcher(rules, list), windows=WindowWatcher(rules),
                               read_foreground=lambda: titles[0], poll_s=1.0,

@@ -13,6 +13,16 @@ from chaukas.core.models import ContextKind
 RULES = ContextRules.load()
 
 
+def needs_windows_ocr() -> None:
+    """Skip unless the OCR bindings are installed, loading Qt's C++ runtime first: winrt
+    bundles an older msvcp140.dll, and if it loads first any later Qt import crashes."""
+    import contextlib
+
+    with contextlib.suppress(ImportError):
+        import PySide6.QtCore  # noqa: F401
+    pytest.importorskip("winrt.windows.media.ocr")
+
+
 def image(title: str = "Secure verification", handle: int = 7) -> WindowImage:
     return WindowImage(handle=handle, title=title, width=10, height=10, bgra=b"\0" * 400)
 
@@ -31,7 +41,7 @@ def ocr(reader: FakeReader, *, suspicious: list[bool], window: WindowImage | Non
         interval_s: float = 3.0) -> TriggeredOcr:  # fmt: skip
     return TriggeredOcr(RULES, should_read=lambda: suspicious[0],
                         capture=lambda: window or image(), reader=reader,
-                        interval_s=interval_s)  # fmt: skip
+                        interval_s=interval_s, synchronous=True)  # fmt: skip
 
 
 class TestTrigger:
@@ -87,7 +97,7 @@ class TestWindowsOcr:
         from chaukas.ui.app import create_app
 
         create_app(headless=True)  # headless Qt only has fonts if pointed at the bundled ones
-        pytest.importorskip("winrt.windows.media.ocr")
+        needs_windows_ocr()
         from chaukas.context.ocr import WindowsOcr
 
         canvas = QImage(640, 160, QImage.Format.Format_ARGB32_Premultiplied)
@@ -118,7 +128,7 @@ class TestWindowsOcr:
         # winrt ships an older msvcp140.dll: if it loads before Qt's, importing Qt crashes
         # the process. WindowsOcr loads Qt's runtime first. In a fresh process, because the
         # dangerous order can only be tested before anything else loaded Qt.
-        pytest.importorskip("winrt.windows.media.ocr")
+        needs_windows_ocr()
         pytest.importorskip("PySide6")
         import subprocess
 
@@ -135,3 +145,95 @@ class TestWindowsOcr:
                               timeout=120)  # fmt: skip
         assert done.returncode == 0, done.stderr[-500:]
         assert "alive" in done.stdout
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows OCR")
+class TestAvailability:
+    """Windows.Media.Ocr needs no package identity (the Windows App SDK TextRecognizer does);
+    what can differ between PCs is whether an OCR language or the bindings are installed."""
+
+    def test_this_test_process_has_no_package_identity(self) -> None:
+        import ctypes
+
+        length = ctypes.c_uint(0)
+        no_package = 15700  # APPMODEL_ERROR_NO_PACKAGE
+        assert ctypes.windll.kernel32.GetCurrentPackageFullName(ctypes.byref(length), None) == (
+            no_package
+        )  # so the real-pixel OCR test above ran unpackaged
+
+    def test_status_says_on_and_names_the_language(self) -> None:
+        needs_windows_ocr()
+        from chaukas.context.ocr import ocr_status
+
+        available, description = ocr_status()
+        if not available and "language" in description:
+            pytest.skip(description)  # a PC without an OCR language
+        assert available
+        assert description.startswith("on (")
+
+    def test_status_explains_missing_bindings(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from chaukas.context.ocr import ocr_status
+
+        monkeypatch.setitem(sys.modules, "winrt.windows.media.ocr", None)
+        available, description = ocr_status()
+        assert not available
+        assert "not installed" in description
+
+
+class SlowReader(FakeReader):
+    def __init__(self, text: str, seconds: float) -> None:
+        super().__init__(text)
+        self.seconds = seconds
+
+    def read(self, window: WindowImage) -> str:
+        import time
+
+        time.sleep(self.seconds)
+        return super().read(window)
+
+
+class TestNeverBlocksTheMonitor:
+    """OCR runs on its own worker: process, window and Downloads polling never wait for it."""
+
+    def _watcher(self, reader: FakeReader) -> TriggeredOcr:
+        return TriggeredOcr(RULES, should_read=lambda: True, capture=image, reader=reader,
+                            interval_s=0.0, synchronous=False)  # fmt: skip
+
+    def test_poll_returns_at_once_and_the_result_arrives_on_a_later_poll(self) -> None:
+        import time
+
+        watcher = self._watcher(SlowReader("Enter OTP", 0.5))
+        start = time.perf_counter()
+        assert watcher.poll(10.0) == []
+        assert time.perf_counter() - start < 0.2  # did not wait for the 0.5 s read
+        events: list = []
+        deadline = time.perf_counter() + 5.0
+        while not events and time.perf_counter() < deadline:
+            time.sleep(0.05)
+            events = watcher.poll(11.0)
+        (event,) = events
+        assert event.kind is ContextKind.OTP_FIELD_VISIBLE
+        assert event.t == 10.0  # when the screen was looked at, not when OCR finished
+        watcher.close()
+
+    def test_only_one_read_at_a_time(self) -> None:
+        import time
+
+        reader = SlowReader("nothing", 0.3)
+        watcher = self._watcher(reader)
+        for t in range(5):
+            watcher.poll(float(t))
+        time.sleep(0.6)
+        watcher.poll(10.0)
+        watcher.close()
+        assert reader.reads <= 2
+
+    def test_a_result_from_before_the_session_ended_is_dropped(self) -> None:
+        import time
+
+        watcher = self._watcher(SlowReader("Enter OTP", 0.3))
+        watcher.poll(1.0)
+        watcher.reset()  # the session ends while the read is in flight
+        time.sleep(0.5)
+        assert all(e.t != 1.0 for e in watcher.poll(2.0))
+        watcher.close()

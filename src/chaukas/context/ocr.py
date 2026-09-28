@@ -19,7 +19,9 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import sys
 from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -49,11 +51,21 @@ class TextReader(Protocol):
 Capture = Callable[[], WindowImage | None]
 
 
-class TriggeredOcr:
-    """Reads the active window's text while ``should_read()`` says the call is suspicious."""
+_Seen = tuple[int, str, ContextKind]  # window handle, title, what its text shows
 
-    __slots__ = ("_capture", "_interval", "_last_read", "_reader", "_reported", "_rules",
-                 "_should_read")  # fmt: skip
+
+class TriggeredOcr:
+    """Reads the active window's text while ``should_read()`` says the call is suspicious.
+
+    Capture, OCR and classification run on one worker thread (about 130 ms for a full-screen
+    window), so ``poll`` never waits: it starts a read when one is due and picks up the
+    result on a later poll, timed when the screen was looked at. At most one read runs at a
+    time, and a read still running when the session ends is discarded. ``synchronous=True``
+    reads inside ``poll`` (tests).
+    """
+
+    __slots__ = ("_capture", "_executor", "_interval", "_last_read", "_pending", "_reader",
+                 "_reported", "_rules", "_should_read")  # fmt: skip
 
     def __init__(
         self,
@@ -63,6 +75,7 @@ class TriggeredOcr:
         capture: Capture,
         reader: TextReader,
         interval_s: float,
+        synchronous: bool = False,
     ) -> None:
         self._rules = rules
         self._should_read = should_read
@@ -70,30 +83,53 @@ class TriggeredOcr:
         self._reader = reader
         self._interval = interval_s
         self._last_read: float | None = None
-        self._reported: set[tuple[int, str, ContextKind]] = set()
+        self._reported: set[_Seen] = set()
+        self._executor = None if synchronous else ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="chaukas-ocr")  # fmt: skip
+        self._pending: tuple[Future[_Seen | None], float] | None = None
 
     def poll(self, now: float) -> list[ContextEvent]:
-        if not self._should_read():
-            return []
-        if self._last_read is not None and now - self._last_read < self._interval:
-            return []
-        self._last_read = now
-        image = self._capture()
-        if image is None or image.title.startswith(OWN_TITLE):
-            return []
-        kind = self._rules.classify_screen_text(self._reader.read(image))
-        if kind is None:
-            return []
-        key = (image.handle, image.title, kind)
-        if key in self._reported:  # already reported for this window and page
-            return []
-        self._reported.add(key)
-        return [ContextEvent(t=now, kind=kind, detail=f"seen on screen: {image.title}")]
+        events = self._collect()
+        due = self._last_read is None or now - self._last_read >= self._interval
+        if self._pending is None and due and self._should_read():
+            self._last_read = now
+            if self._executor is None:
+                events.extend(self._report(self._look(), now))
+            else:
+                self._pending = (self._executor.submit(self._look), now)
+        return events
 
     def reset(self) -> None:
-        """Session end."""
+        """Session end: forget what was reported, and drop a read still running."""
         self._last_read = None
         self._reported.clear()
+        self._pending = None
+
+    def close(self) -> None:
+        if self._executor is not None:
+            self._executor.shutdown(wait=False, cancel_futures=True)
+
+    def _collect(self) -> list[ContextEvent]:
+        if self._pending is None or not self._pending[0].done():
+            return []
+        future, looked_at = self._pending
+        self._pending = None
+        return self._report(future.result(), looked_at)  # a failed read raises here
+
+    def _look(self) -> _Seen | None:
+        """On the worker: capture, read and classify; the image and text end here."""
+        image = self._capture()
+        if image is None or image.title.startswith(OWN_TITLE):
+            return None
+        kind = self._rules.classify_screen_text(self._reader.read(image))
+        return None if kind is None else (image.handle, image.title, kind)
+
+    def _report(self, seen: _Seen | None, t: float) -> list[ContextEvent]:
+        if seen is None or seen in self._reported:  # nothing, or already reported
+            return []
+        self._reported.add(seen)
+        _, title, kind = seen
+        return [ContextEvent(t=t, kind=kind, detail=f"seen on screen: {title}")]
 
 
 class WindowsOcr:
@@ -126,6 +162,30 @@ class WindowsOcr:
         )
         result = await self._engine.recognize_async(bitmap)
         return str(result.text)
+
+
+def ocr_status() -> tuple[bool, str]:
+    """Can Windows OCR be used on this PC? ``(True, "on (en-US)")`` or ``(False, why)``.
+
+    ``Windows.Media.Ocr`` needs no package identity (unlike the Windows App SDK's
+    TextRecognizer); what differs between PCs is whether the bindings and an OCR language
+    are installed.
+    """
+    if sys.platform != "win32":
+        return False, "screen text needs Windows"
+    _load_qt_runtime_first()
+    try:
+        from winrt.windows.media.ocr import OcrEngine
+    except ImportError:
+        return False, "OCR support is not installed (uv sync --extra context)"
+    try:
+        engine = OcrEngine.try_create_from_user_profile_languages()
+    except Exception as exc:  # the OCR service itself failed to start
+        return False, f"Windows OCR failed to start: {exc}"
+    if engine is None:
+        return False, ("no OCR language installed (Settings > Time & language > Language: "
+                       "add Optical character recognition)")  # fmt: skip
+    return True, f"on ({engine.recognizer_language.language_tag})"
 
 
 def _load_qt_runtime_first() -> None:

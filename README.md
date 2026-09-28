@@ -266,7 +266,7 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 | Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; CPU fallback tested |
 | Tray icon, spoken alerts, onboarding | **Not built** |
 
-Quality: 745 automated tests (30 of them security tests), `ruff`, `mypy --strict` and
+Quality: 752 automated tests (30 of them security tests), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on
 every push.
 
@@ -410,7 +410,10 @@ tests/           one folder per package
   English-speaking delivery agent), and a bank saying it will *send* an OTP can read as a
   request.
 - **OCR** reads the languages Windows has OCR packs for (English by default; Hindi needs
-  the Hindi language pack).
+  the Hindi language pack). It uses the classic `Windows.Media.Ocr`, which works without
+  MSIX packaging (tested from a plain, unpackaged Python process). If OCR is missing on a
+  PC, protection continues without it, and both `chaukas devices` and the live status line
+  say "screen text off" and why.
 - **Languages:** English, Hindi and Hinglish. Speech recognition has been measured on
   synthetic English speech only; real Hinglish accuracy is unmeasured. The Hindi text
   still needs a native speaker's review.

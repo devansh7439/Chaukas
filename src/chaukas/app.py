@@ -414,6 +414,12 @@ def _devices() -> None:
         print(f"You (microphone):            {microphone or 'not found'}")
     finally:
         system.close()
+    try:
+        from chaukas.context.ocr import ocr_status
+    except ImportError:
+        return
+    available, description = ocr_status()
+    print(f"Screen text (OCR):           {description if available else 'off: ' + description}")
 
 
 def _load_cases(args: argparse.Namespace) -> tuple[Case, ...]:

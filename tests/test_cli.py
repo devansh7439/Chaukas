@@ -319,3 +319,9 @@ def test_benchmark_reports_the_hardware_and_saves_json(
 def test_benchmark_rejects_zero_runs(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["benchmark", "--runs", "0"]) == EXIT_ERROR
     assert "--runs" in capsys.readouterr().err
+
+
+def test_devices_also_reports_screen_reading(capsys: pytest.CaptureFixture[str]) -> None:
+    pytest.importorskip("soundcard")
+    assert main(["devices"]) == EXIT_OK
+    assert "Screen text (OCR):" in capsys.readouterr().out

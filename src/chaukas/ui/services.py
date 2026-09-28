@@ -53,6 +53,7 @@ class LiveServices:
         self._pipeline: Any = None
         self._captures: list[Any] = []
         self._monitor: Any = None
+        self._screen_note = ""  # "screen text on (en-US)" or why it is off
 
     @property
     def audio_running(self) -> bool:
@@ -107,16 +108,20 @@ class LiveServices:
         self._monitor.start()
 
     def _screen_reader(self, rules: Any) -> Any:
-        """Triggered OCR, or None if switched off or Windows OCR isn't installed."""
+        """Triggered OCR, or None if switched off or unavailable (``_screen_note`` says which;
+        titles, processes and Downloads still protect)."""
         settings = self._config.ocr
         if not settings.enabled:
+            self._screen_note = "screen text off (disabled in settings)"
             return None
-        try:
-            import winrt.windows.media.ocr  # noqa: F401
+        from chaukas.context.ocr import TriggeredOcr, WindowsOcr, capture_active_window, ocr_status
 
-            from chaukas.context.ocr import TriggeredOcr, WindowsOcr, capture_active_window
-        except ImportError:
-            return None  # titles, processes and Downloads still protect
+        available, description = ocr_status()
+        self._screen_note = f"screen text {description}" if available else (
+            f"screen text off: {description}")  # fmt: skip
+        if not available:
+            logger.warning("screen reading is unavailable: %s", description)
+            return None
         threshold = Level.parse(settings.min_level)
         return TriggeredOcr(
             rules,
@@ -173,7 +178,8 @@ class LiveServices:
             names = {stream: device.name for stream, device in found}
             post("Listening: caller = " + names.get(Stream.CALLER, "none")
                  + " · you = " + names.get(Stream.USER, "none")
-                 + " · " + _speech_runs_on(transcriber))  # fmt: skip
+                 + " · " + _speech_runs_on(transcriber)
+                 + (" · " + self._screen_note if self._screen_note else ""))  # fmt: skip
         except (ChaukasError, ImportError, OSError) as exc:
             logger.warning("live audio is unavailable: %s", exc)
             post(f"Audio unavailable: {exc}")

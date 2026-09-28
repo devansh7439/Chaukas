@@ -93,6 +93,8 @@ class ContextMonitor:
         if self._thread is not None:
             self._thread.join(timeout)
             self._thread = None
+        if self._screen is not None:
+            self._screen.close()
 
     def reset(self) -> None:
         """Session end: the next poll is a fresh baseline."""

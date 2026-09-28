@@ -795,3 +795,26 @@ README, ARCHITECTURE.md, the blueprint's risk list and the deck now describe the
 NPU path by what it is built to do (encoder on the NPU through Qualcomm's QNN plugin, safe
 CPU fallback, `chaukas benchmark --asr-device npu` to measure it). The deck's NPU slide
 shows the benchmark command instead of a blank number.
+
+### 2026-09-28 - OCR: works unpackaged (checked), availability visible, never blocks the monitor
+
+Two review points on the triggered OCR:
+1. **"Windows.Media.Ocr needs package identity (MSIX)."** Checked instead of assumed: the
+   package-identity requirement belongs to the Windows App SDK's
+   `Microsoft.Windows.AI.Imaging.TextRecognizer`; the classic `Windows.Media.Ocr.OcrEngine`
+   lists only Windows 10 and the Universal API contract. Measured: the test process has
+   no package identity (`GetCurrentPackageFullName` returns 15700,
+   APPMODEL_ERROR_NO_PACKAGE) and reads "Enter OTP 482913" correctly; a test pins both.
+   The real clean-machine risk is a missing OCR language or missing bindings, so
+   `ocr_status()` now says which: `chaukas devices` prints "Screen text (OCR): on (en-US)"
+   (or off, and why), and the live status line says "screen text on (en-US)" or "screen
+   text off: ...". Protection continues without it either way.
+2. **OCR blocked the context monitor.** Measured: capture + OCR of a full-screen window
+   takes about 130 ms (250 ms the first time), during which process, window and Downloads
+   polling stalled. Capture, OCR and classification now run on one worker thread;
+   `poll()` never waits, the result arrives on a later poll timed when the screen was
+   looked at, one read at a time, and a read still running at session end is dropped.
+Also: a test imported winrt before Qt and crashed the test process (the DLL-order hazard
+from before); tests now load Qt's runtime first through one helper.
+
+Tests: 752 passing.
