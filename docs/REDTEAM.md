@@ -1,4 +1,4 @@
-# Red-team review and hardening (29 September 2026)
+# Red-team review and hardening (28 September 2026)
 
 An adversarial review of Chaukas: try to break it, fix what breaks, measure again.
 Every claim below carries one label:
@@ -163,7 +163,7 @@ transcript horizon still applies.
 
 ## H. Security
 
-Re-checked on 29 September 2026. MEASURED: `bandit -ll` (all of `src/`) no medium or high
+Re-checked on 28 September 2026. MEASURED: `bandit -ll` (all of `src/`) no medium or high
 findings; `pip-audit` on the exported lock file, no known vulnerabilities; secret scan of
 the tree, none; `tests/security` 30/30 pass. The decision trace keeps transcript snippets
 in memory only, like the Why panel before it; no log line prints transcript text

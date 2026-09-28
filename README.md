@@ -17,10 +17,13 @@ Snapdragon® AI Lab Build & Present Challenge.
 > **Status (28 September 2026).** Live protection works end to end on a Windows PC: it
 > hears a call (what the PC plays, and your microphone), transcribes it on the device with
 > Whisper, watches the screen (reading the active window's text when a call turns
-> suspicious), and raises the alert. On a 26-case robustness test it caught **10 of 18
-> scams** (all three written in Devanagari, none of three English paraphrases) with **2
-> false alarms in 8** innocent calls; see [Results](#results). Whisper's encoder is built to
-> run on the Snapdragon NPU, with a safe CPU fallback; see [Snapdragon](#snapdragon).
+> suspicious), and raises the alert. **Latest measurement:** on a fresh red-team set
+> (committed before its only run; synthetic and not blind) it caught **11 of 12 attacks**,
+> 9 of them with a critical alert before the harm, and raised **3 false alarms in 8**
+> deliberately hard look-alikes (a film, a news report about scams, a delivery code). All
+> earlier sets and their history are in [Results](#results). Whisper's encoder is built to
+> run on the Snapdragon NPU, with a safe CPU fallback; performance on Snapdragon hardware
+> is not yet measured (see [Snapdragon](#snapdragon)).
 
 ## Contents
 
@@ -171,9 +174,24 @@ places calls) and the **cybercrime helpline 1930**.
 ## Results
 
 All numbers below were measured on one Intel Core i7-1360P laptop (CPU only). All call
-scripts are synthetic (written for this project, no real victims).
+scripts are synthetic (written for this project, no real victims), and none of them is
+blind: the same assistant wrote the detector and the cases.
 
-**Detection** (configuration E, the default: keywords + engine + screen, no LLM):
+**Latest, after the red-team review (28 September; configuration E, the default:
+keywords + semantic layer + engine + screen, no LLM):**
+
+| Set | Status of the set | Scams detected | Critical before harm | False alarms |
+|---|---|---|---|---|
+| Red-team set D (12 attacks, 8 hard look-alikes) | Fresh: committed before its only run | **11/12** | 9/12 | **3/8** |
+| Held-out AT/BT (8 + 8) | Seen twice before | 7/8 | 5/8 | 1/8 |
+| Robustness matrix (18 + 8) | Seen before | 14/18 | 10/18 | 1/8 |
+| Paraphrase sets B and C (12 + 8) | Seen before | 6/12 | 2/12 | 1/8 |
+| Dev (15 + 11) | Used for development | 13/15 | 10/15 | 1/11 |
+
+Only set D is a clean measurement. The tables below keep the history in the order it
+happened, including each set's first, clean run.
+
+**History.** Detection (configuration E):
 
 | | Held-out test, 16 cases, first run | Held-out, second run (after fixes) | Dev, 16 cases |
 |---|---|---|---|
@@ -234,7 +252,7 @@ through, mainly remote-access paraphrases ("take over your PC", "let me operate 
 laptop"), which reach notice at best. Same caveat as before: synthetic cases, written by
 the same assistant that built the detector, small samples.
 
-**Red-team review** (29 September; full report in [docs/REDTEAM.md](docs/REDTEAM.md)). We
+**Red-team review** (28 September; full report in [docs/REDTEAM.md](docs/REDTEAM.md)). We
 tried to break Chaukas and found eight defects, all now fixed with regression tests. Three
 of them let a caller hide an OTP request with ordinary speech ("Don't worry, send the
 OTP", "OTP batao *nahi toh* account band", where "nahi toh" means "otherwise"). A fourth
@@ -355,7 +373,7 @@ network service it can start (the optional LLM server). Reviewed on 28 September
 | Known vulnerabilities (`pip-audit`, all 148 locked packages) | None |
 | Secrets in the repository (all 29 commits, every branch) | None; `.env` files are git-ignored |
 | Untrusted text in the window | Rendered as plain text only: a web page titled `<a href=...>` can't inject links or formatting into an alert |
-| Caller speech can't switch off the OTP alarm | "Kisi ko OTP mat batana, sirf *mujhe* batao" ("don't tell anyone, tell *me*") is a request, not protective advice; so are "Don't worry, send the OTP" and "OTP batao nahi toh ..." (red-team fixes, 29 Sep); "the warning app is fake" changes nothing |
+| Caller speech can't switch off the OTP alarm | "Kisi ko OTP mat batana, sirf *mujhe* batao" ("don't tell anyone, tell *me*") is a request, not protective advice; so are "Don't worry, send the OTP" and "OTP batao nahi toh ..." (red-team fixes, 28 Sep); "the warning app is fake" changes nothing |
 | Screen reading can't be dodged or stalled | Chaukas skips only its own process, not windows titled "Chaukas"; a hung OCR call is abandoned after 10 s |
 | Config and case files | Parsed with YAML's safe loader: a `!!python/...` tag is rejected, never run |
 | Transcripts in logs | Never: tested at debug level through the whole audio pipeline |

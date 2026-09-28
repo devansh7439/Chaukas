@@ -819,7 +819,7 @@ from before); tests now load Qt's runtime first through one helper.
 
 Tests: 752 passing.
 
-### 2026-09-29 - Semantic intent layer (paraphrases), frozen before its test
+### 2026-09-28 - Semantic intent layer (paraphrases), frozen before its test
 
 The robustness matrix showed paraphrase defeats the keyword layer (0/3 English
 paraphrases). New layer, before the risk engine, detecting *intent* (not "scam"):
@@ -846,7 +846,7 @@ paraphrases). New layer, before the risk engine, detecting *intent* (not "scam")
 
 Tests: 761 passing.
 
-### 2026-09-29 - Semantic layer: fresh test results (one run each)
+### 2026-09-28 - Semantic layer: fresh test results (one run each)
 
 Two fresh sets written after the layer was frozen (tag `semantic-frozen`) and committed
 before their only run (tag `eval-paraphrase-1`): Set B, 12 paraphrased scams (English,
@@ -868,7 +868,7 @@ likely cause is that the "I'll share my screen" counter-examples pull them down.
 further: these sets are now spent. The reordered case reached critical, so the chain
 engine was left as it is. README and deck updated with these numbers.
 
-### 2026-09-29 - Red-team review and hardening
+### 2026-09-28 - Red-team review and hardening
 
 Tried to break Chaukas across attack classes A-M (paraphrase, indirect, reordered,
 adversarial speech, look-alikes, screen and process spoofing, temporal correlation,
