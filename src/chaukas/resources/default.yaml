@@ -15,6 +15,8 @@ audio:
   min_speech_ms: 250           # shorter bursts (clicks, coughs) are not segments
   speech_pad_ms: 200           # kept before and after speech so no syllable is lost
   gap_reset_s: 0.5             # a longer gap in the audio (loopback idle) closes speech
+  max_backlog_s: 120           # if recognition falls this far behind, skip the oldest speech
+                               # (it is too late to warn about it; memory stays bounded)
 
 asr:
   # onnx: ONNX Runtime, runs on x64 and Windows on ARM64 (Snapdragon); detects the language in

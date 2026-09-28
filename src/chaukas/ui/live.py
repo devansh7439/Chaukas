@@ -44,6 +44,43 @@ MIN_LINE_S: Final = 0.6
 _Scheduled = SpeechLine | ContextCue | AssessmentCue
 
 
+class ScoreHistory:
+    """Peak risk score per time bucket, for the dashboard's history chart.
+
+    Buckets start one second wide; whenever there are more than ``max_points`` of them,
+    neighbours merge (keeping the higher score) and the width doubles. Memory and the cost
+    of drawing the chart stay constant however long a session runs, and no peak is lost.
+    """
+
+    MAX_POINTS: Final = 3600
+
+    __slots__ = ("_max", "_scores", "_width")
+
+    def __init__(self, max_points: int = MAX_POINTS) -> None:
+        self._max = max_points
+        self._width = 1.0
+        self._scores: dict[float, float] = {}  # bucket start -> peak score; insertion-ordered
+
+    def add(self, t: float, score: float) -> None:
+        bucket = (t // self._width) * self._width
+        self._scores[bucket] = max(score, self._scores.get(bucket, 0.0))
+        if len(self._scores) > self._max:
+            self._width *= 2.0
+            merged: dict[float, float] = {}
+            for start, peak in self._scores.items():
+                key = (start // self._width) * self._width
+                merged[key] = max(peak, merged.get(key, 0.0))
+            self._scores = merged
+
+    @property
+    def points(self) -> list[tuple[float, float]]:
+        return sorted(self._scores.items())
+
+    def clear(self) -> None:
+        self._width = 1.0
+        self._scores.clear()
+
+
 @dataclass(frozen=True, slots=True)
 class TranscriptEntry:
     t: float
@@ -74,7 +111,7 @@ class LiveSession:
         self._idle_end_s = config.privacy.session_idle_end_s
         self._last_speech: float | None = None
         self._transcript: list[TranscriptEntry] = []
-        self._history: list[tuple[float, float]] = []
+        self._history = ScoreHistory()
         self._scheduled: Timeline[_Scheduled] = Timeline()
         if case is not None:
             for line in case.lines:
@@ -102,7 +139,7 @@ class LiveSession:
 
     @property
     def history(self) -> list[tuple[float, float]]:
-        return list(self._history)
+        return self._history.points
 
     def advance(self, now: float) -> bool:
         """Process everything due by ``now`` and evaluate up to it. True if the session just
@@ -203,4 +240,5 @@ class LiveSession:
         )
 
     def _record(self, snapshots: list[Snapshot]) -> None:
-        self._history.extend((snapshot.t, snapshot.state.score) for snapshot in snapshots)
+        for snapshot in snapshots:
+            self._history.add(snapshot.t, snapshot.state.score)

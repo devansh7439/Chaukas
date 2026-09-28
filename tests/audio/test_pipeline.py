@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections import deque
 from collections.abc import Callable
 
 import pytest
@@ -12,7 +13,8 @@ np = pytest.importorskip("numpy")
 pytest.importorskip("onnxruntime")
 
 from chaukas.asr.base import Transcript  # noqa: E402
-from chaukas.audio.pipeline import AudioPipeline, StreamProcessor  # noqa: E402
+from chaukas.audio.pipeline import AudioPipeline, StreamProcessor, shed_backlog  # noqa: E402
+from chaukas.audio.segmenter import AudioSegment  # noqa: E402
 from chaukas.audio.vad import SileroVad, find_vad_model  # noqa: E402
 from chaukas.core.config import load_config  # noqa: E402
 from chaukas.core.models import HeardLine, Stream  # noqa: E402
@@ -354,3 +356,29 @@ class TestTurnOrder:
         finally:
             pipeline.stop()
         assert [line.stream for line in heard] == [Stream.CALLER, Stream.USER]
+
+
+class TestBacklogBound:
+    """Red-team regression: if speech recognition runs slower than real time (a throttled
+    CPU on battery), the queue of speech waiting for Whisper grew without limit."""
+
+    @staticmethod
+    def segment(start: float, seconds: float) -> AudioSegment:
+        return AudioSegment(Stream.CALLER, start, start + seconds, np.zeros(16, np.float32))
+
+    def test_keeps_the_newest_speech_within_the_limit(self) -> None:
+        backlog = deque(self.segment(10.0 * i, 8.0) for i in range(30))  # 240 s waiting
+        dropped = shed_backlog(backlog, max_s=120.0)
+        assert sum(s.duration for s in backlog) <= 120.0
+        assert backlog[-1].t_start == 290.0  # the latest speech is kept
+        assert [s.t_start for s in dropped] == [10.0 * i for i in range(len(dropped))]
+
+    def test_a_backlog_within_the_limit_is_untouched(self) -> None:
+        backlog = deque([self.segment(0.0, 5.0), self.segment(6.0, 5.0)])
+        assert shed_backlog(backlog, max_s=120.0) == []
+        assert len(backlog) == 2
+
+    def test_the_newest_segment_is_kept_even_if_alone_it_is_too_long(self) -> None:
+        backlog = deque([self.segment(0.0, 30.0), self.segment(40.0, 200.0)])
+        shed_backlog(backlog, max_s=120.0)
+        assert [s.t_start for s in backlog] == [40.0]

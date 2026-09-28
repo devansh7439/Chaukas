@@ -40,6 +40,7 @@ class AudioConfig(_Section):
     min_speech_ms: PositiveInt
     speech_pad_ms: Annotated[int, Field(ge=0)]
     gap_reset_s: Seconds
+    max_backlog_s: Seconds  # speech waiting for recognition beyond this: the oldest is skipped
 
 
 class ASRConfig(_Section):

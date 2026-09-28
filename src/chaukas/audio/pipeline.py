@@ -204,6 +204,22 @@ class _StreamWorker:
     speech_start: float | None = None
 
 
+def shed_backlog(backlog: deque[AudioSegment], *, max_s: float) -> list[AudioSegment]:
+    """Drop the oldest waiting speech until at most ``max_s`` seconds are left; the newest
+    segment always stays. Returns what was dropped, oldest first.
+
+    Used when recognition runs slower than real time: speech that has waited this long
+    can no longer give a warning before harm, and an unbounded queue of audio would
+    eventually exhaust memory. The latest words are the ones that matter."""
+    dropped: list[AudioSegment] = []
+    total = sum(segment.duration for segment in backlog)
+    while len(backlog) > 1 and total > max_s:
+        oldest = backlog.popleft()
+        total -= oldest.duration
+        dropped.append(oldest)
+    return dropped
+
+
 class AudioPipeline:
     def __init__(
         self,
@@ -233,6 +249,7 @@ class AudioPipeline:
         self._pending_caller: list[float] = []  # starts of caller segments not yet taken
         self._held: list[tuple[AudioSegment, float]] = []  # user segments waiting for the caller
         self._busy = 0  # segments queued or being transcribed
+        self.shed_s = 0.0  # older speech skipped because recognition fell behind
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._asr_thread: threading.Thread | None = None
@@ -342,6 +359,7 @@ class AudioPipeline:
                     self._backlog.append(self._segments.get_nowait())
                 except queue.Empty:
                     break
+            self._shed_old_speech()
             batch = self._take_batch()
             if batch[0].stream is Stream.CALLER:
                 self._remember_caller(batch)
@@ -355,6 +373,19 @@ class AudioPipeline:
                 with self._lock:
                     self._busy -= len(batch)
             self._release_held(force_after=_ECHO_HOLD_S)
+
+    def _shed_old_speech(self) -> None:
+        dropped = shed_backlog(self._backlog, max_s=self._config.max_backlog_s)
+        if not dropped:
+            return
+        seconds = sum(segment.duration for segment in dropped)
+        with self._lock:
+            self._busy -= len(dropped)
+            for segment in dropped:
+                if segment.stream is Stream.CALLER and segment.t_start in self._pending_caller:
+                    self._pending_caller.remove(segment.t_start)
+            self.shed_s += seconds
+        logger.warning("speech recognition fell behind; skipped %.0f s of older speech", seconds)
 
     def _take_batch(self) -> list[AudioSegment]:
         """The next segment, plus the same speaker's segments right behind it (merge)."""

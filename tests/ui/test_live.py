@@ -12,7 +12,7 @@ from chaukas.engine.templates import load_templates
 from chaukas.evaluation.ablation import config_for
 from chaukas.evaluation.cases import load_case
 from chaukas.signals.lexicon import Lexicon
-from chaukas.ui.live import LiveSession
+from chaukas.ui.live import LiveSession, ScoreHistory
 from chaukas.ui.presenter import transcript_view
 from chaukas.ui.settings import UserSettings, load_settings, save_settings
 
@@ -204,3 +204,28 @@ class TestLiveInput:
         assert session.state.level is Level.QUIET
         assert session.transcript == ()
         assert session.advance(4000.0) is False  # nothing left to end
+
+
+class TestScoreHistory:
+    """Red-team regression: the score history grew by one point per tick for the whole
+    session, and every dashboard refresh copied and scanned all of it."""
+
+    def test_stays_bounded_and_keeps_every_peak(self) -> None:
+        history = ScoreHistory(max_points=100)
+        for i in range(100_000):
+            history.add(float(i), 0.9 if i == 54_321 else 0.1)
+        assert len(history.points) <= 100
+        assert max(score for _, score in history.points) == 0.9
+        assert history.points == sorted(history.points)
+
+    def test_short_sessions_keep_one_point_per_second(self) -> None:
+        history = ScoreHistory(max_points=100)
+        for t, score in [(0.1, 0.2), (0.6, 0.5), (1.2, 0.3)]:
+            history.add(t, score)
+        assert history.points == [(0.0, 0.5), (1.0, 0.3)]
+
+    def test_a_long_live_session_keeps_the_history_bounded(self, lexicon: Lexicon) -> None:
+        session = live(lexicon)
+        for second in range(1, 20_001):  # five and a half hours of one-second ticks
+            session.advance(float(second))
+        assert len(session.history) <= ScoreHistory.MAX_POINTS

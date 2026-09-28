@@ -327,10 +327,12 @@ class TestTimeouts:
         reader = StuckReader("Enter OTP")
         watcher = self._watcher(reader, timeout_s=1.0)
         for t in range(0, 20, 2):
+            expected = min(3, t // 2 + 1)
             watcher.poll(float(t))
-            self._wait_for(lambda: reader.reads >= min(3, t // 2 + 1))
+            self._wait_for(lambda expected=expected: reader.reads >= expected)
         assert watcher.timeouts == 3
         assert reader.reads == 3  # no further read is started
-        assert watcher.disabled is not None and "stopped responding" in watcher.disabled
+        assert watcher.disabled is not None
+        assert "stopped responding" in watcher.disabled
         reader.release.set()
         watcher.close()
