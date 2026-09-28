@@ -1,0 +1,17 @@
+case_id: RS01
+category: benign
+scenario: E.helpdesk.en
+split: test
+author: me
+language: english
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: IT helpdesk the user called.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Hi, my printer driver keeps failing, I raised ticket 4471."}
+  - {after: 1.0, caller: "Hi, I am from the IT support team. I will connect with Quick Assist."}
+  - {after: 4.0, event: "remote_app_started", detail: "QuickAssist.exe"}
+  - {after: 2.0, caller: "The driver is reinstalled. Please print a test page."}

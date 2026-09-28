@@ -1,0 +1,21 @@
+case_id: RR05
+category: attack
+scenario: E.electricity.devanagari
+split: test
+author: me
+language: hindi
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: Hindi in Devanagari.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "मैं बिजली कंपनी के रिफंड विभाग से बोल रहा हूँ।"}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "आपका कंप्यूटर मैं यहीं से संभाल लूँगा, बस अनुमति दे दीजिए।"}
+  - {after: 5.0, event: "remote_app_started", detail: "AnyDesk.exe"}
+  - {after: 2.0, caller: "अब अपना नेट बैंकिंग खोलिए।"}
+  - {after: 3.0, event: "transfer_page", detail: "DemoBank (MOCK) - Login"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 5.0, mark: "harm"}

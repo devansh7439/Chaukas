@@ -1,0 +1,21 @@
+case_id: RR03
+category: attack
+scenario: E.courier.en
+split: test
+author: me
+language: english
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: returns desk; 'press accept'.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "This is Priya from the returns desk of the courier company."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "I will guide you, just press accept when a connection request pops up."}
+  - {after: 5.0, event: "remote_app_started", detail: "QuickAssist.exe"}
+  - {after: 2.0, caller: "Log in to your bank so the refund can be credited."}
+  - {after: 3.0, event: "bank_page", detail: "DemoBank (MOCK) - Login"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 5.0, mark: "harm"}

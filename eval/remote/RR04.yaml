@@ -1,0 +1,21 @@
+case_id: RR04
+category: attack
+scenario: E.no_claim.en
+split: test
+author: me
+language: english
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: no organisation claim at all.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "Hi, your Windows licence has expired and your files are at risk."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "I will connect to your laptop and fix it, just allow the connection."}
+  - {after: 5.0, event: "remote_app_started", detail: "AnyDesk.exe"}
+  - {after: 2.0, caller: "Open your bank so we can take the renewal fee."}
+  - {after: 3.0, event: "bank_page", detail: "DemoBank (MOCK) - Login"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 5.0, mark: "harm"}

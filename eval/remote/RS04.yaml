@@ -1,0 +1,15 @@
+case_id: RS04
+category: benign
+scenario: E.insurance.en
+split: test
+author: me
+language: english
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: an insurance payout notice.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "I am from the claims team of your insurance company."}
+  - {after: 1.0, caller: "Your claim is approved, the money will reach your account in three days."}

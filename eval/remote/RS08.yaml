@@ -1,0 +1,15 @@
+case_id: RS08
+category: benign
+scenario: E.gas_booking.en
+split: test
+author: me
+language: english
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a delivery confirmation call.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "This is the customer care team of your gas company."}
+  - {after: 1.0, caller: "Your cylinder booking is confirmed for Tuesday morning. Thank you."}

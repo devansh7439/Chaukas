@@ -1,0 +1,17 @@
+case_id: RS02
+category: benign
+scenario: E.son_helps.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a son helps his mother pay a bill remotely, then the bank opens.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Maa, main AnyDesk se connect karta hoon, tum bas allow dabana."}
+  - {after: 4.0, event: "remote_app_started", detail: "AnyDesk.exe"}
+  - {after: 2.0, caller: "Ab bank ka app kholo, main bijli ka bill bhar deta hoon."}
+  - {after: 3.0, event: "bank_page", detail: "DemoBank (MOCK) - Login"}

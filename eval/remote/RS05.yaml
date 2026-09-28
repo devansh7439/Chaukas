@@ -1,0 +1,15 @@
+case_id: RS05
+category: benign
+scenario: E.colleague_share.en
+split: test
+author: me
+language: english
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a colleague shares their screen.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Hi all, I am from the design team."}
+  - {after: 1.0, caller: "Let me share my screen and walk you through the new layout."}

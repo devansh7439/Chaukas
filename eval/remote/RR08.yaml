@@ -1,0 +1,21 @@
+case_id: RR08
+category: attack
+scenario: E.refund.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: refund department, 'control chahiye'.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "Hum Amazon ke refund department se bol rahe hain."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 1.0, caller: "Aapka paisa wapas karne ke liye mujhe aapke laptop ka control chahiye."}
+  - {after: 5.0, event: "remote_app_started", detail: "AnyDesk.exe"}
+  - {after: 2.0, caller: "Ab bank ka app kholiye."}
+  - {after: 3.0, event: "bank_page", detail: "DemoBank (MOCK) - Login"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 5.0, mark: "harm"}

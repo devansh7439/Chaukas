@@ -1,0 +1,15 @@
+case_id: RS06
+category: benign
+scenario: E.power_cut.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: an electricity maintenance notice.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Main bijli vibhag se bol raha hoon."}
+  - {after: 1.0, caller: "Kal subah dus baje se do ghante bijli band rahegi, maintenance hai."}

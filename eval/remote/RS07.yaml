@@ -1,0 +1,17 @@
+case_id: RS07
+category: benign
+scenario: E.tutorial.en
+split: test
+author: me
+language: english
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a tutorial video; the user installs a remote tool for themselves.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "In this video I will show you how to install AnyDesk on your own PC."}
+  - {after: 2.0, event: "download_executable", detail: "AnyDesk.exe"}
+  - {after: 3.0, event: "remote_app_started", detail: "AnyDesk.exe"}
+  - {after: 1.0, caller: "That's it, now you can reach your home computer from work."}

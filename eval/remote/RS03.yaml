@@ -1,0 +1,15 @@
+case_id: RS03
+category: benign
+scenario: E.bank_alert.en
+split: test
+author: me
+language: english
+notes: >
+  Set E, remote-control focus. Written after the organisation-claim rule and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a real bank alert, no request.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "This is Anita from the credit card department of your bank."}
+  - {after: 1.0, caller: "We noticed a payment of four thousand rupees. If it was not you, call the number on your card."}
