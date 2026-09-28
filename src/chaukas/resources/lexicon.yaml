@@ -141,4 +141,18 @@ compounds:
   do: [karo, kariye, kijiye, karein, karen, karna, kar do, kar dijiye, kar dein, kar dena,
        kar lijiye, kar lo, kar dijiyega]
 
+# Organisation claims: the caller introduces themselves on behalf of an organisation without
+# naming a known agency ("I am from the refunds team of your electricity company", "Main
+# insurance company ke claims department se bol rahi hoon"). Inside one clause: a speaker
+# word, then "from" and an organisation noun, or an organisation noun then "se". Only a weak
+# authority signal: it satisfies the remote-banking rule's organisation claim, nothing more.
+claims:
+  speakers: [i, we, this, main, hum, मैं, हम]
+  from_before: [from]
+  from_after: [se, से]
+  organisations: [team, department, desk, support, company, bank, helpline, division, unit,
+                  centre, center, service, services, cell, board, ministry, provider, care,
+                  vibhag, vibhaag, विभाग, कंपनी, बैंक]
+  window: 8
+
 suppress: [pin code, pincode, postal code, पिन कोड]

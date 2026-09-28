@@ -59,6 +59,25 @@ class NegationSpec(_Strict):
     offer_verbs: list[str] = []
 
 
+class ClaimSpec(_Strict):
+    """Organisation claims ("I am from the billing department"); see signals/claims.py."""
+
+    speakers: list[str] = []  # first-person words that start a self-introduction
+    from_before: list[str] = []  # "from": the organisation follows it (English)
+    from_after: list[str] = []  # "se": the organisation precedes it (Hindi)
+    organisations: list[str] = []  # nouns that name an organisation or a unit of one
+    window: int = Field(default=8, ge=1)
+
+
+@dataclass(frozen=True, slots=True)
+class CompiledClaims:
+    speakers: frozenset[str]
+    from_before: frozenset[str]
+    from_after: frozenset[str]
+    organisations: frozenset[str]
+    window: int
+
+
 class LexiconSpec(_Strict):
     """Schema of ``lexicon.yaml``."""
 
@@ -67,6 +86,7 @@ class LexiconSpec(_Strict):
     requests: dict[SignalKind, RequestSpec]
     negation: NegationSpec
     compounds: dict[str, list[str]] = Field(default_factory=dict)  # helper forms per stem type
+    claims: ClaimSpec = Field(default_factory=ClaimSpec)  # empty: no organisation claims
     suppress: list[str]
 
     @model_validator(mode="after")
@@ -105,6 +125,7 @@ class Lexicon:
     """Compiled vocabulary: automata ready to scan token lists."""
 
     __slots__ = (
+        "claims",
         "negation_connectors",
         "negation_fillers",
         "negation_gap",
@@ -157,6 +178,13 @@ class Lexicon:
         self.negation_fillers: frozenset[str] = _single_tokens(spec.negation.fillers)
         self.negation_helpers: frozenset[str] = _single_tokens(spec.negation.helpers)
         self.redirect_recipients: frozenset[str] = _single_tokens(spec.negation.redirect)
+        self.claims = CompiledClaims(
+            speakers=_single_tokens(spec.claims.speakers),
+            from_before=_single_tokens(spec.claims.from_before),
+            from_after=_single_tokens(spec.claims.from_after),
+            organisations=_single_tokens(spec.claims.organisations),
+            window=spec.claims.window,
+        )
         self.offer_subjects: frozenset[str] = _single_tokens(spec.negation.offer_subjects)
         self.offer_verbs: frozenset[str] = _single_tokens(spec.negation.offer_verbs)
 

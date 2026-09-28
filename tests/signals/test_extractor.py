@@ -327,3 +327,36 @@ def test_install_requests_name_the_software_generically(
 ) -> None:
     found = tiers(extractor.extract(segment(Stream.CALLER, text)))
     assert found.get(K.REMOTE_ACCESS_REQUEST) is Tier.FAST_PATH
+
+
+class TestOrganisationClaims:
+    """Review follow-up (RT11 analysis): "I am from the refunds team of your electricity
+    company" named no known agency, so the remote-banking rule, which needs an organisation
+    claim, never fired. A self-introduction on behalf of an organisation is now a weak
+    authority signal: enough for that rule, too weak to prime the OTP rule or fill a step."""
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Good afternoon, I am from the refunds team of your electricity company.",
+            "This is Rahul calling from the billing department.",
+            "We are from the security desk of your internet provider.",
+            "Main insurance company ke claims department se bol rahi hoon.",
+        ],
+    )
+    def test_introductions_for_an_organisation_are_a_weak_claim(
+        self, extractor: SignalExtractor, text: str
+    ) -> None:
+        assert tiers(extractor.extract(segment(Stream.CALLER, text))).get(K.AUTHORITY) is Tier.WEAK
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "I am from Delhi, just visiting for the weekend.",
+            "This is my friend from school.",
+            "I am calling from the clinic about your appointment.",
+            "The team from the other company won the match.",
+        ],
+    )
+    def test_other_introductions_are_not(self, extractor: SignalExtractor, text: str) -> None:
+        assert K.AUTHORITY not in tiers(extractor.extract(segment(Stream.CALLER, text)))

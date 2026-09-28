@@ -18,6 +18,7 @@ from typing import Final
 from chaukas.core.config import SignalsConfig
 from chaukas.core.models import Segment, Signal, SignalKind, SignalSource, Stream, Tier
 from chaukas.core.window import TimeWindow
+from chaukas.signals.claims import organisation_claim
 from chaukas.signals.digits import find_codes
 from chaukas.signals.lexicon import Lexicon
 from chaukas.signals.normalise import tokenize, tokenize_clauses
@@ -97,6 +98,9 @@ class SignalExtractor:
         for hit in requests:
             if not hit.negated:
                 self._offer(best, segment, hit.kind, Tier.FAST_PATH, tokens[hit.start : hit.end])
+        claim = organisation_claim(tokens, self._lexicon, clause_starts)
+        if claim is not None:  # weak: a stronger authority keyword in the line still wins
+            self._offer(best, segment, SignalKind.AUTHORITY, Tier.WEAK, tokens[claim[0] : claim[1]])
         if self._semantic is not None:
             for signal in self._semantic.detect(segment):  # paraphrases; the stronger wins
                 current = best.get(signal.kind)
