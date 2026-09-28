@@ -1,0 +1,19 @@
+case_id: PC03
+category: benign
+scenario: C.office_it.en
+split: test
+author: me
+language: english
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, user: "Hi, I raised a ticket, my laptop will not connect to the printer."}
+  - {after: 1.0, caller: "Hi, this is Rahul from IT. I will connect to your laptop through the remote tool, please approve it."}
+  - {after: 4.0, event: remote_app_started, detail: "QuickAssist.exe"}
+  - {after: 2.0, caller: "Printer driver reinstalled, try printing now."}

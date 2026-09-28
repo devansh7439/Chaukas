@@ -1,0 +1,21 @@
+case_id: PB02
+category: attack
+scenario: B.card_fraud.en
+split: test
+author: me
+language: english
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "Hello, I am with the fraud unit of your card issuer. A purchase of sixty thousand is pending."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "I just sent a confirmation string to your phone. Say it back to me so I can reverse the charge."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "It is two seven zero four one six."}
+  - {after: 0.5, mark: harm}

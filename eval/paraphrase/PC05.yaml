@@ -1,0 +1,17 @@
+case_id: PC05
+category: benign
+scenario: C.news.hi
+split: test
+author: me
+language: hindi
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "खबर: साइबर पुलिस ने बताया कि ठग फ़ोन पर ओटीपी माँगते हैं।"}
+  - {after: 1.0, caller: "लोगों से अपील है कि ऐसी कॉल पर कोई जानकारी न दें।"}

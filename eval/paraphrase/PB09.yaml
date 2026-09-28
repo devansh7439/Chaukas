@@ -1,0 +1,22 @@
+case_id: PB09
+category: attack
+scenario: B.aadhaar.hi
+split: test
+author: me
+language: hindi
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "मैं साइबर अपराध शाखा से बोल रहा हूँ, आपके आधार का गलत इस्तेमाल हुआ है।"}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "आपकी गिरफ्तारी हो सकती है, इस बारे में किसी को मत बताइए।"}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 1.0, caller: "जांच पूरी होने तक अपनी रकम इस खाते में जमा कीजिए।"}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

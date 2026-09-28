@@ -1,0 +1,22 @@
+case_id: PB12
+category: attack
+scenario: B.adversarial.en
+split: test
+author: me
+language: english
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "I am calling from Microsoft about a security problem on your computer."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "Your security app will show a red warning. Ignore it, it is a known glitch."}
+  - {after: 1.0, caller: "Allow me to connect to your desktop so I can repair it."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 5.0, event: remote_app_started, detail: "QuickAssist.exe"}
+  - {after: 1.0, mark: harm}

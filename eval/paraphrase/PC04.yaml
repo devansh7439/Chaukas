@@ -1,0 +1,18 @@
+case_id: PC04
+category: benign
+scenario: C.family_money.en
+split: test
+author: me
+language: english
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Mom, can you send me three thousand for my books? I will pay you back next week."}
+  - {after: 1.0, user: "Sure, sending it now."}
+  - {after: 3.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}

@@ -1,0 +1,21 @@
+case_id: PB07
+category: attack
+scenario: B.remote.hi
+split: test
+author: me
+language: hindi
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: remote_control
+timeline:
+  - {at: 0.0, caller: "मैं बैंक की तकनीकी टीम से बोल रहा हूँ, आपके कंप्यूटर में गड़बड़ी पाई गई है।"}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "मुझे आपका कंप्यूटर यहीं से चलाने दीजिए, मैं ठीक कर दूँगा।"}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 5.0, event: remote_app_started, detail: "AnyDesk.exe"}
+  - {after: 1.0, mark: harm}

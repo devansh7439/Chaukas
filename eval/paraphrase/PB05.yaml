@@ -1,0 +1,22 @@
+case_id: PB05
+category: attack
+scenario: B.son_detained.en
+split: test
+author: me
+language: english
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, caller: "Sir, I am calling from the police station. Your son has been detained after an accident."}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "If you settle the fine quietly through the number I give you, he walks free tonight."}
+  - {after: 1.0, caller: "Do not call anyone else about this, it will only make things worse."}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 4.0, event: transfer_page, detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 6.0, mark: harm}

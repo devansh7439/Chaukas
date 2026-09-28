@@ -1,0 +1,18 @@
+case_id: PC02
+category: benign
+scenario: C.pharmacy_code.en
+split: test
+author: me
+language: english
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "Hi, your medicines from the pharmacy are here."}
+  - {after: 1.0, caller: "What is the pickup code shown in the order screen?"}
+  - {after: 2.0, user: "It is three nine one four."}

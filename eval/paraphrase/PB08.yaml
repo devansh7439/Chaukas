@@ -1,0 +1,21 @@
+case_id: PB08
+category: attack
+scenario: B.kyc.hi
+split: test
+author: me
+language: hindi
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: critical_recovery
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, caller: "मैं बैंक से बोल रही हूँ, आपकी केवाईसी अधूरी है और खाता रुक जाएगा।"}
+  - {after: 0.5, mark: first_tactic}
+  - {after: 1.0, caller: "संदेश में आए अंक मुझे अभी बता दीजिए।"}
+  - {after: 0.5, mark: expected_warning}
+  - {after: 2.0, user: "चार एक नौ सात दो पाँच।"}
+  - {after: 0.5, mark: harm}

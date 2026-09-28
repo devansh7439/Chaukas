@@ -1,0 +1,17 @@
+case_id: PC08
+category: benign
+scenario: C.card_ready.hi
+split: test
+author: me
+language: hindi
+notes: >
+  Fresh paraphrase test case, written after the semantic layer was frozen (tag
+  semantic-frozen) and committed before its only run. Synthetic, AI-assisted, by the
+  same assistant that built the detector (not blind).
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, caller: "नमस्ते, आपका नया डेबिट कार्ड तैयार है।"}
+  - {after: 1.0, caller: "कृपया अपनी शाखा से आकर ले लीजिए।"}
