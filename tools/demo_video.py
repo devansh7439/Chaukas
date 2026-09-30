@@ -39,7 +39,7 @@ def main() -> int:
 
     case = load_case(args.case)
     length = args.seconds or case.end_time + 6.0
-    app = create_app(headless=True)
+    _app = create_app(headless=True)  # keep the Qt application alive while rendering
     ui = load_ui(case=args.case, headless=True, ablation="E", config_paths=(), speed=1.0,
                  size=SIZE, settings_file=None)  # fmt: skip
 
@@ -135,7 +135,7 @@ def main() -> int:
         5.0,
     )
     writer.close()
-    ui.close() if hasattr(ui, "close") else None
+    ui.close()
     QCoreApplication.processEvents()
     print(f"wrote {args.out} ({args.out.stat().st_size / 1e6:.1f} MB, {length:.0f} s of call)")
     return 0
