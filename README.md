@@ -334,7 +334,8 @@ file Chaukas uses, compiled for ONNX Runtime with the QNN provider, as Chaukas r
 | Whisper-small encoder, one 30 s window | Time | Where |
 |---|---|---|
 | **Snapdragon X Elite CRD, NPU** | **150 ms** | all 313 layers on the NPU; peak memory 272 MB |
-| This project's Intel Core i7-1360P laptop, CPU (same fp32 file) | 1,217 ms | 8.1× slower |
+| **Snapdragon X Plus 8-core CRD, NPU** | **144 ms** | all 313 layers on the NPU; peak memory 271 MB |
+| This project's Intel Core i7-1360P laptop, CPU (same fp32 file) | 1,053-1,217 ms | 7-8× slower (on battery; two runs) |
 | The same laptop, Chaukas's CPU default (int8 encoder) | ~980 ms | measured with `chaukas benchmark` |
 
 Reproduce with `uv run --with qai-hub python tools/aihub_profile.py --device "Snapdragon X

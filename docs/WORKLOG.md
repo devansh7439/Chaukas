@@ -940,3 +940,6 @@ screenshots (documented as an open risk).
   the whole pipeline on a Snapdragon laptop, and power.
 - `tools/demo_video.py`: renders the scripted digital-arrest demo from the real app window,
   frame by frame, into an MP4 (notice, warning, the full-screen pause with every reason).
+
+- Snapdragon X Plus 8-core CRD (AI Hub, same file and runtime): 144 ms per window (median of
+  100 runs), all 313 layers on the NPU, peak 271 MB; this laptop's CPU in that run: 1,053 ms.
