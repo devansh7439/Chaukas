@@ -546,6 +546,25 @@ class TestRemoteBanking:
         events = [(0.0, "claim"), (240.0, "remote"), (270.0, "bank")]
         assert self.timeline(events, 271.0).level is Level.WARNING
 
+    def test_a_screen_shared_in_a_browser_meeting_is_a_remote_session(self) -> None:
+        # "Join the Meet link and share your screen": no remote tool starts, but the caller
+        # sees the bank as the user opens it.
+        engine = RiskEngine.from_config(load_config({"ablation": {"use_llm": False}}), TEMPLATES)
+        engine.on_signal(caller(K.AUTHORITY, 0.3, 0.0))
+        engine.on_context(ContextEvent(t=5.0, kind=C.SCREEN_SHARED, detail="chrome.exe"))
+        engine.on_context(ContextEvent(t=8.0, kind=C.BANK_PAGE))
+        state = engine.evaluate(9.0)
+        assert state.level is Level.WARNING
+        assert state.objective is Objective.REMOTE_CONTROL
+
+    def test_a_screen_shared_before_the_claim_does_not_count(self) -> None:
+        # Presenting in a work meeting, then a caller claims to be the bank.
+        engine = RiskEngine.from_config(load_config({"ablation": {"use_llm": False}}), TEMPLATES)
+        engine.on_context(ContextEvent(t=0.0, kind=C.SCREEN_SHARED))
+        engine.on_signal(caller(K.AUTHORITY, 0.3, 60.0))
+        engine.on_context(ContextEvent(t=120.0, kind=C.BANK_PAGE))
+        assert engine.evaluate(121.0).level < Level.WARNING
+
 
 def test_the_why_panel_quotes_the_signal_that_justified_it_not_a_weaker_later_one() -> None:
     def authority(t: float, confidence: float, words: str) -> Signal:

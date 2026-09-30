@@ -30,6 +30,10 @@ remote_tools:
 
 executable_extensions: [.exe, .msi, .apk, .bat, .cmd, .ps1, .scr]
 
+# Apps whose screen capture is a screenshot, not a shared screen (context/sharing.py).
+# Matched against the start of the app's package or executable name.
+screen_capture_ignore: [microsoft.screensketch, snippingtool.exe, screenclippinghost.exe]
+
 # Triggered OCR of the foreground window (blueprint 6.5).
 screen:
   otp: [otp, one time password, ओटीपी]

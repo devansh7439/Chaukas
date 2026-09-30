@@ -112,6 +112,7 @@ _CONTEXT_OBJECTIVE: Mapping[ContextKind, Objective] = MappingProxyType(
     {
         ContextKind.REMOTE_APP_STARTED: Objective.REMOTE_CONTROL,
         ContextKind.DOWNLOAD_EXECUTABLE: Objective.REMOTE_CONTROL,
+        ContextKind.SCREEN_SHARED: Objective.REMOTE_CONTROL,
         ContextKind.BANK_PAGE: Objective.MONEY_TRANSFER,
         ContextKind.TRANSFER_PAGE: Objective.MONEY_TRANSFER,
         ContextKind.OTP_FIELD_VISIBLE: Objective.CREDENTIAL_DISCLOSURE,

@@ -197,8 +197,8 @@ VERIFIED (`tests/engine/test_trace.py`).
 
 **Open risks**, in priority order:
 
-1. Remote-control scams with no organisation claim, or with the screen shared inside a
-   browser meeting (no remote tool starts), reach notice at most (set E: RR04, RR07).
+1. Remote-control scams with no organisation claim reach notice at most (set E: RR04).
+   A screen shared from a browser meeting is now detected (section N; set H 2/6 -> 5/6).
    Remote-control scams that are caught reach warning, rarely critical.
 2. Media playing on the PC (films, news about scams): with no app holding the microphone
    for 10 minutes, alerts now stop at a notice (section M; set G 7/7 -> 0/7). A video
@@ -211,8 +211,9 @@ VERIFIED (`tests/engine/test_trace.py`).
 6. Real Hinglish speech recognition, and the whole pipeline on a Snapdragon laptop: NOT YET
    VERIFIED (the encoder alone is measured on a real X Elite through AI Hub).
 7. OCR reads the whole active window once a call is suspicious. Reading only the text of
-   the relevant controls through Windows UI Automation, before falling back to a
-   screenshot, would expose less unrelated private content. Not built.
+   the relevant controls through Windows UI Automation was tried and dropped (section N):
+   Edge exposed only its own buttons and tabs, not the page, so in a browser (where
+   banking happens) it would always fall back to the screenshot. MEASURED.
 
 **Q: Isn't this just keyword matching?** Keywords are one layer. Requests need a verb and
 an object of the same kind, with clause-bounded negation, offers and redirects handled;
@@ -320,3 +321,35 @@ Fresh set G (`eval/calls/`, committed before its only run, tag `eval-calls-1`, n
 starting after a video). Before the gate: 6/6 detected, **7/7 false alarms** (three
 critical). After: **6/6 detected, 0/7 false alarms**. NOT YET VERIFIED: a real WhatsApp or
 Zoom call on this PC, and a video playing during a real call (still treated as a call).
+
+## N. Screen sharing from a browser meeting (30 September)
+
+"Join the Meet link and share your screen" starts no remote tool, so set E's RR07 stayed
+at a notice. Windows keeps per-app screen-capture records next to the microphone ones
+(`graphicsCaptureWithoutBorder`, `graphicsCaptureProgrammatic`), with a stop time of 0
+while an app captures. `context/sharing.py` reads them once a second and reports a share
+that starts during protection as `screen_shared` (once per share; shares already running
+at start are the baseline; Snipping Tool is ignored). The engine treats it as a remote
+session: it fills the remote-access chain's context step, and the remote-banking rule
+(organisation claim, then a remote session, then the bank) now accepts it. MEASURED live
+on this PC with a throwaway browser profile sharing the entire screen: Chrome reported as
+`chrome.exe` 3 s after launch, Edge as `msedge.exe`, nothing after the share ended.
+
+Fresh set H (`eval/sharing/`, committed before any run, tag `eval-sharing-1`, non-blind):
+6 scams and 6 look-alikes (a work presentation, a son showing his father how to pay a
+bill, a teacher, the company IT helpdesk, an accountant's office asking for a bank
+statement, a friend). Before: 2/6 detected (the two with threats), 0/6 false alarms.
+After: **5/6 detected** (2 critical, 3 warnings), **0/6 false alarms**. Missed: SA5, an
+OTP page opened during a share with no bank page (the rule needs the bank). Note: SM5
+(an accountant's office: claim, share, bank page) stayed at a notice only because "this is
+Neha from Sharma and Associates" is not recognised as an organisation claim; a scammer
+using the same words would also be missed. NOT YET VERIFIED: Zoom's and Teams' desktop
+apps on this PC, and a real meeting (the test used a local page).
+
+**UI Automation instead of screenshots: tried, dropped.** A prototype read the control
+names of the active window through UI Automation (comtypes). On a local page in Edge with
+an OTP field it returned 45 elements, all of them Edge's own (tabs, address bar, window
+buttons), none from the page: Chromium builds the page tree only for assistive
+technology, which activation via MSAA and a registered UIA event handler did not trigger.
+Since banking happens in the browser, the reader would always fall back to the screenshot,
+so the dependency was not added. MEASURED.

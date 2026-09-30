@@ -18,7 +18,7 @@ remote_access:
     - {id: authority,   signals: [authority],                weight: 1.0, required: true,  distinctive: false}
     - {id: fear,        signals: [threat, urgency],          weight: 0.8, required: false, distinctive: false}
     - {id: install_req, signals: [remote_access_request],    weight: 1.2, required: true,  distinctive: true}
-    - {id: remote_ctx,  events:  [remote_app_started, download_executable], weight: 1.2, required: false, distinctive: true}
+    - {id: remote_ctx,  events:  [remote_app_started, download_executable, screen_shared], weight: 1.2, required: false, distinctive: true}
 
 credential_theft:
   objective: credential_disclosure

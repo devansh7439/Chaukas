@@ -20,6 +20,10 @@ def test_packaged_templates_match_the_blueprint() -> None:
     assert steps["control"].signals == {SignalKind.ISOLATION, SignalKind.SURVEILLANCE}
     assert steps["bank_ctx"].events == {ContextKind.BANK_PAGE, ContextKind.TRANSFER_PAGE}
     assert [step.required for step in digital_arrest.steps] == [True, True, True, True, False]
+    remote = {step.id: step for step in templates[1].steps}
+    assert remote["remote_ctx"].events == {ContextKind.REMOTE_APP_STARTED,
+                                           ContextKind.DOWNLOAD_EXECUTABLE,
+                                           ContextKind.SCREEN_SHARED}  # fmt: skip
 
 
 def one_template(**step: Any) -> dict[str, Any]:

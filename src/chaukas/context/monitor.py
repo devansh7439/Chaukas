@@ -1,5 +1,5 @@
-"""The context monitor: polls processes, the foreground window, Downloads and (while a call
-is suspicious) the active window's text, at 1 Hz (6.5).
+"""The context monitor: polls processes, the foreground window, Downloads, screen sharing,
+call presence and (while a call is suspicious) the active window's text, at 1 Hz (6.5).
 
 Runs on its own daemon thread and publishes ContextEvents stamped with session time. A
 reader that fails (access denied, a window closing mid-read) is logged and skipped for
@@ -16,6 +16,7 @@ from typing import Self
 from chaukas.context.downloads import DownloadPoller
 from chaukas.context.ocr import TriggeredOcr
 from chaukas.context.processes import ProcessWatcher
+from chaukas.context.sharing import ScreenShareWatcher
 from chaukas.context.windows import WindowWatcher
 from chaukas.core.clock import Clock
 from chaukas.core.models import ContextEvent, ContextKind
@@ -38,6 +39,7 @@ class ContextMonitor:
         downloads: DownloadPoller | None = None,
         screen: TriggeredOcr | None = None,
         calls: Callable[[], bool | None] | None = None,
+        sharing: ScreenShareWatcher | None = None,
     ) -> None:
         if poll_s <= 0:
             raise ValueError(f"poll_s must be positive, got {poll_s}")
@@ -50,6 +52,7 @@ class ContextMonitor:
         self._screen = screen
         self._calls = calls  # call presence: True, False or None (unknown)
         self._call: bool | None = None
+        self._sharing = sharing
         self._poll_s = poll_s
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -76,6 +79,11 @@ class ContextMonitor:
                 events.extend(self._downloads.poll(now))
             except Exception:
                 logger.exception("Downloads folder poll failed")
+        if self._sharing is not None:
+            try:
+                events.extend(self._sharing.poll(now))
+            except Exception:
+                logger.exception("screen sharing check failed")
         if self._screen is not None:
             try:
                 events.extend(self._screen.poll(now))
@@ -122,6 +130,8 @@ class ContextMonitor:
         self._windows.reset()
         if self._downloads is not None:
             self._downloads.reset()
+        if self._sharing is not None:
+            self._sharing.reset()
         if self._screen is not None:
             self._screen.reset()
 

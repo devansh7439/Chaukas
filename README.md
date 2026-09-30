@@ -190,6 +190,7 @@ keywords + semantic layer + engine + screen, no LLM):**
 | Red-team set D (12 attacks, 8 hard look-alikes) | Fresh: committed before its only run | **11/12** | 9/12 | **3/8** |
 | Set E: remote control (8 attacks, 8 look-alikes) | Fresh: committed before its only run | **6/8** (1/8 before the organisation-claim rule) | 1/8 | **0/8** |
 | Set G: call presence (6 scam calls, 7 films / news / videos playing with **no call**) | Fresh: committed before its only run | **6/6** | 4/6 | **0/7** (7/7 before the call-presence gate) |
+| Set H: screen shared from a **browser meeting** (6 scams, 6 look-alikes: work, family, teacher, IT, accountant, friend) | Fresh: committed before any run | **5/6** (2/6 before screen-share detection) | 2/6 (0/6 before) | **0/6** (0/6 before) |
 | Sets D + E, English cases **spoken aloud**, then heard by Whisper (13 + 11) | Seen as text; first run as audio | 11/13 (same as text) | 7/13 (same) | 2/11 (same) |
 | Held-out AT/BT (8 + 8) | Seen twice before | 7/8 | 5/8 | 1/8 |
 | Robustness matrix (18 + 8) | Seen before | 14/18 | 10/18 | 1/8 |
@@ -368,7 +369,7 @@ the rest run on its CPU); that needs the hardware.
 | Speech-to-text: Whisper on ONNX Runtime (default) or faster-whisper, fully offline | Built, tested, measured |
 | Keyword and request detection (English, romanised Hindi, Devanagari) | Built, tested |
 | Risk engine: attack chains, gates, levels, OTP rules, remote-banking rule | Built, tested |
-| Desktop monitor: remote tools, bank / transfer / OTP pages, downloads | Built, tested (real Windows calls) |
+| Desktop monitor: remote tools, bank / transfer / OTP pages, downloads, screen sharing, call presence | Built, tested (real Windows calls; screen sharing checked live in Chrome and Edge) |
 | Triggered OCR of the active window (Windows OCR), only while a call is suspicious | Built, tested on real rendered text |
 | The window: dashboard, alerts, Why / Privacy / Settings, English and Hindi | Built, tested |
 | Semantic intent layer for paraphrases (on-device embeddings; English and Devanagari) | Built, measured on fresh sets |
@@ -380,7 +381,7 @@ the rest run on its CPU); that needs the hardware.
 | Spoken alerts: on each rise to a warning or higher, the alert is said out loud (Indian-English voice; Hindi when a Hindi voice is installed); Chaukas never reacts to its own voice | Built, tested |
 | First-run welcome (live mode): what Chaukas listens to, what stays private, that you decide | Built, tested |
 
-Quality: 927 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
+Quality: 943 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on
 every push.
 
@@ -495,7 +496,7 @@ src/chaukas/
   evaluation/    case scripts, session pipeline, replay, metrics, ablations
   ui/            window: live session, services, presenter, Qt bridge, QML views
   resources/     default.yaml, lexicon.yaml, templates.yaml, context.yaml
-eval/            case scripts (YAML): cases/ (dev, held-out), robustness/, paraphrase/, redteam/, remote/, calls/
+eval/            case scripts (YAML): cases/ (dev, held-out), robustness/, paraphrase/, redteam/, remote/, calls/, sharing/
 docs/            ARCHITECTURE.md, DATA_MODEL.md, REDTEAM.md, WORKLOG.md, diagrams, images
 tests/           one folder per package
 ```
@@ -527,13 +528,16 @@ tests/           one folder per package
 - **Paraphrases are only partly covered.** The semantic layer caught 6 of 12 fresh
   paraphrased scams (keywords alone: 1), and Roman-script Hinglish paraphrases depend on
   the lexicon. Remote-control scams are caught when the caller claims to be from an
-  organisation (6 of 8 fresh cases, as warnings); missed when there is no claim at all, or
-  when the screen is shared inside a browser meeting, where no remote tool starts (see
-  [Results](#results)).
+  organisation (6 of 8 fresh cases, as warnings); missed when there is no claim at all
+  (see [Results](#results)). A screen shared from a browser meeting is now seen (Windows
+  records which apps capture the screen): 5 of 6 fresh cases, mostly as warnings; an OTP
+  page opened during a share, with no bank page, stays at a notice.
 - **OTP false alarms:** a stranger asking for an OTP is a warning even when legitimate: a
   delivery agent asking for the order OTP uses the same words as a scammer.
 - **Tools it doesn't know:** a rebuilt remote-access tool with new branding, or remote
-  access through the browser, is not recognised as a remote-control session.
+  *control* through the browser, is not recognised as a remote-control session. Screen
+  sharing is seen only for apps that capture through Windows Graphics Capture (checked:
+  Chrome, Edge; Windows lists Teams and WhatsApp too); Zoom's desktop app: not verified.
 - **OCR** reads the languages Windows has OCR packs for (English by default; Hindi needs
   the Hindi language pack). It uses the classic `Windows.Media.Ocr`, which works without
   MSIX packaging (tested from a plain, unpackaged Python process). If OCR is missing on a

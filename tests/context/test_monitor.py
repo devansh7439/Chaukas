@@ -229,3 +229,26 @@ def test_the_monitor_reports_call_state_changes_only(rules: ContextRules) -> Non
         ContextKind.CALL_ACTIVE,
         ContextKind.NO_CALL,
     ]
+
+
+def test_a_screen_share_is_part_of_each_poll_and_forgotten_at_session_end(
+    rules: ContextRules,
+) -> None:
+    from chaukas.context.sharing import ScreenShareWatcher
+
+    chrome = r"C:#Program Files#Google#Chrome#Application#chrome.exe"
+    reads = iter([{}, {chrome: (100, 0)}, {chrome: (100, 0)}, {chrome: (100, 0)}])
+    published: list[ContextEvent] = []
+    monitor = ContextMonitor(
+        clock=VirtualClock(), publish=published.append,
+        processes=ProcessWatcher(rules, lambda: []), windows=WindowWatcher(rules),
+        read_foreground=lambda: None, poll_s=1.0,
+        sharing=ScreenShareWatcher(rules, read=lambda: next(reads), exclude=()),
+    )  # fmt: skip
+    monitor.poll_once()
+    monitor.poll_once()
+    assert [(e.kind, e.detail) for e in published] == [(ContextKind.SCREEN_SHARED, "chrome.exe")]
+    monitor.reset()
+    monitor.poll_once()  # the share still running is the new session's baseline
+    monitor.poll_once()
+    assert len(published) == 1

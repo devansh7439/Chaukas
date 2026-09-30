@@ -24,8 +24,7 @@ from typing import Final
 logger = logging.getLogger(__name__)
 
 Records = Mapping[str, tuple[int, int]]  # app key -> (last start, last stop), FILETIME ticks
-_KEY: Final = (r"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager"
-               r"\ConsentStore\microphone")  # fmt: skip
+_STORE: Final = r"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore"
 
 
 def apps_in_use(records: Records, *, exclude: Collection[str]) -> list[str]:
@@ -40,8 +39,10 @@ def apps_in_use(records: Records, *, exclude: Collection[str]) -> list[str]:
     return using
 
 
-def read_records() -> dict[str, tuple[int, int]] | None:
-    """The microphone records of this Windows user, or None where there are none."""
+def read_records(capability: str = "microphone") -> dict[str, tuple[int, int]] | None:
+    """This Windows user's records of one capability ("microphone", or the screen-capture
+    ones read by ``context/sharing.py``), or None where there are none. Desktop apps are
+    listed under "NonPackaged", which is absent until a desktop app has used it."""
     if sys.platform != "win32":
         return None
     import winreg
@@ -58,13 +59,18 @@ def read_records() -> dict[str, tuple[int, int]] | None:
                     with winreg.OpenKey(key, name) as app:
                         start = int(winreg.QueryValueEx(app, "LastUsedTimeStart")[0])
                         stop = int(winreg.QueryValueEx(app, "LastUsedTimeStop")[0])
-                except OSError:  # an app that never used the microphone has no times
+                except OSError:  # an app that never used the capability has no times
                     continue
                 records[name] = (start, stop)
 
     try:
-        collect(_KEY)
-        collect(_KEY + r"\NonPackaged")
+        collect(rf"{_STORE}\{capability}")
+    except OSError:
+        return None
+    try:
+        collect(rf"{_STORE}\{capability}\NonPackaged")
+    except FileNotFoundError:
+        pass
     except OSError:
         return None
     return records

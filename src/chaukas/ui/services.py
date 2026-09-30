@@ -91,6 +91,7 @@ class LiveServices:
         from chaukas.context.monitor import ContextMonitor
         from chaukas.context.processes import ProcessWatcher, list_processes
         from chaukas.context.rules import ContextRules
+        from chaukas.context.sharing import ScreenShareWatcher
         from chaukas.context.win32 import downloads_folder, foreground_window
         from chaukas.context.windows import WindowWatcher
 
@@ -106,6 +107,7 @@ class LiveServices:
             downloads=DownloadPoller(downloads_folder(), DownloadClassifier(rules)),
             screen=self._screen_reader(rules),
             calls=CallProbe(),
+            sharing=ScreenShareWatcher(rules),
         )
         self._monitor.start()
 

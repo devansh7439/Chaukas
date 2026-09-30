@@ -124,7 +124,7 @@ Times are always **seconds since the session started**.
 | `SignalKind` | `authority`, `threat`, `urgency`, `isolation`, `surveillance`, `money_request`, `remote_access_request`, `credential_request`, `user_digits_spoken` |
 | `SignalSource` | `keyword`, `llm`, `rule` |
 | `Tier` | `weak`, `strong`, `phrase`, `fast_path`, `llm`, `rule` |
-| `ContextKind` | `remote_app_started`, `bank_page`, `transfer_page`, `download_executable`, `otp_field_visible`, `password_field_visible`, `window_changed` |
+| `ContextKind` | `remote_app_started`, `bank_page`, `transfer_page`, `download_executable`, `otp_field_visible`, `password_field_visible`, `window_changed`, `call_active`, `no_call`, `screen_shared` |
 | `Objective` | `money_transfer`, `remote_control`, `credential_disclosure`, `none`, `unclear` |
 | `Level` (ordered) | `quiet` < `notice` < `warning` < `critical` < `critical_recovery` |
 

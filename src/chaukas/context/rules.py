@@ -44,6 +44,7 @@ class _RulesSpec(_Strict):
     otp_words: Phrases = Field(min_length=1)
     remote_tools: _RemoteToolsSpec
     executable_extensions: Phrases = Field(min_length=1)
+    screen_capture_ignore: Phrases
     screen: _ScreenSpec
 
 
@@ -68,6 +69,7 @@ class _PhraseSet:
 class ContextRules:
     __slots__ = (
         "_banks",
+        "_capture_ignore",
         "_executables",
         "_otp",
         "_process_names",
@@ -86,6 +88,7 @@ class ContextRules:
         self._process_names = frozenset(name.casefold() for name in spec.remote_tools.process_names)
         self._products = _PhraseSet(spec.remote_tools.product_keywords)
         self._executables = frozenset(ext.casefold() for ext in spec.executable_extensions)
+        self._capture_ignore = tuple(name.casefold() for name in spec.screen_capture_ignore)
         self._screen_otp = _PhraseSet(spec.screen.otp)
         self._screen_password = _PhraseSet(spec.screen.password)
         self._screen_transfer = _PhraseSet(spec.screen.transfer)
@@ -121,6 +124,10 @@ class ContextRules:
             return True
         text = " ".join((name.replace("_", " "), company, product))
         return bool(self._products.hits(tokenize(text)))
+
+    def is_screenshot_tool(self, app: str) -> bool:
+        """An app (package name or executable name) whose screen capture is a screenshot."""
+        return app.casefold().startswith(self._capture_ignore)
 
     def is_executable(self, path: Path) -> bool:
         """A finished download that can run code (partial ``.crdownload`` files are not)."""

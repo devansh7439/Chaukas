@@ -183,8 +183,8 @@ the window (tray, spoken alerts, first-run welcome), live app, `run.bat`, tools,
 
 | Still open | Notes |
 |---|---|
-| Screen text via UI Automation before OCR | Read only the relevant controls' text, screenshot as fallback (REDTEAM open risk 7) |
-| Remote control without a remote tool | Screen shared inside a browser meeting; no organisation claim (open risk 1) |
+| An OTP page during a screen share | No bank page, so the remote-banking rule doesn't fire (set H: SA5) |
+| Remote control with no organisation claim | Open risk 1 (browser screen sharing: done, 30 Sep) |
 | Mock bank site | Local pages titled "DemoBank (MOCK) - ..." for demos; the demo uses window titles only |
 | LLM in live mode | Live mode refuses ablations B-D |
 
@@ -968,3 +968,25 @@ screenshots (documented as an open risk).
   the microphone; with no call for 10 minutes, media stops at a notice. Verified live (ffmpeg
   recording = call; Chaukas's own capture = not a call, after fixing a resolved-path bug).
   Fresh set G (tag `eval-calls-1`): media false alarms 7/7 -> 0/7, scam calls 6/6 -> 6/6.
+
+### 2026-09-30 - Screen sharing from a browser meeting; UI Automation tried and dropped
+
+- **UI Automation before OCR (open risk 7): prototyped, not built.** Edge exposed only its
+  own controls through UI Automation, never the page (Chromium builds the page tree only
+  for assistive technology). In the browser, where banking happens, it would always fall
+  back to the screenshot, so it adds a dependency for no privacy gain. Recorded in
+  REDTEAM section N.
+- **Screen sharing (`context/sharing.py`).** Windows records per-app screen capture next to
+  the microphone records (`graphicsCaptureWithoutBorder`, `graphicsCaptureProgrammatic`);
+  `read_records` in `calls.py` now takes the capability name (and tolerates a missing
+  `NonPackaged` key). `ScreenShareWatcher` reports each share that starts during protection
+  as `screen_shared` (baseline at the first good read, once per (app, start), screenshot
+  tools in `context.yaml: screen_capture_ignore`). The engine counts it as a remote
+  session: remote-access chain step `remote_ctx` and the remote-banking rule. Wired into
+  the monitor and live services.
+- Verified live with throwaway profiles sharing the entire screen: Chrome and Edge each
+  reported within 3 s; nothing after the share ended.
+- Fresh set H (`eval/sharing/`, tag `eval-sharing-1`, committed before any run): detected
+  2/6 -> **5/6**, critical before harm 0/6 -> 2/6, false alarms 0/6 -> 0/6. Missed SA5 (OTP
+  page, no bank page).
+- Tests: 943 (16 new), ruff, format and mypy clean.

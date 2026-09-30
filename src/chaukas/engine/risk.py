@@ -61,6 +61,8 @@ _DISCOUNT_FACTOR: Final = 0.5
 _LLM_TRIGGER_TIERS: Final = frozenset({Tier.STRONG, Tier.PHRASE, Tier.FAST_PATH, Tier.LLM})
 _COERCIVE: Final = tuple(kind for kind in SignalKind if kind.is_coercive)
 _BANKING: Final = frozenset({ContextKind.BANK_PAGE, ContextKind.TRANSFER_PAGE})
+# A remote session: a remote-control app, or the screen shared (e.g. from a browser meeting)
+_REMOTE_SESSION: Final = frozenset({ContextKind.REMOTE_APP_STARTED, ContextKind.SCREEN_SHARED})
 
 
 class RiskEngine:
@@ -380,8 +382,9 @@ class RiskEngine:
 
     def _remote_banking(self) -> bool:
         """The causal order of a remote-control scam: the caller claims to be from an
-        organisation (even a weak "customer care"), *then* a remote-control app starts,
-        and the bank opens within ``remote_banking_window_s`` of that start.
+        organisation (even a weak "customer care"), *then* a remote session starts (a
+        remote-control app, or the screen shared from a browser meeting), and the bank
+        opens within ``remote_banking_window_s`` of that start.
 
         The tech-support and refund scam needs no threats, so the coercion rule alone
         would stop it at a notice. Family remote help makes no organisation claim, and a
@@ -395,7 +398,7 @@ class RiskEngine:
         if claimed is None:
             return False
         remote_starts = [e.t for e in self._context
-                         if e.kind is ContextKind.REMOTE_APP_STARTED and e.t > claimed]  # fmt: skip
+                         if e.kind in _REMOTE_SESSION and e.t > claimed]  # fmt: skip
         banking = [e.t for e in self._context if e.kind in _BANKING]
         window = rules.remote_banking_window_s
         return any(start <= bank <= start + window for start in remote_starts for bank in banking)
