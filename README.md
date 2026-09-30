@@ -73,7 +73,11 @@ Nothing is ever blocked. `uv run chaukas ui` opens an empty session where you ty
 yourself: try `SBI bank se bol raha hoon, OTP batao`, then switch the speaker to **You**
 and type `4 5 6 7`.
 
-**Live protection on your own calls:**
+**Live protection on your own calls, without a terminal:** download the repository (Code ›
+Download ZIP, then extract it) and double-click **`install.bat`**. It offers to install uv
+if it is missing, installs Chaukas, downloads its models (the only time Chaukas uses the
+network) and puts a **Chaukas** icon on your Desktop; double-click that icon to start
+protection. From a terminal, the same steps are:
 
 ```powershell
 run.bat setup    # once: installs everything, downloads Whisper small (~250 MB) and the
