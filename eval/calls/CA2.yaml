@@ -1,0 +1,20 @@
+case_id: CA2
+category: attack
+scenario: G.otp_call.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a bank-KYC OTP call.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Main SBI se bol raha hoon, aapka KYC pending hai."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "Jo OTP aaya hai woh bata dijiye, warna account band."}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 3.0, user: "Chaar saat do nau ek paanch."}
+  - {after: 0.2, mark: "harm"}

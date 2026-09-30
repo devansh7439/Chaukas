@@ -1,0 +1,21 @@
+case_id: CA1
+category: attack
+scenario: G.arrest_call.en
+split: test
+author: me
+language: english
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a digital-arrest call.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: money_transfer
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "This is the CBI cyber cell. A warrant is issued in your name."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "Do not tell anyone. Stay on the video call."}
+  - {after: 2.0, caller: "Transfer your savings to the safe account for verification."}
+  - {after: 2.0, event: "transfer_page", detail: "DemoBank (MOCK) - Transfer Funds"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 6.0, mark: "harm"}

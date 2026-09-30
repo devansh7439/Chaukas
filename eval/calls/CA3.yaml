@@ -1,0 +1,22 @@
+case_id: CA3
+category: attack
+scenario: G.remote_call.en
+split: test
+author: me
+language: english
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a refund call with remote control.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: remote_control
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "I am from the refunds team of your electricity company."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "Please install AnyDesk so I can process your refund."}
+  - {after: 5.0, event: "remote_app_started", detail: "AnyDesk.exe"}
+  - {after: 2.0, caller: "Now log in to your net banking."}
+  - {after: 3.0, event: "bank_page", detail: "DemoBank (MOCK) - Login"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 5.0, mark: "harm"}

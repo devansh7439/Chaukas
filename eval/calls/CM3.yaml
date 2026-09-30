@@ -1,0 +1,19 @@
+case_id: CM3
+category: benign
+scenario: G.awareness.en
+split: test
+author: me
+language: english
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a scam-awareness re-enactment while the viewer checks their bank.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "no_call", detail: "no app is using the microphone"}
+  - {at: 1.0, caller: "Watch how the scam works. The fake officer says: I am from the CBI."}
+  - {after: 2.0, caller: "Your Aadhaar is linked to money laundering. You must not tell your family."}
+  - {after: 2.0, caller: "Transfer your savings to this safe account for verification."}
+  - {after: 2.0, event: "bank_page", detail: "DemoBank (MOCK) - Login"}
+  - {after: 2.0, caller: "Remember: no real officer ever asks for this. Hang up and call 1930."}

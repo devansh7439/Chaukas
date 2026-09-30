@@ -1,0 +1,17 @@
+case_id: CM6
+category: benign
+scenario: G.serial.devanagari
+split: test
+author: me
+language: hindi
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a Hindi TV serial.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "no_call", detail: "no app is using the microphone"}
+  - {at: 1.0, caller: "मैं पुलिस इंस्पेक्टर बोल रहा हूँ, तुम्हारे नाम पर गिरफ़्तारी का वारंट है।"}
+  - {after: 2.0, caller: "यह बात किसी को मत बताना, वरना तुम्हारा पूरा परिवार फँसेगा।"}
+  - {after: 2.0, caller: "अभी के अभी पैसे इस खाते में भेजो।"}

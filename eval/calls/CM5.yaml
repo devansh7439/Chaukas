@@ -1,0 +1,17 @@
+case_id: CM5
+category: benign
+scenario: G.podcast.en
+split: test
+author: me
+language: english
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a tech podcast about remote-access scams.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "no_call", detail: "no app is using the microphone"}
+  - {at: 1.0, caller: "On today's episode: fake tech support. They say, I am from Microsoft support."}
+  - {after: 2.0, caller: "Your computer has a virus, install AnyDesk and give me access right now."}
+  - {after: 2.0, caller: "If anyone says that to you, just hang up."}

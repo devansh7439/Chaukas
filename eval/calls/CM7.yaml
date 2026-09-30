@@ -1,0 +1,17 @@
+case_id: CM7
+category: benign
+scenario: G.film_long.en
+split: test
+author: me
+language: english
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a film that plays long after a call ended.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {after: 5.0, event: "no_call", detail: "no app is using the microphone"}
+  - {after: 700.0, caller: "The con man smiled: I am calling from your bank's security team."}
+  - {after: 2.0, caller: "Read me the OTP now, or the money is gone."}

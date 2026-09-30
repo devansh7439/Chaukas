@@ -1,0 +1,17 @@
+case_id: CM1
+category: benign
+scenario: G.film.en
+split: test
+author: me
+language: english
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a thriller film with an OTP demand.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "no_call", detail: "no app is using the microphone"}
+  - {at: 1.0, caller: "This is inspector Kumar, cyber police. You are under arrest."}
+  - {after: 2.0, caller: "Don't tell anyone about this call. Stay where you are."}
+  - {after: 2.0, caller: "Now give me the OTP on your phone, or you go to jail tonight."}

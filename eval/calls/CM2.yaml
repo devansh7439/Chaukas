@@ -1,0 +1,17 @@
+case_id: CM2
+category: benign
+scenario: G.news.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a news bulletin quoting a scam.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "no_call", detail: "no app is using the microphone"}
+  - {at: 1.0, caller: "Aaj ki badi khabar: thag khud ko CBI officer batakar logon ko digital arrest kar rahe hain."}
+  - {after: 2.0, caller: "Woh kehte hain, kisi ko mat batana, aur safe account mein paise transfer karo."}
+  - {after: 2.0, caller: "Police ki salah: aisi call aaye to turant 1930 par report karein."}

@@ -1,0 +1,21 @@
+case_id: CA5
+category: attack
+scenario: G.call_after_video.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Set G, call presence. Written after the call-presence gate and committed before its only run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a video first, then a scam call starts.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, event: "no_call", detail: "no app is using the microphone"}
+  - {at: 1.0, caller: "Aaj ke video mein hum dekhenge ki biryani kaise banti hai."}
+  - {after: 20.0, event: "call_active", detail: "an app is using the microphone"}
+  - {after: 1.0, caller: "Hello, main cyber crime cell se bol raha hoon, aapke naam par case hai."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "OTP abhi batao nahi toh arrest ho jaoge."}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 3.0, mark: "harm"}
