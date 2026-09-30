@@ -47,8 +47,18 @@ class TestProbe:
         assert CallProbe(read=broken, exclude=())() is None
 
 
+def needs_microphone_records() -> None:
+    """A PC where apps have used the microphone has privacy records; a fresh machine (a CI
+    server) has none, and then the probe rightly answers "unknown"."""
+    from chaukas.context.calls import read_records
+
+    if read_records() is None:
+        pytest.skip("this machine has no microphone privacy records (e.g. a fresh CI server)")
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows privacy records")
 def test_this_pc_has_readable_microphone_records() -> None:
+    needs_microphone_records()
     assert microphone_users(exclude=()) is not None
 
 
@@ -59,6 +69,7 @@ def test_chaukas_recording_the_microphone_itself_is_not_a_call() -> None:
     import threading
     import time
 
+    needs_microphone_records()
     soundcard = pytest.importorskip("soundcard")
     try:
         microphone = soundcard.default_microphone()
