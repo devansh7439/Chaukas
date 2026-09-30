@@ -42,7 +42,9 @@ PARAPHRASE_REPO = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 PARAPHRASE_REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
 PARAPHRASE_FILE = "onnx/model_qint8_arm64.onnx"
 PARAPHRASE_TOKENS = 32
-PARAPHRASE_SPECS = dict.fromkeys(("input_ids", "attention_mask", "token_type_ids"), ((1, PARAPHRASE_TOKENS), "int64"))  # fmt: skip
+PARAPHRASE_SPECS = dict.fromkeys(
+    ("input_ids", "attention_mask", "token_type_ids"), ((1, PARAPHRASE_TOKENS), "int64")
+)
 OUT_DIR = Path(__file__).resolve().parents[1] / "docs" / "benchmarks"
 
 
