@@ -155,3 +155,52 @@ class TestStaleChainSteps:
         state = engine.evaluate(now + 1.0)
         assert state.chain is not None
         assert ("authority", now) in state.chain.steps_seen
+
+
+class TestCallPresence:
+    """During a real call the call app holds the microphone; during a film or a news clip
+    playing on the PC nothing does. When Windows positively shows no call, the loopback is
+    media and alerts stop at a notice. Unknown call state changes nothing."""
+
+    def scam(self, engine: RiskEngine, start: float = 1.0) -> float:
+        engine.on_signal(signal(K.AUTHORITY, 0.6, start, words="cbi"))
+        engine.on_signal(signal(K.THREAT, 0.6, start + 1.0, words="arrest"))
+        engine.on_signal(signal(K.CREDENTIAL_REQUEST, 0.75, start + 2.0, words="otp batao"))
+        return start + 3.0
+
+    def test_no_call_caps_at_a_notice(self) -> None:
+        engine = make_engine()
+        engine.on_context(ContextEvent(t=0.0, kind=ContextKind.NO_CALL))
+        state = engine.evaluate(self.scam(engine))
+        assert state.level is Level.NOTICE
+        assert state.rule == "no_call"
+
+    def test_a_call_starting_lifts_the_cap(self) -> None:
+        engine = make_engine()
+        engine.on_context(ContextEvent(t=0.0, kind=ContextKind.NO_CALL))
+        now = self.scam(engine)
+        engine.on_context(ContextEvent(t=now, kind=ContextKind.CALL_ACTIVE))
+        assert engine.evaluate(now + 1.0).level is Level.CRITICAL
+
+    def test_unknown_call_state_changes_nothing(self) -> None:
+        engine = make_engine()
+        assert engine.evaluate(self.scam(engine)).level is Level.CRITICAL
+
+    def test_call_events_are_not_action_context(self) -> None:
+        assert ContextKind.NO_CALL.objective is None
+        assert ContextKind.CALL_ACTIVE.objective is None
+
+    def test_a_muted_call_is_still_a_call(self) -> None:
+        # Some call apps release the microphone while the person is muted: a "no call"
+        # soon after a call is not trusted, so protection stays on for the muted call.
+        engine = make_engine()
+        engine.on_context(ContextEvent(t=0.0, kind=ContextKind.CALL_ACTIVE))
+        engine.on_context(ContextEvent(t=30.0, kind=ContextKind.NO_CALL))  # muted
+        assert engine.evaluate(self.scam(engine, start=40.0)).level is Level.CRITICAL
+
+    def test_the_cap_applies_once_no_call_has_lasted(self) -> None:
+        engine = make_engine()
+        engine.on_context(ContextEvent(t=0.0, kind=ContextKind.CALL_ACTIVE))
+        engine.on_context(ContextEvent(t=30.0, kind=ContextKind.NO_CALL))  # the call ended
+        state = engine.evaluate(self.scam(engine, start=30.0 + 700.0))  # a film, later
+        assert (state.level, state.rule) == (Level.NOTICE, "no_call")

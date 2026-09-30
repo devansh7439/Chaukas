@@ -95,6 +95,9 @@ class ContextKind(StrEnum):
     OTP_FIELD_VISIBLE = "otp_field_visible"
     PASSWORD_FIELD_VISIBLE = "password_field_visible"
     WINDOW_CHANGED = "window_changed"
+    # Call presence (context/calls.py): another app holds the microphone, or none does
+    CALL_ACTIVE = "call_active"
+    NO_CALL = "no_call"
 
     @property
     def objective(self) -> Objective | None:

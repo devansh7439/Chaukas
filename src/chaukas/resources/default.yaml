@@ -115,6 +115,8 @@ engine:
                                   # coercion while its faded value stays above this (a 0.5
                                   # keyword: about 5 minutes of speech)
     pre_disclosure_min_confidence: 0.7
+    no_call_grace_s: 600          # no app has held the microphone for this long: no call, so the
+                                  # loopback is media and alerts stop at a notice (muted calls kept)
     priming_window_s: 1800        # an OTP request is critical if authority or coercion was heard
                                   # within this much speech before it (not "ever this session":
                                   # loopback also hears videos and news between calls)

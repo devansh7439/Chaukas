@@ -162,6 +162,7 @@ class RulesConfig(_Section):
     coercion_floor: UnitFloat  # a confident coercive signal counts while it stays above this
     pre_disclosure_min_confidence: UnitFloat
     priming_window_s: Seconds  # authority/coercion primes an OTP request for this much speech
+    no_call_grace_s: Seconds  # a call seen this recently still counts (apps drop the mic on mute)
     hysteresis_margin: UnitFloat
     hysteresis_hold_s: Seconds
     dismissal_s: Seconds

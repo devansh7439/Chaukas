@@ -86,6 +86,7 @@ class LiveServices:
     # ---------------------------------------------------------------- screen
 
     def _start_screen(self) -> None:
+        from chaukas.context.calls import CallProbe
         from chaukas.context.downloads import DownloadClassifier, DownloadPoller
         from chaukas.context.monitor import ContextMonitor
         from chaukas.context.processes import ProcessWatcher, list_processes
@@ -104,6 +105,7 @@ class LiveServices:
             poll_s=1.0,
             downloads=DownloadPoller(downloads_folder(), DownloadClassifier(rules)),
             screen=self._screen_reader(rules),
+            calls=CallProbe(),
         )
         self._monitor.start()
 

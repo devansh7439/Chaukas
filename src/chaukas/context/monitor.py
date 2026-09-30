@@ -18,7 +18,7 @@ from chaukas.context.ocr import TriggeredOcr
 from chaukas.context.processes import ProcessWatcher
 from chaukas.context.windows import WindowWatcher
 from chaukas.core.clock import Clock
-from chaukas.core.models import ContextEvent
+from chaukas.core.models import ContextEvent, ContextKind
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ class ContextMonitor:
         poll_s: float,
         downloads: DownloadPoller | None = None,
         screen: TriggeredOcr | None = None,
+        calls: Callable[[], bool | None] | None = None,
     ) -> None:
         if poll_s <= 0:
             raise ValueError(f"poll_s must be positive, got {poll_s}")
@@ -47,6 +48,8 @@ class ContextMonitor:
         self._read_foreground = read_foreground
         self._downloads = downloads
         self._screen = screen
+        self._calls = calls  # call presence: True, False or None (unknown)
+        self._call: bool | None = None
         self._poll_s = poll_s
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -78,8 +81,24 @@ class ContextMonitor:
                 events.extend(self._screen.poll(now))
             except Exception:  # OCR unavailable or failed: titles and processes still work
                 logger.exception("screen reading failed")
+        if self._calls is not None:
+            try:
+                events.extend(self._call_change(now))
+            except Exception:
+                logger.exception("call presence check failed")
         for event in events:
             self._publish(event)
+
+    def _call_change(self, now: float) -> list[ContextEvent]:
+        """An event when the call state becomes known or changes; unknown is not news."""
+        assert self._calls is not None
+        state = self._calls()
+        if state is None or state == self._call:
+            return []
+        self._call = state
+        kind = ContextKind.CALL_ACTIVE if state else ContextKind.NO_CALL
+        detail = "an app is using the microphone" if state else "no app is using the microphone"
+        return [ContextEvent(t=now, kind=kind, detail=detail)]
 
     def start(self) -> None:
         if self.running:
@@ -98,6 +117,7 @@ class ContextMonitor:
 
     def reset(self) -> None:
         """Session end: the next poll is a fresh baseline."""
+        self._call = None
         self._processes.reset()
         self._windows.reset()
         if self._downloads is not None:

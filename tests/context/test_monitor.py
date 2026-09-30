@@ -212,3 +212,20 @@ class TestScreenReading:
             self._monitor(rules, Broken(), published, titles).poll_once()
         assert C.TRANSFER_PAGE in [event.kind for event in published]  # from the title
         assert "screen reading failed" in caplog.text
+
+
+def test_the_monitor_reports_call_state_changes_only(rules: ContextRules) -> None:
+    states = iter([None, False, False, True, True, False])
+    published: list[ContextEvent] = []
+    monitor = ContextMonitor(
+        clock=VirtualClock(), publish=published.append,
+        processes=ProcessWatcher(rules, lambda: []), windows=WindowWatcher(rules),
+        read_foreground=lambda: None, poll_s=1.0, calls=lambda: next(states),
+    )  # fmt: skip
+    for _ in range(6):
+        monitor.poll_once()
+    assert [event.kind for event in published] == [
+        ContextKind.NO_CALL,
+        ContextKind.CALL_ACTIVE,
+        ContextKind.NO_CALL,
+    ]

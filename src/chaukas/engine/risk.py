@@ -17,6 +17,9 @@ Levels come from thresholds on R, then:
     a warning otherwise. An LLM verdict
     of "not addressed to the user" can lower it to a warning but never silence it;
   * recovery rule: a code read out after a pre-disclosure alert is critical_recovery.
+  * call presence: when Windows shows that no app holds the microphone, no call is
+    happening and the loopback is media (a film, the news), so the level stops at a notice;
+    an unknown call state changes nothing;
   * A critical or critical_recovery raised by these rules holds until the session ends:
     the request's evidence decays, but a caller who stalls after asking for the OTP is
     still waiting for it.
@@ -84,6 +87,8 @@ class RiskEngine:
         self._first_trigger_t: float | None = None
         self._held = Level.QUIET  # raised by the credential rules; held until session end
         self._held_signals: tuple[Signal, ...] = ()  # what raised the hold, for the trace
+        self._call_active: bool | None = None  # None: unknown, so no call-presence cap
+        self._last_call_t: float | None = None  # when a call app last held the microphone
         self._changes = 0  # new chain steps or context events; invalidates dismissals
 
     @classmethod
@@ -110,6 +115,11 @@ class RiskEngine:
             self._changes += 1
 
     def on_context(self, event: ContextEvent) -> None:
+        if event.kind in (ContextKind.CALL_ACTIVE, ContextKind.NO_CALL):
+            self._call_active = event.kind is ContextKind.CALL_ACTIVE
+            if self._call_active or self._last_call_t is not None:
+                self._last_call_t = event.t  # a call now, or the moment it went quiet
+            return
         if event.objective is None:
             return
         self._context.add(event.t, event)
@@ -144,6 +154,8 @@ class RiskEngine:
         self._first_trigger_t = None
         self._held = Level.QUIET
         self._held_signals = ()
+        self._call_active = None
+        self._last_call_t = None
         self._changes = 0
 
     # ------------------------------------------------------------- evaluation
@@ -175,6 +187,9 @@ class RiskEngine:
         if self._awaiting_llm(now):
             raw, rule = Level.QUIET, "awaiting_llm"
         raw, rule, rule_objective = self._apply_rules(now, raw, rule, evidence, is_addressed)
+        if raw > Level.NOTICE and self._no_call(now):
+            # No app holds the microphone: the loopback is a video or the news, not a call.
+            raw, rule = Level.NOTICE, "no_call"
         level = self._levels.update(now, raw, score)
 
         return RiskState(
@@ -324,6 +339,15 @@ class RiskEngine:
             level, rule = self._held, raised_hold or "held"
             rule_objective = Objective.CREDENTIAL_DISCLOSURE
         return level, rule, rule_objective
+
+    def _no_call(self, now: float) -> bool:
+        """Windows shows no app holding the microphone, and none has for
+        ``no_call_grace_s``: some call apps release it while the person is muted, so a
+        recent call still counts as a call."""
+        if self._call_active is not False:
+            return False
+        last = self._last_call_t
+        return last is None or now - last > self._config.rules.no_call_grace_s
 
     def _prime(self, now: float) -> Signal | None:
         """The latest authority or coercion signal heard confidently within the last
