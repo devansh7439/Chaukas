@@ -1,0 +1,20 @@
+case_id: SM5
+category: benign
+scenario: H.ca_office.en
+split: test
+author: me
+language: english
+notes: >
+  Set H, browser screen sharing. Written before screen sharing was detected and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: the accountant's office helps file taxes and asks for a bank statement: an organisation claim, a share and a bank page, as in a scam.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Hello uncle, this is Neha from Sharma and Associates, your CA's office."}
+  - {after: 2.0, caller: "Please share your screen, let us fill the income tax return together."}
+  - {after: 4.0, event: "screen_shared", detail: "chrome.exe"}
+  - {after: 3.0, caller: "Now open your bank and download the interest certificate."}
+  - {after: 4.0, event: "bank_page", detail: "DemoBank (MOCK) - Statements"}
+  - {after: 3.0, caller: "Perfect, save the PDF and we will upload it to the portal."}

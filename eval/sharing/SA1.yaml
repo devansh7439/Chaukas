@@ -1,0 +1,22 @@
+case_id: SA1
+category: attack
+scenario: H.kyc_meet.en
+split: test
+author: me
+language: english
+notes: >
+  Set H, browser screen sharing. Written before screen sharing was detected and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: bank KYC update over a Meet link; the screen is shared, then net banking opens.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: remote_control
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Good afternoon, I am calling from the KYC department of State Bank."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "Your KYC has expired. Join the Google Meet link I sent on WhatsApp and share your screen."}
+  - {after: 6.0, event: "screen_shared", detail: "chrome.exe"}
+  - {after: 3.0, caller: "Now log in to your net banking so I can verify your details."}
+  - {after: 4.0, event: "bank_page", detail: "DemoBank (MOCK) - Login"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 6.0, mark: "harm"}

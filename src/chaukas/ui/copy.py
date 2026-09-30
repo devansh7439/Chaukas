@@ -69,6 +69,7 @@ _EN_HI: Final[dict[str, tuple[str, str]]] = {
     "reason_transfer_page": ("A money-transfer page is open", "पैसे ट्रांसफर का पेज खुला है"),
     "reason_download_executable": ("A program was downloaded", "एक प्रोग्राम डाउनलोड हुआ"),
     "reason_remote_app_started": ("A remote-access app started", "रिमोट-एक्सेस ऐप चालू हुआ"),
+    "reason_screen_shared": ("Your screen is being shared", "आपकी स्क्रीन शेयर हो रही है"),
     "reason_otp_field_visible": ("A page is asking for an OTP", "एक पेज OTP माँग रहा है"),
     "reason_password_field_visible": ("A page is asking for a password", "एक पेज पासवर्ड माँग रहा है"),
     # How a reason was detected (from the decision trace)

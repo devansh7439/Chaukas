@@ -1,0 +1,18 @@
+case_id: SM3
+category: benign
+scenario: H.teacher.en
+split: test
+author: me
+language: english
+notes: >
+  Set H, browser screen sharing. Written before screen sharing was detected and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a teacher checks homework over a class link; an organisation claim, no bank.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Hello, this is Priya ma'am from Delhi Public School."}
+  - {after: 2.0, caller: "Please share your screen so I can see the maths homework."}
+  - {after: 4.0, event: "screen_shared", detail: "chrome.exe"}
+  - {after: 3.0, caller: "Good, scroll down to question five."}

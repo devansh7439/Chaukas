@@ -1,0 +1,17 @@
+case_id: SM1
+category: benign
+scenario: H.work_meeting.en
+split: test
+author: me
+language: english
+notes: >
+  Set H, browser screen sharing. Written before screen sharing was detected and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a colleague asks for the quarterly slides; no bank.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Hi, can you share your screen and walk us through the quarterly slides?"}
+  - {after: 3.0, event: "screen_shared", detail: "msedge.exe"}
+  - {after: 3.0, caller: "Great, go to the slide with the revenue numbers."}

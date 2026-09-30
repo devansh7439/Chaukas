@@ -98,6 +98,9 @@ class ContextKind(StrEnum):
     # Call presence (context/calls.py): another app holds the microphone, or none does
     CALL_ACTIVE = "call_active"
     NO_CALL = "no_call"
+    # Screen sharing (context/sharing.py): an app started capturing the screen, e.g. a
+    # browser meeting tab; a remote session with no remote-access tool
+    SCREEN_SHARED = "screen_shared"
 
     @property
     def objective(self) -> Objective | None:

@@ -1,0 +1,22 @@
+case_id: SA2
+category: attack
+scenario: H.refund_meet.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Set H, browser screen sharing. Written before screen sharing was detected and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: an online-shopping refund; screen shared in a browser meeting, then the bank.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: remote_control
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Namaste sir, main Amazon refund team se bol raha hoon."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "Aapka refund atka hua hai. Meet link join karke apni screen share kijiye."}
+  - {after: 6.0, event: "screen_shared", detail: "chrome.exe"}
+  - {after: 3.0, caller: "Ab apna bank account kholiye, refund wahin process hoga."}
+  - {after: 4.0, event: "bank_page", detail: "DemoBank (MOCK) - Account Summary"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 6.0, mark: "harm"}

@@ -1,0 +1,19 @@
+case_id: SM2
+category: benign
+scenario: H.family_bill.en
+split: test
+author: me
+language: english
+notes: >
+  Set H, browser screen sharing. Written before screen sharing was detected and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a son shows his father how to pay a bill online; screen shared, then the bank.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Papa, share your screen on Meet, I will show you how to pay the electricity bill online."}
+  - {after: 4.0, event: "screen_shared", detail: "chrome.exe"}
+  - {after: 3.0, caller: "Now open your bank and click on bill payments."}
+  - {after: 4.0, event: "bank_page", detail: "DemoBank (MOCK) - Bill Payments"}
+  - {after: 3.0, caller: "Choose the electricity board and enter the consumer number."}

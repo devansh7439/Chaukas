@@ -1,0 +1,18 @@
+case_id: SM4
+category: benign
+scenario: H.it_helpdesk.en
+split: test
+author: me
+language: english
+notes: >
+  Set H, browser screen sharing. Written before screen sharing was detected and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: the company IT helpdesk fixes the VPN over Teams; no bank.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Hi, this is Rahul from the IT helpdesk, you raised a ticket about the VPN."}
+  - {after: 2.0, caller: "Please share your screen in Teams so I can look at the error."}
+  - {after: 4.0, event: "screen_shared", detail: "ms-teams.exe"}
+  - {after: 3.0, caller: "Click on network settings and restart the VPN client."}
