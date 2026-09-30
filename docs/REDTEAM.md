@@ -209,7 +209,8 @@ VERIFIED (`tests/engine/test_trace.py`).
    sharing their screen matches "share your screen" by meaning; notice at most).
 5. Rebuilt remote tools and browser-based remote access are not recognised.
 6. Real Hinglish speech recognition, and the whole pipeline on a Snapdragon laptop: NOT YET
-   VERIFIED (the encoder alone is measured on a real X Elite through AI Hub).
+   VERIFIED (the encoder is measured on a real X Elite through AI Hub, and its transcripts
+   give the same alerts as the CPU's on 24 spoken cases: section O).
 7. OCR reads the whole active window once a call is suspicious. Reading only the text of
    the relevant controls through Windows UI Automation was tried and dropped (section N):
    Edge exposed only its own buttons and tabs, not the page, so in a browser (where
@@ -353,3 +354,25 @@ buttons), none from the page: Chromium builds the page tree only for assistive
 technology, which activation via MSAA and a registered UIA event handler did not trigger.
 Since banking happens in the browser, the reader would always fall back to the screenshot,
 so the dependency was not added. MEASURED.
+
+## O. An OTP page during a remote session; the encoder on a real NPU (30 September)
+
+**Set I** (`eval/remote_otp/`, committed before any run, tag `eval-remote-otp-1`,
+non-blind): 4 scams where the caller, after an organisation claim, starts a remote session
+(screen share or AnyDesk / Quick Assist) and an OTP page opens with no bank page (the
+pattern set H's SA5 missed), and 4 look-alikes. Before: 1/4 detected, 2/4 false alarms.
+Rule: the remote-banking rule now also counts an OTP page (objective: credential
+disclosure); a password page does not (support staff watching a sign-in is ordinary).
+After: **3/4 detected**, false alarms still **2/4**: a daughter saying "type the OTP that
+came on your phone" and an IT helpdesk saying "sign in again with your password" trip the
+existing credential-request warning, the same weakness as the delivery OTP (open risk 3).
+Missed: OA3 ("the subsidy department of your gas agency" is not recognised as an
+organisation claim). No change on sets D, E, G or the robustness matrix (re-run). Set H
+re-run (seen): 6/6. VERIFIED by tests; MEASURED on the sets.
+
+**Whisper's encoder on a real Snapdragon X Elite NPU, end to end.** Every line of the 24
+English cases of sets D and E (76 lines, Windows voices) ran through the encoder on the NPU
+in one AI Hub inference job, was decoded here, and the cases were scored: all 24 reached
+the same alert level as with CPU transcripts; 74/76 lines identical, two differ in spelling
+only; cosine ≥ 0.9992 against fp32 on the CPU. MEASURED. The whole pipeline on a Snapdragon
+laptop: NOT YET VERIFIED.

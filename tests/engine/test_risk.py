@@ -557,6 +557,25 @@ class TestRemoteBanking:
         assert state.level is Level.WARNING
         assert state.objective is Objective.REMOTE_CONTROL
 
+    def test_an_otp_page_while_the_screen_is_shared_is_a_warning(self) -> None:
+        # "Share your screen, now type the code you receive": the caller reads the OTP off
+        # the shared screen, and no bank page need open.
+        engine = RiskEngine.from_config(load_config({"ablation": {"use_llm": False}}), TEMPLATES)
+        engine.on_signal(caller(K.AUTHORITY, 0.3, 0.0))
+        engine.on_context(ContextEvent(t=5.0, kind=C.SCREEN_SHARED, detail="chrome.exe"))
+        engine.on_context(ContextEvent(t=8.0, kind=C.OTP_FIELD_VISIBLE))
+        state = engine.evaluate(9.0)
+        assert state.level is Level.WARNING
+        assert state.objective is Objective.CREDENTIAL_DISCLOSURE
+
+    def test_a_password_page_during_a_remote_session_is_not_enough(self) -> None:
+        # The company IT helpdesk watching the user sign in again is ordinary support.
+        engine = RiskEngine.from_config(load_config({"ablation": {"use_llm": False}}), TEMPLATES)
+        engine.on_signal(caller(K.AUTHORITY, 0.3, 0.0))
+        engine.on_context(ContextEvent(t=5.0, kind=C.SCREEN_SHARED, detail="ms-teams.exe"))
+        engine.on_context(ContextEvent(t=8.0, kind=C.PASSWORD_FIELD_VISIBLE))
+        assert engine.evaluate(9.0).level < Level.WARNING
+
     def test_a_screen_shared_before_the_claim_does_not_count(self) -> None:
         # Presenting in a work meeting, then a caller claims to be the bank.
         engine = RiskEngine.from_config(load_config({"ablation": {"use_llm": False}}), TEMPLATES)

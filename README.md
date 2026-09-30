@@ -18,14 +18,17 @@ Snapdragon® AI Lab Build & Present Challenge.
 > hears a call (what the PC plays, and your microphone), transcribes it on the device with
 > Whisper, watches the screen, and raises the alert.
 >
-> - **Detection:** across four fresh test sets (each committed before its only run;
->   synthetic and not blind) it caught **28 of 32 scams** and correctly stayed quiet on **26
->   of 29** deliberately hard innocent look-alikes (the 3 false alarms: a film, a news report,
->   a delivery OTP; the film-and-news kind is what call presence now fixes, 7/7 → 0/7 on a
+> - **Detection:** across five fresh test sets (each committed before its only run;
+>   synthetic and not blind) it caught **31 of 36 scams** and correctly stayed quiet on **28
+>   of 33** deliberately hard innocent look-alikes (the false alarms: a film, a news report,
+>   and three callers asking for a code or password: a delivery agent, a family member, an
+>   IT helpdesk; the film-and-news kind is what call presence now fixes, 7/7 → 0/7 on a
 >   fresh set). See [Results](#results).
 > - **Snapdragon:** Whisper's encoder runs on the Hexagon NPU with a safe CPU fallback:
 >   **151 ms** per 30 s window on an X Elite, **70 ms** on an X2 Elite (real devices via
->   Qualcomm AI Hub), 8× faster than this project's Intel laptop CPU. See [Snapdragon](#snapdragon).
+>   Qualcomm AI Hub), 8× faster than this project's Intel laptop CPU; and with the encoder
+>   run on a real X Elite NPU, all 24 spoken test calls got **the same alert as on the CPU**.
+>   See [Snapdragon](#snapdragon).
 > - **Try it in 5 minutes**, no microphone needed: [Run it](#run-it).
 >   Pitch deck: [docs/Chaukas-Pitch.pdf](docs/Chaukas-Pitch.pdf).
 
@@ -194,6 +197,8 @@ keywords + semantic layer + engine + screen, no LLM):**
 | Set E: remote control (8 attacks, 8 look-alikes) | Fresh: committed before its only run | **6/8** (1/8 before the organisation-claim rule) | 1/8 | **0/8** |
 | Set G: call presence (6 scam calls, 7 films / news / videos playing with **no call**) | Fresh: committed before its only run | **6/6** | 4/6 | **0/7** (7/7 before the call-presence gate) |
 | Set H: screen shared from a **browser meeting** (6 scams, 6 look-alikes: work, family, teacher, IT, accountant, friend) | Fresh: committed before any run | **5/6** (2/6 before screen-share detection) | 2/6 (0/6 before) | **0/6** (0/6 before) |
+| Set I: an **OTP page during a remote session** (4 scams, 4 look-alikes) | Fresh: committed before its only run | **3/4** (1/4 before the rule) | 0/4 | 2/4 (2/4 before: a family member and an IT helpdesk asking for a code or password) |
+| Set H re-run after the set I rule | Seen | 6/6 | 2/6 | 0/6 |
 | Sets D + E, English cases **spoken aloud**, then heard by Whisper (13 + 11) | Seen as text; first run as audio | 11/13 (same as text) | 7/13 (same) | 2/11 (same) |
 | Held-out AT/BT (8 + 8) | Seen twice before | 7/8 | 5/8 | 1/8 |
 | Robustness matrix (18 + 8) | Seen before | 14/18 | 10/18 | 1/8 |
@@ -359,6 +364,17 @@ per 36 ms window (median of 100; 21 MB), so it costs almost nothing. The paraphr
 (semantic) model, also on the CPU as Chaukas runs it: **44 ms** per 32-token sentence (52 MB).
 All three of Chaukas's models are now measured on real Snapdragon hardware.
 
+**Correct on the NPU, not only fast** (`tools/aihub_npu_transcripts.py`): every line of the
+24 English cases of sets D and E was spoken by a Windows voice, its log-mel features were
+sent to a real Snapdragon X Elite, and the encoder ran on the NPU (76 passes, one AI Hub
+inference job). The outputs came back, were decoded by Chaukas's own decoder, and every
+case was scored: **all 24 cases reached exactly the same alert level as with this PC's CPU
+transcripts** (11/13 scams detected, 7/13 critical before harm, 2/11 false alarms, both
+ways). 74 of 76 lines were transcribed identically; the other two differ in spelling only
+("Adha" / "Aadha", "882137" / "8 8 2 1 3 7"). Encoder outputs vs the same fp32 model on
+this CPU: cosine similarity at least 0.9992. Saved in `docs/benchmarks/`. Still not
+measured: the whole pipeline running on a Snapdragon laptop, and power.
+
 Reproduce with `uv run --with qai-hub python tools/aihub_profile.py --device "Snapdragon X
 Elite CRD"` (add `--component vad` for voice detection); the full profile is in [docs/benchmarks/](docs/benchmarks/). What this does
 *not* measure: the whole pipeline on a Snapdragon laptop (the decoder, voice detection and
@@ -384,7 +400,7 @@ the rest run on its CPU); that needs the hardware.
 | Spoken alerts: on each rise to a warning or higher, the alert is said out loud (Indian-English voice; Hindi when a Hindi voice is installed); Chaukas never reacts to its own voice | Built, tested |
 | First-run welcome (live mode): what Chaukas listens to, what stays private, that you decide | Built, tested |
 
-Quality: 943 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
+Quality: 946 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on
 every push.
 

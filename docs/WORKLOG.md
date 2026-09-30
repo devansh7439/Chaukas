@@ -1008,3 +1008,18 @@ screenshots (documented as an open risk).
   inference job) and scores the cases with those transcripts.
 - Pitch deck, 13 slides (`docs/Chaukas-Pitch.pdf`; PPTX kept outside the repo): every
   number from this log. Project description updated with set H and 943 tests.
+
+### 2026-09-30 - The encoder on a real NPU gives the same alerts; OTP page during a remote session
+
+- `tools/aihub_npu_transcripts.py` ran Whisper's encoder on a real Snapdragon X Elite NPU
+  for all 76 spoken lines of the 24 English cases of sets D and E: every case reached the
+  same alert level as with CPU transcripts; 74/76 lines identical; cosine ≥ 0.9992.
+- Set I (`eval/remote_otp/`, tag `eval-remote-otp-1`): the remote-banking rule now also
+  counts an OTP page after a remote session (objective: credential disclosure); password
+  pages don't. Detected 1/4 -> 3/4; false alarms 2/4 both before and after (the existing
+  credential-request warning). Other sets unchanged; set H re-run 6/6.
+- Look-alike results are now shown as calls correctly left quiet (README, deck).
+- The AI Hub API key was removed from this PC (`~/.qai_hub/client.ini`); a scan of the
+  working tree and all 80 commits found it had never been committed. The AI Hub scripts
+  and saved results stay: they back every Snapdragon number.
+- Tests: 946, ruff, format and mypy clean.

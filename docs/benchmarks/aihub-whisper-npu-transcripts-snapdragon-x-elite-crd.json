@@ -1,0 +1,141 @@
+{
+  "device": "Snapdragon X Elite CRD",
+  "compile_job": "https://workbench.aihub.qualcomm.com/jobs/jgzl1le45/",
+  "inference_job": "https://workbench.aihub.qualcomm.com/jobs/j5wljlo4p/",
+  "lines": 76,
+  "cosine_min": 0.9991826090180743,
+  "cosine_median": 0.9994765044983756,
+  "max_abs_diff": 23.627769470214844,
+  "cases": [
+    {
+      "case": "RL01",
+      "npu": "notice",
+      "cpu": "notice"
+    },
+    {
+      "case": "RL03",
+      "npu": "quiet",
+      "cpu": "quiet"
+    },
+    {
+      "case": "RL06",
+      "npu": "notice",
+      "cpu": "notice"
+    },
+    {
+      "case": "RL07",
+      "npu": "warning",
+      "cpu": "warning"
+    },
+    {
+      "case": "RL08",
+      "npu": "critical",
+      "cpu": "critical"
+    },
+    {
+      "case": "RT01",
+      "npu": "critical_recovery",
+      "cpu": "critical_recovery"
+    },
+    {
+      "case": "RT04",
+      "npu": "critical_recovery",
+      "cpu": "critical_recovery"
+    },
+    {
+      "case": "RT05",
+      "npu": "critical_recovery",
+      "cpu": "critical_recovery"
+    },
+    {
+      "case": "RT06",
+      "npu": "critical",
+      "cpu": "critical"
+    },
+    {
+      "case": "RT08",
+      "npu": "critical_recovery",
+      "cpu": "critical_recovery"
+    },
+    {
+      "case": "RT10",
+      "npu": "critical_recovery",
+      "cpu": "critical_recovery"
+    },
+    {
+      "case": "RT11",
+      "npu": "warning",
+      "cpu": "warning"
+    },
+    {
+      "case": "RT12",
+      "npu": "warning",
+      "cpu": "warning"
+    },
+    {
+      "case": "RR01",
+      "npu": "warning",
+      "cpu": "warning"
+    },
+    {
+      "case": "RR03",
+      "npu": "warning",
+      "cpu": "warning"
+    },
+    {
+      "case": "RR04",
+      "npu": "notice",
+      "cpu": "notice"
+    },
+    {
+      "case": "RR06",
+      "npu": "critical",
+      "cpu": "critical"
+    },
+    {
+      "case": "RR07",
+      "npu": "notice",
+      "cpu": "notice"
+    },
+    {
+      "case": "RS01",
+      "npu": "notice",
+      "cpu": "notice"
+    },
+    {
+      "case": "RS03",
+      "npu": "quiet",
+      "cpu": "quiet"
+    },
+    {
+      "case": "RS04",
+      "npu": "quiet",
+      "cpu": "quiet"
+    },
+    {
+      "case": "RS05",
+      "npu": "notice",
+      "cpu": "notice"
+    },
+    {
+      "case": "RS07",
+      "npu": "notice",
+      "cpu": "notice"
+    },
+    {
+      "case": "RS08",
+      "npu": "quiet",
+      "cpu": "quiet"
+    }
+  ],
+  "texts_differing": [
+    {
+      "npu": "This is the cyber crime cell. Your Adha is linked to a money laundering case.",
+      "cpu": "This is the cyber crime cell. Your Aadha is linked to a money laundering case."
+    },
+    {
+      "npu": "882137",
+      "cpu": "8 8 2 1 3 7"
+    }
+  ]
+}

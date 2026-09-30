@@ -63,6 +63,11 @@ _COERCIVE: Final = tuple(kind for kind in SignalKind if kind.is_coercive)
 _BANKING: Final = frozenset({ContextKind.BANK_PAGE, ContextKind.TRANSFER_PAGE})
 # A remote session: a remote-control app, or the screen shared (e.g. from a browser meeting)
 _REMOTE_SESSION: Final = frozenset({ContextKind.REMOTE_APP_STARTED, ContextKind.SCREEN_SHARED})
+# What a remote session must not watch, and what the watcher is after
+_WATCHED_PAGES: Final = (
+    (_BANKING, Objective.REMOTE_CONTROL),
+    (frozenset({ContextKind.OTP_FIELD_VISIBLE}), Objective.CREDENTIAL_DISCLOSURE),
+)
 
 
 class RiskEngine:
@@ -334,9 +339,10 @@ class RiskEngine:
                 raised_hold = "recovery"
             else:
                 at_least(Level.WARNING, "digits")
-        if self._remote_banking():
+        watched = self._remote_banking()
+        if watched is not None:
             at_least(Level.WARNING, "remote_banking")
-            rule_objective = rule_objective or Objective.REMOTE_CONTROL
+            rule_objective = rule_objective or watched
         if self._held > level:
             level, rule = self._held, raised_hold or "held"
             rule_objective = Objective.CREDENTIAL_DISCLOSURE
@@ -380,28 +386,33 @@ class RiskEngine:
         """At most ``speech_s`` seconds of speech lie between ``t`` and ``now``."""
         return self._clock.call_time(now) - self._clock.call_time(t) <= speech_s
 
-    def _remote_banking(self) -> bool:
+    def _remote_banking(self) -> Objective | None:
         """The causal order of a remote-control scam: the caller claims to be from an
         organisation (even a weak "customer care"), *then* a remote session starts (a
-        remote-control app, or the screen shared from a browser meeting), and the bank
-        opens within ``remote_banking_window_s`` of that start.
+        remote-control app, or the screen shared from a browser meeting), and the bank or
+        an OTP page opens within ``remote_banking_window_s`` of that start. Returns what
+        the watcher is after: control of the bank, or the code read off the screen.
 
         The tech-support and refund scam needs no threats, so the coercion rule alone
         would stop it at a notice. Family remote help makes no organisation claim, and a
         remote session the user started before the claim (for their own reasons) does
-        not count. The claim may come minutes before the install request.
+        not count. The claim may come minutes before the install request. A password page
+        does not count: support staff watching a sign-in is ordinary help.
         """
         rules = self._config.rules
         if not rules.remote_banking_warning:
-            return False
+            return None
         claimed = self._evidence.first_seen(SignalKind.AUTHORITY)
         if claimed is None:
-            return False
+            return None
         remote_starts = [e.t for e in self._context
                          if e.kind in _REMOTE_SESSION and e.t > claimed]  # fmt: skip
-        banking = [e.t for e in self._context if e.kind in _BANKING]
         window = rules.remote_banking_window_s
-        return any(start <= bank <= start + window for start in remote_starts for bank in banking)
+        for page, objective in _WATCHED_PAGES:
+            opened = [e.t for e in self._context if e.kind in page]
+            if any(start <= t <= start + window for start in remote_starts for t in opened):
+                return objective
+        return None
 
     def _objective(
         self,
