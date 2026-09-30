@@ -1,0 +1,22 @@
+case_id: OA2
+category: attack
+scenario: I.sim_kyc_anydesk.hinglish
+split: test
+author: me
+language: hinglish
+notes: >
+  Set I, an OTP page opened while a remote session runs. Written before the rule that covers it and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: SIM KYC; AnyDesk is installed, then an OTP page opens.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Main Airtel KYC team se bol raha hoon, aapka SIM aaj band ho jayega."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "Play Store se AnyDesk download karke mujhe number bataiye."}
+  - {after: 8.0, event: "remote_app_started", detail: "AnyDesk.exe"}
+  - {after: 3.0, caller: "Ab jo message aayega woh number screen pe daal dijiye."}
+  - {after: 4.0, event: "otp_field_visible", detail: "seen on screen: Enter OTP"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 6.0, mark: "harm"}

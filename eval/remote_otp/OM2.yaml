@@ -1,0 +1,18 @@
+case_id: OM2
+category: benign
+scenario: I.family_netbanking.en
+split: test
+author: me
+language: english
+notes: >
+  Set I, an OTP page opened while a remote session runs. Written before the rule that covers it and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a daughter shows her mother how to log in to net banking; no claim.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Mummy, share your screen on Meet, I will show you how to log in to net banking."}
+  - {after: 4.0, event: "screen_shared", detail: "chrome.exe"}
+  - {after: 3.0, caller: "Now type the OTP that came on your phone."}
+  - {after: 4.0, event: "otp_field_visible", detail: "seen on screen: Enter OTP"}

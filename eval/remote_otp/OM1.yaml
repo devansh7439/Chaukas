@@ -1,0 +1,20 @@
+case_id: OM1
+category: benign
+scenario: I.ca_everify.en
+split: test
+author: me
+language: english
+notes: >
+  Set I, an OTP page opened while a remote session runs. Written before the rule that covers it and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: the accountant's office helps e-verify a tax return with an Aadhaar OTP while the screen is shared: the same sequence as a scam.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Hello uncle, this is Neha from Sharma and Associates, your CA's office."}
+  - {after: 2.0, caller: "Please share your screen, let us e-verify your income tax return."}
+  - {after: 4.0, event: "screen_shared", detail: "chrome.exe"}
+  - {after: 3.0, caller: "Choose Aadhaar OTP and enter the code that comes to your phone."}
+  - {after: 4.0, event: "otp_field_visible", detail: "seen on screen: e-Verify with Aadhaar OTP"}
+  - {after: 3.0, caller: "Done, the return is verified. You will get an email."}

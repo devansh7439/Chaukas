@@ -1,0 +1,22 @@
+case_id: OA3
+category: attack
+scenario: I.gas_subsidy_whatsapp.en
+split: test
+author: me
+language: english
+notes: >
+  Set I, an OTP page opened while a remote session runs. Written before the rule that covers it and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: a gas subsidy; the screen is shared on a WhatsApp video call, then a payment code page.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "This is the subsidy department of your gas agency."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "Your subsidy is pending. Share your screen on this WhatsApp video call so I can guide you."}
+  - {after: 6.0, event: "screen_shared", detail: "WhatsApp"}
+  - {after: 3.0, caller: "Open the payment page and enter the six digit code you get."}
+  - {after: 4.0, event: "otp_field_visible", detail: "seen on screen: Enter one time password"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 6.0, mark: "harm"}

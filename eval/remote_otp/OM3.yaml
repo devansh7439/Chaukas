@@ -1,0 +1,19 @@
+case_id: OM3
+category: benign
+scenario: I.it_password.en
+split: test
+author: me
+language: english
+notes: >
+  Set I, an OTP page opened while a remote session runs. Written before the rule that covers it and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: the company IT helpdesk watches a password sign-in over Teams.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Hi, this is Rahul from the IT helpdesk, calling about your VPN ticket."}
+  - {after: 2.0, caller: "Please share your screen in Teams so I can see the error."}
+  - {after: 4.0, event: "screen_shared", detail: "ms-teams.exe"}
+  - {after: 3.0, caller: "Now sign in again with your password."}
+  - {after: 4.0, event: "password_field_visible", detail: "seen on screen: Sign in"}

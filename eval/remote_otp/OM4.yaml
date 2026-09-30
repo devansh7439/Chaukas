@@ -1,0 +1,18 @@
+case_id: OM4
+category: benign
+scenario: I.presenting_then_bank.en
+split: test
+author: me
+language: english
+notes: >
+  Set I, an OTP page opened while a remote session runs. Written before the rule that covers it and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: the user was already presenting in a work meeting before anyone introduced themselves; later they log in to their own bank.
+expected:
+  max_level: quiet
+  acceptable_levels: [quiet, notice]
+  objective: none
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {after: 0.5, event: "screen_shared", detail: "msedge.exe"}
+  - {after: 2.0, caller: "Hi everyone, this is Priya from the finance team, thanks for sharing the slides."}
+  - {after: 3.0, caller: "Let us take a short break and come back in five minutes."}
+  - {after: 6.0, event: "otp_field_visible", detail: "seen on screen: DemoBank (MOCK) - Enter OTP"}

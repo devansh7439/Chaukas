@@ -1,0 +1,22 @@
+case_id: OA1
+category: attack
+scenario: I.card_block_share.en
+split: test
+author: me
+language: english
+notes: >
+  Set I, an OTP page opened while a remote session runs. Written before the rule that covers it and committed before any run. DEVELOPMENT / NON-BLIND: synthetic, authored by the same assistant that built the detector. Variant: card-blocking help over a Meet link; the OTP page opens while the screen is shared.
+expected:
+  max_level: critical
+  acceptable_levels: [warning, critical, critical_recovery]
+  objective: credential_disclosure
+timeline:
+  - {at: 0.0, event: "call_active", detail: "an app is using the microphone"}
+  - {at: 1.0, caller: "Hello, I am calling from the customer care of your credit card company."}
+  - {after: 0.5, mark: "first_tactic"}
+  - {after: 2.0, caller: "There is a suspicious transaction. Join the Meet link and share your screen, I will help you block the card."}
+  - {after: 6.0, event: "screen_shared", detail: "chrome.exe"}
+  - {after: 3.0, caller: "Now open the card blocking page and type the code you receive."}
+  - {after: 4.0, event: "otp_field_visible", detail: "seen on screen: Verify card blocking"}
+  - {after: 0.5, mark: "expected_warning"}
+  - {after: 6.0, mark: "harm"}
