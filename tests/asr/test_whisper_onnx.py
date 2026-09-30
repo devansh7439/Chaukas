@@ -44,6 +44,18 @@ class TestTranscribe:
         assert hinted.text == detected.text
         assert "arrest warrant" in hinted.text.lower()
 
+    def test_encoder_output_from_elsewhere_decodes_to_the_same_text(
+        self, whisper: WhisperOnnx, speech: Callable[[str], object]
+    ) -> None:
+        # tools/aihub_npu_transcripts.py runs the encoder on a real Snapdragon NPU and
+        # decodes here; with the same encoder output the text must be identical.
+        from chaukas.asr.features import log_mel
+
+        audio = speech("Please tell me the OTP you just received.")
+        encoded = whisper._encoder.run(None, {"input_features": log_mel(audio)[None]})[0]  # type: ignore[arg-type]
+        text, language = whisper.decode_encoded(encoded, len(audio) / RATE)  # type: ignore[arg-type]
+        assert (text, language) == (whisper.transcribe(audio).text, "en")  # type: ignore[arg-type]
+
     def test_silence_gives_no_text(self, whisper: WhisperOnnx) -> None:
         assert whisper.transcribe(np.zeros(RATE * 2, dtype=np.float32)).text == ""
 

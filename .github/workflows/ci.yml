@@ -24,6 +24,11 @@ jobs:
         with:
           enable-cache: true
 
+      - name: The README's 5-minute demo works with only its two extras and no models
+        run: |
+          uv sync --locked --extra ui --extra context
+          uv run chaukas replay eval/cases/DA01.yaml
+
       - name: Install (exact locked versions)
         run: uv sync --locked --extra ui --extra context --extra audio --extra asr
 

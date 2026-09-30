@@ -1,6 +1,7 @@
 @echo off
 rem Chaukas one-click install: double-click this file.
-rem   1. installs uv (a small Python installer from astral.sh) if it is missing, after asking
+rem   1. installs uv (a small Python installer by Astral) if it is missing, after asking:
+rem      through winget, Windows' own package manager, where it exists
 rem   2. installs Chaukas and downloads its models (the only time Chaukas uses the network)
 rem   3. puts a "Chaukas" shortcut on the Desktop that starts live protection
 cd /d "%~dp0"
@@ -8,16 +9,25 @@ echo.
 echo  Chaukas - on-device protection against scam calls on this PC
 echo  =============================================================
 echo.
+rem where winget and uv's own installer put uv; a new window would find it on PATH anyway
+set "PATH=%LOCALAPPDATA%\Microsoft\WinGet\Links;%USERPROFILE%\.local\bin;%PATH%"
 where uv >nul 2>nul
-if errorlevel 1 (
-  echo Chaukas is installed with uv, a small Python installer from https://astral.sh/uv
-  choice /c YN /m "Install uv for this Windows user now"
-  if errorlevel 2 (echo Nothing was installed. & pause & exit /b 1)
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/install.ps1 | iex"
-  if errorlevel 1 (echo uv could not be installed. & pause & exit /b 1)
-)
-rem uv's installer puts it here; a new window would find it on PATH anyway
-set "PATH=%USERPROFILE%\.local\bin;%PATH%"
+if not errorlevel 1 goto install
+echo Chaukas is installed with uv, a small Python installer by Astral (https://astral.sh/uv).
+choice /c YN /m "Install uv for this Windows user now"
+if errorlevel 2 (echo Nothing was installed. & pause & exit /b 1)
+where winget >nul 2>nul
+if errorlevel 1 goto script
+echo Installing uv through winget, the Windows package manager...
+winget install --id astral-sh.uv --exact --scope user --accept-package-agreements --accept-source-agreements
+where uv >nul 2>nul
+if not errorlevel 1 goto install
+:script
+echo Installing uv with Astral's official installer...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/install.ps1 | iex"
+where uv >nul 2>nul
+if errorlevel 1 (echo uv could not be installed. & pause & exit /b 1)
+:install
 echo.
 echo Installing Chaukas and downloading its models (about 1 GB, once)...
 uv sync --extra ui --extra context --extra audio --extra asr

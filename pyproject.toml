@@ -17,6 +17,7 @@ classifiers = [
 dependencies = [
     "pydantic>=2.7,<3",
     "PyYAML>=6.0",
+    "numpy>=1.26",  # the semantic layer (on by default) and every audio path
 ]
 
 [project.optional-dependencies]

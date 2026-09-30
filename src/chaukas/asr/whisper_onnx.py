@@ -220,19 +220,26 @@ class WhisperOnnx:
 
     def transcribe(self, samples: Samples, *, language: str | None = None) -> Transcript:
         start = time.perf_counter()
-        fixed = language if self._language == "auto" else self._language
         features = log_mel(samples)[None]
         encoder_start = time.perf_counter()
         encoded = self._encoder.run(None, {"input_features": features})[0]
         encoder_ms = (time.perf_counter() - encoder_start) * 1000
         decoder_start = time.perf_counter()
-        duration = len(samples) / TARGET_RATE
-        text, detected = self._decode(encoded, fixed, duration)
-        if fixed is None and detected in _RETRY_AS_HINDI:
-            text, detected = self._decode(encoded, "hi", duration)
+        text, detected = self.decode_encoded(encoded, len(samples) / TARGET_RATE, language)
         decoder_ms = (time.perf_counter() - decoder_start) * 1000
         self._last_timing = Timing(encoder_ms=encoder_ms, decoder_ms=decoder_ms)
         return Transcript(text=text, language=detected, ms=(time.perf_counter() - start) * 1000)
+
+    def decode_encoded(
+        self, encoded: Any, duration: float, language: str | None = None
+    ) -> tuple[str, str]:
+        """Text and language from encoder output computed elsewhere (``tools/`` runs the
+        encoder on a real Snapdragon NPU through AI Hub and decodes here)."""
+        fixed = language if self._language == "auto" else self._language
+        text, detected = self._decode(encoded, fixed, duration)
+        if fixed is None and detected in _RETRY_AS_HINDI:
+            text, detected = self._decode(encoded, "hi", duration)
+        return text, detected
 
     # ---------------------------------------------------------------- decoding
 
