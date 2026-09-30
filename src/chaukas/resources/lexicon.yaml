@@ -64,7 +64,7 @@ tactics:
 
   remote_access_request:
     terms: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
-            any desk, team viewer, rust desk, ultra viewer,       # as Whisper often writes them
+            any desk, any disk, team viewer, rust desk, ultra viewer,  # as Whisper writes them
             share your screen, download this app, tell me the code on screen,
             app download karo, screen share karo,
             एनीडेस्क, टीमव्यूअर, स्क्रीन शेयर, ऐप डाउनलोड]
@@ -96,7 +96,7 @@ requests:
             इंस्टॉल करो, डाउनलोड करो, शेयर करो]
     stems: {do: [install, download, share, open]}
     objects: [anydesk, teamviewer, rustdesk, ultraviewer, quick assist, screenconnect,
-              any desk, team viewer, rust desk, ultra viewer,
+              any desk, any disk, team viewer, rust desk, ultra viewer,
               app, application, software, screen, code on screen, code on your screen,
               utility, tool, support tool, remote tool, apk, program, extension,
               id shown on the screen, id on the screen, id on screen,

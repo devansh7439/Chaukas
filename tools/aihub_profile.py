@@ -36,6 +36,13 @@ REPO = "onnx-community/whisper-small"
 REVISION = "36050c46d777d46dc4b5f43f6d90574fc38f8732"
 ENCODER = "onnx/encoder_model.onnx"
 INPUT_SPECS = {"input_features": ((1, 80, 3000), "float32")}
+# The paraphrase layer's model, the ARM64 build Chaukas loads on Snapdragon PCs. Chaukas
+# runs it on the CPU, so it is profiled on the device's CPU; one sentence of 32 tokens.
+PARAPHRASE_REPO = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+PARAPHRASE_REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+PARAPHRASE_FILE = "onnx/model_qint8_arm64.onnx"
+PARAPHRASE_TOKENS = 32
+PARAPHRASE_SPECS = dict.fromkeys(("input_ids", "attention_mask", "token_type_ids"), ((1, PARAPHRASE_TOKENS), "int64"))  # fmt: skip
 OUT_DIR = Path(__file__).resolve().parents[1] / "docs" / "benchmarks"
 
 
@@ -51,6 +58,9 @@ def main() -> int:
     parser.add_argument("--list-devices", action="store_true", help="list Snapdragon devices")
     parser.add_argument("--model", type=Path, help="use this encoder file instead of downloading")
     parser.add_argument("--local-only", action="store_true", help="only time the CPU here")
+    parser.add_argument("--component", choices=["encoder", "paraphrase"], default="encoder",
+                        help="encoder: Whisper's encoder on the NPU; paraphrase: the "
+                             "semantic model on the device's CPU, as Chaukas runs it")  # fmt: skip
     args = parser.parse_args()
 
     if args.list_devices:
@@ -60,6 +70,8 @@ def main() -> int:
                 print(f"{device.name}   ({device.os})")
         return 0
 
+    if args.component == "paraphrase":
+        return _paraphrase(args)
     model = args.model or _download_encoder()
     print(f"Encoder: {model} ({model.stat().st_size / 1e6:.0f} MB)")
     cpu_ms = _time_on_this_cpu(model)
@@ -91,6 +103,41 @@ def main() -> int:
     out.write_text(json.dumps(profile, indent=2), encoding="utf-8")
     _summarise(profile, args.device, cpu_ms, compile_job.url, profile_job.url)
     print(f"Full profile saved to {out}")
+    return 0
+
+
+def _paraphrase(args: argparse.Namespace) -> int:
+    """The semantic layer's model on the device's CPU, as Chaukas runs it there."""
+    os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+    from huggingface_hub import hf_hub_download
+
+    model = args.model or Path(hf_hub_download(PARAPHRASE_REPO, PARAPHRASE_FILE,
+                                               revision=PARAPHRASE_REVISION))  # fmt: skip
+    print(f"Paraphrase model: {model} ({model.stat().st_size / 1e6:.0f} MB)")
+    hub = _hub()
+    device = hub.Device(args.device)
+    options = f"--target_runtime {args.runtime} --compute_unit cpu"
+    print(f"Compiling for {args.device} ({options})...")
+    compile_job = hub.submit_compile_job(
+        model=str(model), device=device, name="chaukas-paraphrase-minilm",
+        input_specs=PARAPHRASE_SPECS, options=options,
+    )  # fmt: skip
+    target = compile_job.get_target_model()
+    if target is None:
+        print(f"Compilation failed; see {compile_job.url}", file=sys.stderr)
+        return 1
+    profile_job = hub.submit_profile_job(model=target, device=device, options="--compute_unit cpu",
+                                         name="chaukas-paraphrase-minilm")  # fmt: skip
+    profile: dict[str, Any] = profile_job.download_profile()
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    slug = re.sub(r"[^a-z0-9]+", "-", args.device.lower()).strip("-")
+    out = OUT_DIR / f"aihub-paraphrase-minilm-{slug}-cpu.json"
+    out.write_text(json.dumps(profile, indent=2), encoding="utf-8")
+    times = profile.get("execution_summary", {}).get("all_inference_times") or []
+    if times:
+        print(f"\n{args.device} CPU: median {statistics.median(times) / 1000:.1f} ms per "
+              f"{PARAPHRASE_TOKENS}-token sentence ({len(times)} runs)")  # fmt: skip
+    print(f"  {compile_job.url}\n  {profile_job.url}\nFull profile saved to {out}")
     return 0
 
 

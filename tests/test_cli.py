@@ -348,3 +348,18 @@ def test_a_tampered_semantic_model_is_refused_and_keywords_carry_on(
     monkeypatch.setattr(semantic, "TOKENIZER_SHA256", "0" * 64)
     assert main(["eval", str(CASES_DIR), "--split", "dev"]) == EXIT_OK
     assert "semantic layer: off (tokenizer.json has changed" in capsys.readouterr().err
+
+
+def test_output_never_crashes_on_a_legacy_windows_code_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Piped on Windows, stdout is cp1252; the decision trace quotes the caller's words,
+    # which may be Devanagari or curly quotes. `replay | more` crashed with UnicodeEncodeError.
+    import io
+    import sys
+
+    raw = io.BytesIO()
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(raw, encoding="cp1252"))
+    assert main(["replay", str(CASES_DIR / "DA01.yaml")]) == EXIT_OK
+    sys.stdout.flush()
+    assert b"CRITICAL" in raw.getvalue()

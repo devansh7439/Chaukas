@@ -360,3 +360,13 @@ class TestOrganisationClaims:
     )
     def test_other_introductions_are_not(self, extractor: SignalExtractor, text: str) -> None:
         assert K.AUTHORITY not in tiers(extractor.extract(segment(Stream.CALLER, text)))
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["Please install any disk on your laptop.", "Download any disk and tell me the number."],
+)
+def test_whisper_hears_anydesk_as_any_disk(extractor: SignalExtractor, text: str) -> None:
+    # Measured: Whisper small transcribed a spoken "AnyDesk" as "any disk" (tools/audio_eval.py).
+    found = tiers(extractor.extract(segment(Stream.CALLER, text)))
+    assert K.REMOTE_ACCESS_REQUEST in found

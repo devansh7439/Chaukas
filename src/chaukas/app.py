@@ -139,7 +139,18 @@ def _size(text: str) -> tuple[int, int]:
     return width, height
 
 
+def _never_fail_to_print() -> None:
+    """Piped on Windows, stdout is a legacy code page (cp1252) that has no Devanagari or
+    curly quotes, and the decision trace quotes the caller's words: substitute characters
+    the stream cannot encode rather than crash."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="replace")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _never_fail_to_print()
     parser = build_parser()
     args = parser.parse_args(argv)
     if getattr(args, "llm_offline", False) and args.llm_cache is None:
