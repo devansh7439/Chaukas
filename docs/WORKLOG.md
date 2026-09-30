@@ -176,19 +176,17 @@ replays those answers exactly, with no model running.
 
 ## 3. What is left
 
-Built so far: core, signals, engine, evaluation, LLM layer, context monitor, the window.
+Built: core, signals, engine, evaluation, LLM layer, context monitor (processes, windows,
+Downloads, OCR, call presence), audio, speech-to-text (CPU and NPU paths), privacy session,
+the window (tray, spoken alerts, first-run welcome), live app, `run.bat`, tools, docs.
+(Sections 1.2-1.4 describe the state of 23 September; the README is the current overview.)
 
-| Still to build (in order) | Notes |
+| Still open | Notes |
 |---|---|
-| Mock bank site (`mockbank/`) | Four local pages titled "DemoBank (MOCK) - ..." |
-| Real-LLM smoke test | A small model is downloaded to `models/llm/` (git-ignored) |
-| Privacy session (`privacy/`) | 5-minute transcript buffer, wipe on "End session" or 30 min idle |
-| Audio (`audio/`) | Two-stream capture, speech detection (Silero VAD), segmenter, playback and echo guards, file replay |
-| Speech-to-text (`asr/`) | Whisper on CPU now (`faster-whisper-small` is cached on this PC); NPU backend behind the same interface |
-| UI leftovers | System tray icon ("LOCAL MODE"), spoken alert clips (`assets/audio/`), onboarding consent screen |
-| Live app + `run.bat` | Wires threads together; one-command start |
-| Tooling | `tools/download_models.py`, `bench/`, `eval/assemble.py`, `labels.csv`, more cases |
-| Docs | Full README, architecture diagram |
+| Screen text via UI Automation before OCR | Read only the relevant controls' text, screenshot as fallback (REDTEAM open risk 7) |
+| Remote control without a remote tool | Screen shared inside a browser meeting; no organisation claim (open risk 1) |
+| Mock bank site | Local pages titled "DemoBank (MOCK) - ..." for demos; the demo uses window titles only |
+| LLM in live mode | Live mode refuses ablations B-D |
 
 **Only you can do these:** recording voices for the 60-case dataset, blind scripts from
 friends for the test split, a native speaker's review of the Hindi alerts, and reading the
@@ -966,3 +964,7 @@ screenshots (documented as an open risk).
   and Hindi.
 - Paraphrase model on the X Elite CPU (AI Hub, token types fixed to zeros as Chaukas feeds
   them; the earlier failure was AI Hub's random token types): 44.4 ms per 32-token sentence.
+- Call presence (`context/calls.py`): Windows microphone records say whether a call app holds
+  the microphone; with no call for 10 minutes, media stops at a notice. Verified live (ffmpeg
+  recording = call; Chaukas's own capture = not a call, after fixing a resolved-path bug).
+  Fresh set G (tag `eval-calls-1`): media false alarms 7/7 -> 0/7, scam calls 6/6 -> 6/6.

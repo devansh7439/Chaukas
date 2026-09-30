@@ -200,8 +200,10 @@ VERIFIED (`tests/engine/test_trace.py`).
 1. Remote-control scams with no organisation claim, or with the screen shared inside a
    browser meeting (no remote tool starts), reach notice at most (set E: RR04, RR07).
    Remote-control scams that are caught reach warning, rarely critical.
-2. Media playing on the PC (films, news about scams) can raise warnings or a critical:
-   loopback cannot tell a film from a call.
+2. Media playing on the PC (films, news about scams): with no app holding the microphone
+   for 10 minutes, alerts now stop at a notice (section M; set G 7/7 -> 0/7). A video
+   playing *during* a real call still counts, and real WhatsApp / Zoom calls: NOT YET
+   VERIFIED.
 3. Delivery-code requests are indistinguishable by wording from scam requests.
 4. The embedding model barely separates "my screen" from "your screen" (a presenter
    sharing their screen matches "share your screen" by meaning; notice at most).
@@ -300,3 +302,21 @@ to zeros, as Chaukas feeds them). MEASURED, AI Hub, median of 100 each.
 
 **Bug found on the way:** `chaukas replay` piped on Windows crashed on characters the cp1252
 console cannot encode (the trace quotes the caller). Output now substitutes them. VERIFIED.
+
+## M. Call presence: media is not a call (30 September)
+
+Two of set D's three false alarms were a film and a news report playing on the laptop. During
+a real call the call app holds the microphone; during a video nothing does. Windows keeps
+per-app microphone records (a stop time of 0 = in use now). `context/calls.py` reads them
+once a second, excluding Chaukas's own capture; when no app has held the microphone for 10
+minutes (`rules.no_call_grace_s`: some apps release it while muted), the level stops at a
+notice (rule `no_call`). Unknown call state changes nothing. VERIFIED by tests; MEASURED live
+on this PC: no call before, a call while ffmpeg recorded the microphone, no call after, and
+no call while Chaukas itself recorded (a first version counted Chaukas's own capture because
+Windows records the resolved interpreter path; fixed, test added).
+
+Fresh set G (`eval/calls/`, committed before its only run, tag `eval-calls-1`, non-blind):
+7 media look-alikes playing with no call and 6 scam calls (including a muted call and a call
+starting after a video). Before the gate: 6/6 detected, **7/7 false alarms** (three
+critical). After: **6/6 detected, 0/7 false alarms**. NOT YET VERIFIED: a real WhatsApp or
+Zoom call on this PC, and a video playing during a real call (still treated as a call).

@@ -189,6 +189,7 @@ keywords + semantic layer + engine + screen, no LLM):**
 |---|---|---|---|---|
 | Red-team set D (12 attacks, 8 hard look-alikes) | Fresh: committed before its only run | **11/12** | 9/12 | **3/8** |
 | Set E: remote control (8 attacks, 8 look-alikes) | Fresh: committed before its only run | **6/8** (1/8 before the organisation-claim rule) | 1/8 | **0/8** |
+| Set G: call presence (6 scam calls, 7 films / news / videos playing with **no call**) | Fresh: committed before its only run | **6/6** | 4/6 | **0/7** (7/7 before the call-presence gate) |
 | Sets D + E, English cases **spoken aloud**, then heard by Whisper (13 + 11) | Seen as text; first run as audio | 11/13 (same as text) | 7/13 (same) | 2/11 (same) |
 | Held-out AT/BT (8 + 8) | Seen twice before | 7/8 | 5/8 | 1/8 |
 | Robustness matrix (18 + 8) | Seen before | 14/18 | 10/18 | 1/8 |
@@ -379,7 +380,7 @@ the rest run on its CPU); that needs the hardware.
 | Spoken alerts: on each rise to a warning or higher, the alert is said out loud (Indian-English voice; Hindi when a Hindi voice is installed); Chaukas never reacts to its own voice | Built, tested |
 | First-run welcome (live mode): what Chaukas listens to, what stays private, that you decide | Built, tested |
 
-Quality: 875 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
+Quality: 927 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on
 every push.
 
@@ -494,7 +495,7 @@ src/chaukas/
   evaluation/    case scripts, session pipeline, replay, metrics, ablations
   ui/            window: live session, services, presenter, Qt bridge, QML views
   resources/     default.yaml, lexicon.yaml, templates.yaml, context.yaml
-eval/            case scripts (YAML): cases/ (dev, held-out), robustness/, paraphrase/, redteam/, remote/
+eval/            case scripts (YAML): cases/ (dev, held-out), robustness/, paraphrase/, redteam/, remote/, calls/
 docs/            ARCHITECTURE.md, DATA_MODEL.md, REDTEAM.md, WORKLOG.md, diagrams, images
 tests/           one folder per package
 ```
@@ -510,10 +511,14 @@ tests/           one folder per package
 ## Limitations
 
 - **Calls taken on a phone are not covered.** Chaukas hears the PC's audio and microphone.
-- **It hears everything the PC plays.** A film or a news report about scams can raise an
-  alert: in the red-team set a film scene with a threat and an OTP line reached critical,
-  and a news report reached a warning. It follows the default speaker and
-  microphone chosen at start; switching devices mid-call needs a restart.
+- **It hears everything the PC plays.** A film or a news report about scams sounds like a
+  scam call. Chaukas now checks whether a call is happening: during a call the call app
+  holds the microphone (Windows records which apps do), during a video nothing does. With
+  no call for 10 minutes, alerts stop at a notice (fresh set G: media false alarms 7/7 →
+  0/7, scam calls still 6/6). Verified on this PC with a real app recording the microphone;
+  not yet with a real WhatsApp or Zoom call. A video playing *during* a call still counts.
+  It follows the default speaker and microphone chosen at start; switching devices mid-call
+  needs a restart.
 - **Volume:** detection works down to 2 % speaker volume on our laptop, not at 0 %.
 - **Money sent from a phone** instead of the PC reaches warning at most, because the
   transfer never appears on screen.
