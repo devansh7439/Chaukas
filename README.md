@@ -19,8 +19,10 @@ Snapdragon® AI Lab Build & Present Challenge.
 > Whisper, watches the screen, and raises the alert.
 >
 > - **Detection:** across four fresh test sets (each committed before its only run;
->   synthetic and not blind) it caught **28 of 32 scams** and raised **3 false alarms on 29**
->   deliberately hard look-alikes (a film, a news report, a delivery OTP). See [Results](#results).
+>   synthetic and not blind) it caught **28 of 32 scams** and correctly stayed quiet on **26
+>   of 29** deliberately hard innocent look-alikes (the 3 false alarms: a film, a news report,
+>   a delivery OTP; the film-and-news kind is what call presence now fixes, 7/7 → 0/7 on a
+>   fresh set). See [Results](#results).
 > - **Snapdragon:** Whisper's encoder runs on the Hexagon NPU with a safe CPU fallback:
 >   **151 ms** per 30 s window on an X Elite, **70 ms** on an X2 Elite (real devices via
 >   Qualcomm AI Hub), 8× faster than this project's Intel laptop CPU. See [Snapdragon](#snapdragon).
