@@ -28,6 +28,7 @@ def main() -> int:
     parser.add_argument(
         "--seconds", type=float, default=0.0, help="call time to record (0: the case)"
     )
+    parser.add_argument("--by", default="", help="author name for the title card")
     args = parser.parse_args()
 
     import imageio_ffmpeg
@@ -113,6 +114,7 @@ def main() -> int:
                 "An on-device guardian against phone-scam manipulation on Windows PCs.",
                 "What follows is a scripted digital-arrest call played through the real app.",
                 "A fake CBI officer, a threat, “don’t tell anyone”, then a bank transfer page.",
+                *([f"By {args.by}"] if args.by else []),
             ],
         ),
         5.0,

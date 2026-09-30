@@ -358,7 +358,8 @@ the rest run on its CPU); that needs the hardware.
 | Decision trace per alert (source, confidence, decay, contribution, chain step, rule); the Why panel is built from it | Built, tested |
 | Optional local LLM (llama.cpp, managed by Chaukas; evidence guard; schema-constrained) | Built, measured; off by default, not wired into live mode |
 | Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; encoder measured on a real X Elite via AI Hub (150 ms); CPU fallback tested |
-| Tray icon, spoken alerts, onboarding | **Not built** |
+| Tray icon (the level at a glance; Open, Pause / Resume, Quit) and one-click `install.bat` with a Desktop shortcut | Built, tested |
+| Spoken alerts, first-run onboarding | **Not built** |
 
 Quality: 875 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on

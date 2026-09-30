@@ -19,6 +19,7 @@ from PySide6.QtCore import QObject, QTimer, QUrl
 from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterSingletonType
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
 from chaukas.core.config import ChaukasConfig
 from chaukas.core.errors import ChaukasError
@@ -32,6 +33,7 @@ from chaukas.ui.bridge import DashboardBridge
 from chaukas.ui.icons import IconProvider
 from chaukas.ui.live import LiveSession
 from chaukas.ui.settings import load_settings, settings_path
+from chaukas.ui.tray import Tray
 
 logger = logging.getLogger(__name__)
 
@@ -45,18 +47,18 @@ ALERT_WINDOWS: Final = ("noticeWindow", "warningWindow", "criticalWindow")
 _registered = False
 
 
-def create_app(*, headless: bool) -> QGuiApplication:
+def create_app(*, headless: bool) -> QApplication:
     """The application object (created once), with the bundled fonts loaded."""
     global _registered
     existing = QGuiApplication.instance()
-    if isinstance(existing, QGuiApplication):
+    if isinstance(existing, QApplication):
         return existing
     if headless:
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
         # The offscreen platform has no system fonts: use only the bundled ones.
         os.environ.setdefault("QT_QPA_FONTDIR", str(ASSETS / "fonts"))
         QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Software)
-    app = QGuiApplication(sys.argv[:1])
+    app = QApplication(sys.argv[:1])  # widgets: the tray icon and its menu
     app.setApplicationName("Chaukas")
     app.setOrganizationName("Chaukas")
     for font_file in sorted((ASSETS / "fonts").glob("*.ttf")):
@@ -155,6 +157,8 @@ def run_live(
                  config_overrides=config_overrides, semantic=True)  # fmt: skip
     services = LiveServices(ui.bridge, ui.config, audio=audio, screen=screen)
     services.start()
+    tray = Tray(ui.bridge, ui.main_window, app) if QSystemTrayIcon.isSystemTrayAvailable() else None
+    app.aboutToQuit.connect(lambda: tray.hide() if tray else None)
     app.aboutToQuit.connect(services.stop)
     try:
         return app.exec()

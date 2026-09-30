@@ -296,6 +296,7 @@ Only `chaukas setup` downloads anything. Everything lands in `%LOCALAPPDATA%\Cha
   unmeasured.
 - The loopback hears everything the PC plays, and capture follows the default devices
   chosen at start.
-- Not yet built: system tray icon, spoken alerts, onboarding / consent screen. The
+- Not yet built: spoken alerts, onboarding / consent screen (the tray icon and a one-click
+  installer are built). The
   firewall test proving offline operation is written (`tools/offline_check.ps1`) but not
   yet run.
