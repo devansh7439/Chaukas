@@ -294,8 +294,9 @@ remote-tool term (test first). Synthetic speech only; real voices and Hinglish: 
 **Snapdragon** (Qualcomm AI Hub, MEASURED, median of 100 runs): Whisper encoder X Elite
 150.9 ms, X Plus 144.1 ms, X2 Elite 70.4 ms, all layers on the NPU.
 
-Voice detection on the X Elite's CPU (as Chaukas runs it): 0.13 ms per 36 ms window, 21 MB
-(MEASURED, AI Hub, median of 100).
+Voice detection on the X Elite's CPU (as Chaukas runs it): 0.13 ms per 36 ms window, 21 MB;
+the paraphrase model on the same CPU: 44.4 ms per 32-token sentence, 52 MB (token types fixed
+to zeros, as Chaukas feeds them). MEASURED, AI Hub, median of 100 each.
 
 **Bug found on the way:** `chaukas replay` piped on Windows crashed on characters the cp1252
 console cannot encode (the trace quotes the caller). Output now substitutes them. VERIFIED.

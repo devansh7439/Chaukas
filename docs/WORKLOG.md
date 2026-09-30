@@ -964,3 +964,5 @@ screenshots (documented as an open risk).
 - First-run welcome (live mode only, shown once, remembered in settings): what Chaukas
   listens to, that nothing is saved or sent, and that the person always decides; English
   and Hindi.
+- Paraphrase model on the X Elite CPU (AI Hub, token types fixed to zeros as Chaukas feeds
+  them; the earlier failure was AI Hub's random token types): 44.4 ms per 32-token sentence.

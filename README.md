@@ -350,7 +350,9 @@ file Chaukas uses, compiled for ONNX Runtime with the QNN provider, as Chaukas r
 | The same laptop, Chaukas's CPU default (int8 encoder) | ~980 ms | measured with `chaukas benchmark` |
 
 Voice detection (Silero VAD, which Chaukas runs on the CPU), on the X Elite's CPU: **0.13 ms**
-per 36 ms window (median of 100; 21 MB), so it costs almost nothing.
+per 36 ms window (median of 100; 21 MB), so it costs almost nothing. The paraphrase
+(semantic) model, also on the CPU as Chaukas runs it: **44 ms** per 32-token sentence (52 MB).
+All three of Chaukas's models are now measured on real Snapdragon hardware.
 
 Reproduce with `uv run --with qai-hub python tools/aihub_profile.py --device "Snapdragon X
 Elite CRD"` (add `--component vad` for voice detection); the full profile is in [docs/benchmarks/](docs/benchmarks/). What this does
