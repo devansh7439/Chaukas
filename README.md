@@ -14,17 +14,18 @@ Snapdragon® AI Lab Build & Present Challenge.
 
 ![The Chaukas window during a simulated digital-arrest call](docs/images/dashboard.png)
 
-> **Status (28 September 2026).** Live protection works end to end on a Windows PC: it
+> **At a glance (30 September 2026).** Live protection works end to end on a Windows PC: it
 > hears a call (what the PC plays, and your microphone), transcribes it on the device with
-> Whisper, watches the screen (reading the active window's text when a call turns
-> suspicious), and raises the alert. **Latest measurement:** on a fresh red-team set
-> (committed before its only run; synthetic and not blind) it caught **11 of 12 attacks**,
-> 9 of them with a critical alert before the harm, and raised **3 false alarms in 8**
-> deliberately hard look-alikes (a film, a news report about scams, a delivery code). All
-> earlier sets and their history are in [Results](#results). Whisper's encoder is built to
-> run on the Snapdragon NPU, with a safe CPU fallback: on a real Snapdragon X Elite (via
-> Qualcomm AI Hub) it takes **150 ms per 30 s window** on an X Elite and **70 ms** on an X2
-> Elite, 7-15× faster than this project's Intel laptop CPU (see [Snapdragon](#snapdragon)).
+> Whisper, watches the screen, and raises the alert.
+>
+> - **Detection:** across four fresh test sets (each committed before its only run;
+>   synthetic and not blind) it caught **28 of 32 scams** and raised **3 false alarms on 29**
+>   deliberately hard look-alikes (a film, a news report, a delivery OTP). See [Results](#results).
+> - **Snapdragon:** Whisper's encoder runs on the Hexagon NPU with a safe CPU fallback:
+>   **151 ms** per 30 s window on an X Elite, **70 ms** on an X2 Elite (real devices via
+>   Qualcomm AI Hub), 8× faster than this project's Intel laptop CPU. See [Snapdragon](#snapdragon).
+> - **Try it in 5 minutes**, no microphone needed: [Run it](#run-it).
+>   Pitch deck: [docs/Chaukas-Pitch.pdf](docs/Chaukas-Pitch.pdf).
 
 ## Contents
 
