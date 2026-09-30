@@ -990,3 +990,21 @@ screenshots (documented as an open risk).
   2/6 -> **5/6**, critical before harm 0/6 -> 2/6, false alarms 0/6 -> 0/6. Missed SA5 (OTP
   page, no bank page).
 - Tests: 943 (16 new), ruff, format and mypy clean.
+
+### 2026-09-30 - Submission fixes: quick start, installer, pitch deck
+
+- **The README's 5-minute demo crashed on a fresh clone** (`No module named 'numpy'`): the
+  semantic layer is on by default and imports numpy, which only the audio and ASR extras
+  installed. numpy is now a core dependency, and CI runs the quick-start commands with
+  only their two extras. Verified from a fresh GitHub clone with no models and an empty
+  settings folder: replay reaches critical at 29 s; the demo window runs headless without
+  errors.
+- `install.bat` installs uv through winget (Windows' package manager) where it exists;
+  Astral's installer script is the fallback. Dry run of the control flow with uv present:
+  correct. The winget branch itself: not run (it would install uv on this PC).
+- `WhisperOnnx.decode_encoded`: decode encoder output computed elsewhere (tested to give
+  the same text as `transcribe`). Used by `tools/aihub_npu_transcripts.py`, which runs the
+  encoder for every spoken line of sets D and E on a real Snapdragon X Elite NPU (AI Hub
+  inference job) and scores the cases with those transcripts.
+- Pitch deck, 13 slides (`docs/Chaukas-Pitch.pdf`; PPTX kept outside the repo): every
+  number from this log. Project description updated with set H and 943 tests.
