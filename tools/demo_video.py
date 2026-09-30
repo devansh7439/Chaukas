@@ -29,6 +29,7 @@ def main() -> int:
         "--seconds", type=float, default=0.0, help="call time to record (0: the case)"
     )
     parser.add_argument("--by", default="", help="author name for the title card")
+    parser.add_argument("--narrate", action="store_true", help="add a spoken narration track")
     args = parser.parse_args()
 
     import imageio_ffmpeg
@@ -139,8 +140,68 @@ def main() -> int:
     writer.close()
     ui.close()
     QCoreApplication.processEvents()
+    if args.narrate:
+        narrate(args.out, total_s=5.0 + (int(length / STEP_S) + 1) * STEP_S + 5.0)
     print(f"wrote {args.out} ({args.out.stat().st_size / 1e6:.1f} MB, {length:.0f} s of call)")
     return 0
+
+
+# (seconds into the video, words; "Chow-kus" so the voice says the name right).
+# The call starts 5 s in, after the title card; the demo's
+# alerts fire at 8.5 s (notice), 19.9 s (warning) and 29.0 s (critical) of call time.
+NARRATION = (
+    (0.5, "Chow-kus is an on-device guardian against scam calls on Windows PCs."),
+    (6.0, "A caller claims to be from the CBI. Chow-kus transcribes the call on the laptop."),
+    (13.8, "A notice: someone may be pressuring you, with the exact words behind it."),
+    (25.0, "Don't tell anyone, stay on camera: that isolation raises a warning."),
+    (34.2, "A bank page opens. Chow-kus pauses the whole screen and shows every reason, "
+           "with its time."),
+    (45.5, "Nothing is blocked. The person decides."),
+    (53.8, "Speech runs on the PC, and Whisper's encoder on the Snapdragon NPU."),
+)  # fmt: skip
+
+
+def narrate(video: Path, *, total_s: float) -> None:
+    """Speak NARRATION with a Windows voice (Indian English if installed) and mix it into
+    ``video``. Needs the winrt speech packages (see audio_eval.py)."""
+    import asyncio
+    import subprocess
+    import tempfile
+    import wave
+
+    import imageio_ffmpeg
+    import numpy as np
+    from tools.audio_eval import _speak
+
+    from chaukas.asr.benchmark import load_wav
+
+    rate = 16_000
+    track = np.zeros(int(total_s * rate) + rate, dtype=np.float32)
+    free_from = 0.0
+    with tempfile.TemporaryDirectory() as folder:
+        for i, (start, words) in enumerate(NARRATION):
+            wav = Path(folder) / f"line{i}.wav"
+            asyncio.run(_speak(words, ("Ravi", "David"), wav))
+            speech = load_wav(wav)
+            begin = max(start, free_from)  # never talk over the previous line
+            first = int(begin * rate)
+            end = min(len(track), first + len(speech))
+            track[first:end] += speech[: end - first]
+            free_from = begin + len(speech) / rate + 0.3
+        audio = Path(folder) / "narration.wav"
+        with wave.open(str(audio), "wb") as out:
+            out.setnchannels(1)
+            out.setsampwidth(2)
+            out.setframerate(rate)
+            out.writeframes((np.clip(track, -1.0, 1.0) * 32767).astype(np.int16).tobytes())
+        silent = Path(folder) / "silent.mp4"
+        video.replace(silent)
+        subprocess.run(
+            [imageio_ffmpeg.get_ffmpeg_exe(), "-loglevel", "error", "-y", "-i", str(silent),
+             "-i", str(audio), "-c:v", "copy", "-c:a", "aac", "-b:a", "96k", "-shortest",
+             str(video)],
+            check=True,
+        )  # fmt: skip
 
 
 if __name__ == "__main__":

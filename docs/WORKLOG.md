@@ -951,3 +951,6 @@ screenshots (documented as an open risk).
   2/11 false alarms). Found "AnyDesk" heard as "any disk": now recognised.
 - Fixed: piped `chaukas replay` crashed on a cp1252 console (UnicodeEncodeError).
 - Set D re-run on the final code: 12/12 (seen: the claim rule came from RT11's analysis).
+- Tried to profile the paraphrase model on the X Elite CPU (`aihub_profile.py --component
+  paraphrase`): AI Hub's random test inputs used a token-type id of 3 (the model accepts 0-1)
+  and the profile failed, so there is no measurement for it; it needs fixed sample inputs.
