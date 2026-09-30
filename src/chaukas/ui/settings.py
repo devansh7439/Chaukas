@@ -29,6 +29,7 @@ class UserSettings:
     contact_name: str = ""
     contact_number: str = ""
     capture_exclusion: bool = False
+    welcomed: bool = False  # the first-run welcome has been seen
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "contact_name", self.contact_name.strip()[:_MAX_NAME])
@@ -73,7 +74,7 @@ def _valid_fields(data: dict[str, Any]) -> dict[str, Any]:
             continue
         if name == "language" and value not in _LANGUAGES:
             continue
-        if name == "capture_exclusion" and not isinstance(value, bool):
+        if name in ("capture_exclusion", "welcomed") and not isinstance(value, bool):
             continue
         if name in ("contact_name", "contact_number") and not isinstance(value, str):
             continue

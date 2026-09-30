@@ -5,7 +5,7 @@ import Chaukas
 // A centred card over a dimmed page: confirmations and quick info. Esc or the scrim closes.
 Item {
     id: root
-    property string kind: ""        // "end", "contact", "helpline" or ""
+    property string kind: ""        // "welcome", "end", "contact", "helpline" or ""
     readonly property bool shown: kind.length > 0
 
     anchors.fill: parent
@@ -37,6 +37,33 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             anchors.margins: 32
             spacing: 16
+
+            // First run (live mode): what Chaukas does, what stays private
+            AppText {
+                visible: root.kind === "welcome"
+                Layout.fillWidth: true
+                text: dashboard.labels.welcome_title
+                font.pixelSize: Theme.title
+                font.weight: Font.DemiBold
+            }
+            Repeater {
+                model: root.kind === "welcome" ? ["welcome_listen", "welcome_private",
+                                                   "welcome_decide"] : []
+                AppText {
+                    required property string modelData
+                    Layout.fillWidth: true
+                    text: dashboard.labels[modelData]
+                    color: Theme.inkMuted
+                    font.pixelSize: Theme.body
+                    lineHeight: 1.2
+                }
+            }
+            PillButton {
+                visible: root.kind === "welcome"
+                Layout.alignment: Qt.AlignRight
+                text: dashboard.labels.welcome_start
+                onClicked: { dashboard.finishWelcome(); root.kind = "" }
+            }
 
             // End session: confirm, because it discards what Chaukas heard
             AppText {

@@ -1,0 +1,2416 @@
+{
+  "execution_summary": {
+    "estimated_inference_time": 4584,
+    "estimated_inference_peak_memory": 51650560,
+    "first_load_time": 141846,
+    "first_load_peak_memory": 47566848,
+    "warm_load_time": 138198,
+    "warm_load_peak_memory": 47349760,
+    "compile_time": 0,
+    "compile_peak_memory": 0,
+    "compile_memory_increase_range": [
+      0,
+      0
+    ],
+    "compile_memory_peak_range": [
+      0,
+      0
+    ],
+    "first_load_memory_increase_range": [
+      42582016,
+      42582016
+    ],
+    "first_load_memory_peak_range": [
+      42582016,
+      42582016
+    ],
+    "warm_load_memory_increase_range": [
+      42360832,
+      42360832
+    ],
+    "warm_load_memory_peak_range": [
+      42360832,
+      42360832
+    ],
+    "inference_memory_increase_range": [
+      4042752,
+      4042752
+    ],
+    "inference_memory_peak_range": [
+      4042752,
+      4042752
+    ],
+    "all_compile_times": [],
+    "all_first_load_times": [
+      141846
+    ],
+    "all_warm_load_times": [
+      138198
+    ],
+    "all_inference_times": [
+      163970,
+      5848,
+      44783,
+      5137,
+      43189,
+      50535,
+      39438,
+      114223,
+      52493,
+      122378,
+      45400,
+      46891,
+      31757,
+      40796,
+      5160,
+      49087,
+      41396,
+      30385,
+      111945,
+      52825,
+      42830,
+      11709,
+      52795,
+      45260,
+      12427,
+      43938,
+      46083,
+      45784,
+      11817,
+      45229,
+      44116,
+      46296,
+      12017,
+      44782,
+      45679,
+      12277,
+      45360,
+      45289,
+      46667,
+      12344,
+      45935,
+      46074,
+      44981,
+      12210,
+      40164,
+      46120,
+      15934,
+      85887,
+      5143,
+      6214,
+      85102,
+      49647,
+      13261,
+      34662,
+      5897,
+      41173,
+      108520,
+      39171,
+      15808,
+      37533,
+      101669,
+      46682,
+      5021,
+      31595,
+      4967,
+      4584,
+      97799,
+      46454,
+      53368,
+      45875,
+      12366,
+      44221,
+      43579,
+      11488,
+      45003,
+      45796,
+      45919,
+      12445,
+      45841,
+      49119,
+      44839,
+      12469,
+      45703,
+      45818,
+      46710,
+      11430,
+      45892,
+      17085,
+      33913,
+      15882,
+      43048,
+      5574,
+      24511,
+      23959,
+      44543,
+      52139,
+      48767,
+      45945,
+      12226,
+      43002
+    ]
+  },
+  "execution_detail": [
+    {
+      "name": "/embeddings/position_embeddings/Gather_output_0_DequantizeLinear",
+      "type": "DequantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/embeddings/token_type_embeddings/Gather_output_0_DequantizeLinear",
+      "type": "DequantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/embeddings/word_embeddings/Gather",
+      "type": "Gather",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/embeddings/word_embeddings/Gather_output_0_DequantizeLinear",
+      "type": "DequantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/embeddings/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 26,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 109,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/embeddings/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 47,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 77,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 33,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 31,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 48,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Unsqueeze_102",
+      "type": "Unsqueeze",
+      "compute_unit": "CPU",
+      "execution_time": 26,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/Expand",
+      "type": "Expand",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/Cast",
+      "type": "Cast",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Equal_141",
+      "type": "Equal",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Where_143",
+      "type": "Where",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 51,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 33,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 76,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_0",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 107,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 176,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_128",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 116,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 211,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_1",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 109,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.0/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 72,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 25,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 31,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 81,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 33,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 70,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 41,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 75,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_2",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 109,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 178,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_129",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 107,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 211,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_3",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 107,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.1/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 73,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 75,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 44,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 72,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 77,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_4",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 111,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 177,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_130",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 110,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 209,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_5",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 109,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.2/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 72,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 73,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 43,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 73,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 79,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_6",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 177,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_131",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 110,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 210,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_7",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.3/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 33,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 71,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 31,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 69,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 26,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 70,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 75,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_8",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 180,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_132",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 225,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_9",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 112,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.4/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 70,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 72,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 70,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 31,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 76,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_10",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 177,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_133",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 211,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_11",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.5/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 31,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 75,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 71,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 41,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 26,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 33,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 71,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 41,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 75,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_12",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 107,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 182,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_134",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 110,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 215,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_13",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 112,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.6/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 73,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 25,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 33,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 33,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 82,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 25,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 36,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 78,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 46,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 76,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_14",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 112,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 180,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_135",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 210,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_15",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 109,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.7/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 74,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 72,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 25,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 44,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 74,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 43,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 25,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 78,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_16",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 114,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 181,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_136",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 107,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 214,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_17",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 109,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.8/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 31,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 74,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 74,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 43,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 73,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 33,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 41,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 77,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_18",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 109,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 182,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_137",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 112,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 220,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_19",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.9/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 75,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 25,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 31,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 75,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 26,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 74,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 25,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 42,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 23,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 79,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_20",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 112,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 182,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_138",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 108,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 220,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_21",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 111,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.10/output/LayerNorm/Add_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/key/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 74,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Reshape_1",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 25,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Transpose_2",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Mul_1",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Mul_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 31,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/query/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 76,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Reshape",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Transpose",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 30,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Mul",
+      "type": "Mul",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 45,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Add",
+      "type": "Add",
+      "compute_unit": "CPU",
+      "execution_time": 27,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Softmax",
+      "type": "Softmax",
+      "compute_unit": "CPU",
+      "execution_time": 34,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/value/MatMul_quant",
+      "type": "MatMulIntegerToFloat",
+      "compute_unit": "CPU",
+      "execution_time": 75,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Reshape_2",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Transpose_1",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 28,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Transpose_1_output_0_QuantizeLinear",
+      "type": "DynamicQuantizeLinear",
+      "compute_unit": "CPU",
+      "execution_time": 32,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/MatMul_1_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 45,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Transpose_3",
+      "type": "Transpose",
+      "compute_unit": "CPU",
+      "execution_time": 29,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/self/Reshape_3",
+      "type": "Reshape",
+      "compute_unit": "CPU",
+      "execution_time": 24,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/attention/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 85,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_22",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 113,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/intermediate/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 196,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu_139",
+      "type": "Gelu",
+      "compute_unit": "CPU",
+      "execution_time": 111,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/encoder/layer.11/output/dense/MatMul_quant",
+      "type": "DynamicQuantizeMatMul",
+      "compute_unit": "CPU",
+      "execution_time": 222,
+      "execution_cycles": 0
+    },
+    {
+      "name": "SkipLayerNormalization_token_23",
+      "type": "SkipLayerNormalization",
+      "compute_unit": "CPU",
+      "execution_time": 115,
+      "execution_cycles": 0
+    }
+  ]
+}

@@ -56,9 +56,11 @@ class DashboardBridge(QObject):
         *,
         speed: float = 1.0,
         clock: Callable[[], float] = time.monotonic,
+        welcome: bool = False,
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
+        self._welcome = welcome  # live mode: show the first-run welcome if not yet seen
         self._live = live
         self._templates = tuple(templates)
         self._settings = settings
@@ -165,6 +167,17 @@ class DashboardBridge(QObject):
     history = Property(dict, _get_history, notify=historyChanged)
     labels = Property(dict, _get_labels, notify=labelsChanged)
     language = Property(str, _get_language, notify=settingsChanged)
+
+    def _get_first_run(self) -> bool:
+        return self._welcome and not self._settings.welcomed
+
+    firstRun = Property(bool, _get_first_run, notify=settingsChanged)
+
+    @Slot()
+    def finishWelcome(self) -> None:
+        """The person read the welcome: never show it again."""
+        self._update_settings(welcomed=True)
+
     contactName = Property(str, _get_contact_name, notify=settingsChanged)
     contactNumber = Property(str, _get_contact_number, notify=settingsChanged)
     captureExclusion = Property(bool, _get_capture_exclusion, notify=settingsChanged)

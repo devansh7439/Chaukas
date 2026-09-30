@@ -135,6 +135,8 @@ ablation:
 ui:
   capture_exclusion: false     # also hides Chaukas from screen recorders; see blueprint 6.8
   language: en
+  spoken_alerts: true         # say warnings and critical alerts out loud in live mode;
+                               # Chaukas never reacts to its own alert sentences
 
 privacy:
   transcript_horizon_s: 300

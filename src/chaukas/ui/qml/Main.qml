@@ -92,7 +92,11 @@ Window {
             }
         }
 
-        Sheet { id: sheet }
+        Sheet {
+            id: sheet
+            objectName: "sheet"
+            Component.onCompleted: if (dashboard.firstRun) kind = "welcome"
+        }
         Toast { id: toast }
     }
 

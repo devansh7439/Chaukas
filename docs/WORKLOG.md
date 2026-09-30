@@ -954,3 +954,13 @@ screenshots (documented as an open risk).
 - Tried to profile the paraphrase model on the X Elite CPU (`aihub_profile.py --component
   paraphrase`): AI Hub's random test inputs used a token-type id of 3 (the model accepts 0-1)
   and the profile failed, so there is no measurement for it; it needs fixed sample inputs.
+
+- Spoken alerts (`ui/voice.py`, `ui.spoken_alerts`, on by default in live mode): on each rise
+  to a warning, a critical or the recovery level, the alert text is said out loud (Microsoft
+  Heera, Indian English; Hindi when a Hindi voice is installed). Not on a notice, not
+  repeated, not on the way down, not while paused. Every spoken sentence is tested to give
+  no evidence when heard back through the loopback. AlertVoice is owned by the bridge (a
+  first version was silently garbage-collected; the test caught it).
+- First-run welcome (live mode only, shown once, remembered in settings): what Chaukas
+  listens to, that nothing is saved or sent, and that the person always decides; English
+  and Hindi.

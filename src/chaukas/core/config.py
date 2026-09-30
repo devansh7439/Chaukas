@@ -200,6 +200,7 @@ class AblationConfig(_Section):
 class UIConfig(_Section):
     capture_exclusion: bool
     language: Literal["en", "hi"]
+    spoken_alerts: bool  # say warnings and critical alerts out loud (live mode)
 
 
 class PrivacyConfig(_Section):

@@ -42,9 +42,6 @@ PARAPHRASE_REPO = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 PARAPHRASE_REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
 PARAPHRASE_FILE = "onnx/model_qint8_arm64.onnx"
 PARAPHRASE_TOKENS = 32
-PARAPHRASE_SPECS = dict.fromkeys(
-    ("input_ids", "attention_mask", "token_type_ids"), ((1, PARAPHRASE_TOKENS), "int64")
-)
 OUT_DIR = Path(__file__).resolve().parents[1] / "docs" / "benchmarks"
 
 
@@ -60,7 +57,7 @@ def main() -> int:
     parser.add_argument("--list-devices", action="store_true", help="list Snapdragon devices")
     parser.add_argument("--model", type=Path, help="use this encoder file instead of downloading")
     parser.add_argument("--local-only", action="store_true", help="only time the CPU here")
-    parser.add_argument("--component", choices=["encoder", "paraphrase"], default="encoder",
+    parser.add_argument("--component", choices=["encoder", "paraphrase", "vad"], default="encoder",
                         help="encoder: Whisper's encoder on the NPU; paraphrase: the "
                              "semantic model on the device's CPU, as Chaukas runs it")  # fmt: skip
     args = parser.parse_args()
@@ -72,8 +69,8 @@ def main() -> int:
                 print(f"{device.name}   ({device.os})")
         return 0
 
-    if args.component == "paraphrase":
-        return _paraphrase(args)
+    if args.component in ("paraphrase", "vad"):
+        return _on_cpu(args)
     model = args.model or _download_encoder()
     print(f"Encoder: {model} ({model.stat().st_size / 1e6:.0f} MB)")
     cpu_ms = _time_on_this_cpu(model)
@@ -108,37 +105,77 @@ def main() -> int:
     return 0
 
 
-def _paraphrase(args: argparse.Namespace) -> int:
-    """The semantic layer's model on the device's CPU, as Chaukas runs it there."""
-    os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+def _paraphrase_model() -> Path:
+    """The ARM64 paraphrase model with token_type_ids fixed to zeros, as Chaukas feeds it.
+
+    AI Hub profiles with random inputs, and a random token type (the model knows 0 and 1)
+    makes the embedding lookup fail; baking the zeros in keeps the real computation."""
+    import tempfile
+
+    import onnx
     from huggingface_hub import hf_hub_download
 
-    model = args.model or Path(hf_hub_download(PARAPHRASE_REPO, PARAPHRASE_FILE,
-                                               revision=PARAPHRASE_REVISION))  # fmt: skip
-    print(f"Paraphrase model: {model} ({model.stat().st_size / 1e6:.0f} MB)")
+    source = Path(hf_hub_download(PARAPHRASE_REPO, PARAPHRASE_FILE, revision=PARAPHRASE_REVISION))
+    model = onnx.load(str(source))
+    graph = model.graph
+    for graph_input in list(graph.input):
+        if graph_input.name == "token_type_ids":
+            graph.input.remove(graph_input)
+    zeros = onnx.helper.make_tensor(
+        "token_type_ids", onnx.TensorProto.INT64, (1, PARAPHRASE_TOKENS), [0] * PARAPHRASE_TOKENS
+    )
+    graph.initializer.append(zeros)
+    out = Path(tempfile.gettempdir()) / "chaukas-paraphrase-zero-token-types.onnx"
+    onnx.save(model, str(out))
+    return out
+
+
+def _on_cpu(args: argparse.Namespace) -> int:
+    """A model Chaukas runs on the CPU, profiled on the device's CPU: the paraphrase model
+    (one 32-token sentence) or voice detection (one 576-sample window)."""
+    os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+    if args.component == "paraphrase":
+        model = args.model or _paraphrase_model()
+        specs: dict[str, Any] = dict.fromkeys(
+            ("input_ids", "attention_mask"), ((1, PARAPHRASE_TOKENS), "int64")
+        )
+        label, unit = "paraphrase-minilm", f"{PARAPHRASE_TOKENS}-token sentence"
+    else:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+        from chaukas.audio.vad import find_vad_model
+
+        model = args.model or find_vad_model()
+        specs = {"input": ((1, 576), "float32"), "h": ((1, 1, 128), "float32"),
+                 "c": ((1, 1, 128), "float32")}  # fmt: skip
+        label, unit = "silero-vad", "36 ms window"
+    print(f"{label}: {model} ({model.stat().st_size / 1e6:.1f} MB)")
     hub = _hub()
     device = hub.Device(args.device)
     options = f"--target_runtime {args.runtime} --compute_unit cpu"
     print(f"Compiling for {args.device} ({options})...")
     compile_job = hub.submit_compile_job(
-        model=str(model), device=device, name="chaukas-paraphrase-minilm",
-        input_specs=PARAPHRASE_SPECS, options=options,
+        model=str(model), device=device, name=f"chaukas-{label}",
+        input_specs=specs, options=options,
     )  # fmt: skip
     target = compile_job.get_target_model()
     if target is None:
         print(f"Compilation failed; see {compile_job.url}", file=sys.stderr)
         return 1
     profile_job = hub.submit_profile_job(model=target, device=device, options="--compute_unit cpu",
-                                         name="chaukas-paraphrase-minilm")  # fmt: skip
+                                         name=f"chaukas-{label}")  # fmt: skip
     profile: dict[str, Any] = profile_job.download_profile()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     slug = re.sub(r"[^a-z0-9]+", "-", args.device.lower()).strip("-")
-    out = OUT_DIR / f"aihub-paraphrase-minilm-{slug}-cpu.json"
+    out = OUT_DIR / f"aihub-{label}-{slug}-cpu.json"
     out.write_text(json.dumps(profile, indent=2), encoding="utf-8")
     times = profile.get("execution_summary", {}).get("all_inference_times") or []
     if times:
-        print(f"\n{args.device} CPU: median {statistics.median(times) / 1000:.1f} ms per "
-              f"{PARAPHRASE_TOKENS}-token sentence ({len(times)} runs)")  # fmt: skip
+        print(f"\n{args.device} CPU: median {statistics.median(times) / 1000:.2f} ms per "
+              f"{unit} ({len(times)} runs)")  # fmt: skip
+    if not times:
+        out.unlink()  # a failed profile is not a result
+        print("The profile failed; nothing was saved.", file=sys.stderr)
+        return 1
     print(f"  {compile_job.url}\n  {profile_job.url}\nFull profile saved to {out}")
     return 0
 

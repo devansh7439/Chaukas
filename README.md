@@ -349,8 +349,11 @@ file Chaukas uses, compiled for ONNX Runtime with the QNN provider, as Chaukas r
 | This project's Intel Core i7-1360P laptop, CPU (same fp32 file) | 1,053-1,217 ms | 7-8× slower (on battery; two runs) |
 | The same laptop, Chaukas's CPU default (int8 encoder) | ~980 ms | measured with `chaukas benchmark` |
 
+Voice detection (Silero VAD, which Chaukas runs on the CPU), on the X Elite's CPU: **0.13 ms**
+per 36 ms window (median of 100; 21 MB), so it costs almost nothing.
+
 Reproduce with `uv run --with qai-hub python tools/aihub_profile.py --device "Snapdragon X
-Elite CRD"`; the full profile is in [docs/benchmarks/](docs/benchmarks/). What this does
+Elite CRD"` (add `--component vad` for voice detection); the full profile is in [docs/benchmarks/](docs/benchmarks/). What this does
 *not* measure: the whole pipeline on a Snapdragon laptop (the decoder, voice detection and
 the rest run on its CPU); that needs the hardware.
 
@@ -371,7 +374,8 @@ the rest run on its CPU); that needs the hardware.
 | Optional local LLM (llama.cpp, managed by Chaukas; evidence guard; schema-constrained) | Built, measured; off by default, not wired into live mode |
 | Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; encoder measured on a real X Elite via AI Hub (150 ms); CPU fallback tested |
 | Tray icon (the level at a glance; Open, Pause / Resume, Quit) and one-click `install.bat` with a Desktop shortcut | Built, tested |
-| Spoken alerts, first-run onboarding | **Not built** |
+| Spoken alerts: on each rise to a warning or higher, the alert is said out loud (Indian-English voice; Hindi when a Hindi voice is installed); Chaukas never reacts to its own voice | Built, tested |
+| First-run welcome (live mode): what Chaukas listens to, what stays private, that you decide | Built, tested |
 
 Quality: 875 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
 `bandit` clean, no known vulnerabilities in the locked dependencies; CI runs all of it on

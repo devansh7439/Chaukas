@@ -175,6 +175,23 @@ _EN_HI: Final[dict[str, tuple[str, str]]] = {
     "privacy_cloud": ("Cloud upload", "क्लाउड अपलोड"),
     "privacy_local": ("Processed on this PC", "इसी पीसी पर"),
     "privacy_none": ("None", "कोई नहीं"),
+    # First-run welcome (live mode)
+    "welcome_title": ("Welcome to Chaukas", "चौकस में आपका स्वागत है"),
+    "welcome_listen": (
+        "Chaukas listens to calls on this PC (what it plays, and your microphone) and watches "
+        "for remote-access apps and bank pages.",
+        "चौकस इस पीसी पर होने वाली कॉल सुनता है (जो पीसी चलाता है और आपका माइक्रोफ़ोन) और "
+        "रिमोट-एक्सेस ऐप और बैंक पेज पर नज़र रखता है।",
+    ),
+    "welcome_private": (
+        "Everything stays on this PC. Nothing about a call is saved or sent anywhere.",
+        "सब कुछ इसी पीसी पर रहता है। कॉल की कोई भी बात न सेव होती है, न कहीं भेजी जाती है।",
+    ),
+    "welcome_decide": (
+        "If a call looks like a scam, Chaukas interrupts and shows you why. You always decide.",
+        "अगर कोई कॉल धोखाधड़ी जैसी लगे, तो चौकस आपको रोककर वजह दिखाता है। फ़ैसला हमेशा आपका है।",
+    ),
+    "welcome_start": ("Start protecting", "सुरक्षा शुरू करें"),
     "privacy_note": (
         "Transcripts are kept in memory for 5 minutes and never saved. Ending a session "
         "discards everything Chaukas heard.",

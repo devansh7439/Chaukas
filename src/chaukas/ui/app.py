@@ -34,6 +34,7 @@ from chaukas.ui.icons import IconProvider
 from chaukas.ui.live import LiveSession
 from chaukas.ui.settings import load_settings, settings_path
 from chaukas.ui.tray import Tray
+from chaukas.ui.voice import AlertVoice, QtSpeaker
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,7 @@ def load_ui(
     speed: float = 1.0,
     size: tuple[int, int] | None = None,
     semantic: bool = False,
+    welcome: bool = False,
 ) -> LoadedUi:
     """Build the whole interface. Call ``create_app`` first. ``semantic`` loads the
     paraphrase layer (live mode); scripted demos run keywords only, so they stay the same."""
@@ -123,7 +125,8 @@ def load_ui(
     live = LiveSession(config, Lexicon.load(), templates,
                        case=load_case(case) if case else None, semantic=detector)  # fmt: skip
     path = settings_file if settings_file is not None else settings_path()
-    bridge = DashboardBridge(live, templates, load_settings(path), path, speed=speed)
+    bridge = DashboardBridge(live, templates, load_settings(path), path, speed=speed,
+                             welcome=welcome)  # fmt: skip
 
     engine = QQmlApplicationEngine()
     engine.addImageProvider("icon", IconProvider(ASSETS / "icons"))
@@ -154,10 +157,14 @@ def run_live(
 
     app = create_app(headless=False)
     ui = load_ui(case=None, ablation=ablation, config_paths=config_paths,
-                 config_overrides=config_overrides, semantic=True)  # fmt: skip
+                 config_overrides=config_overrides, semantic=True, welcome=True)  # fmt: skip
     services = LiveServices(ui.bridge, ui.config, audio=audio, screen=screen)
     services.start()
     tray = Tray(ui.bridge, ui.main_window, app) if QSystemTrayIcon.isSystemTrayAvailable() else None
+    if ui.config.ui.spoken_alerts:
+        speaker = QtSpeaker()
+        AlertVoice(ui.bridge, speaker.say, languages=speaker.languages)  # owned by the bridge
+
     app.aboutToQuit.connect(lambda: tray.hide() if tray else None)
     app.aboutToQuit.connect(services.stop)
     try:
