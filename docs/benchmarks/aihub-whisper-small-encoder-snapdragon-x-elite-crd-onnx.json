@@ -1,0 +1,2346 @@
+{
+  "execution_summary": {
+    "estimated_inference_time": 150009,
+    "estimated_inference_peak_memory": 271601664,
+    "first_load_time": 25099013,
+    "first_load_peak_memory": 2018783232,
+    "warm_load_time": 1623413,
+    "warm_load_peak_memory": 270770176,
+    "compile_time": 0,
+    "compile_peak_memory": 0,
+    "compile_memory_increase_range": [
+      0,
+      0
+    ],
+    "compile_memory_peak_range": [
+      0,
+      0
+    ],
+    "first_load_memory_increase_range": [
+      1532416000,
+      1532416000
+    ],
+    "first_load_memory_peak_range": [
+      2013814784,
+      2013814784
+    ],
+    "warm_load_memory_increase_range": [
+      24457216,
+      24457216
+    ],
+    "warm_load_memory_peak_range": [
+      265814016,
+      265814016
+    ],
+    "inference_memory_increase_range": [
+      16375808,
+      16375808
+    ],
+    "inference_memory_peak_range": [
+      240918528,
+      240918528
+    ],
+    "all_compile_times": [],
+    "all_first_load_times": [
+      25099013
+    ],
+    "all_warm_load_times": [
+      1623413
+    ],
+    "all_inference_times": [
+      152210,
+      151727,
+      150692,
+      151227,
+      150879,
+      152153,
+      150948,
+      150467,
+      150437,
+      151825,
+      151509,
+      151307,
+      151092,
+      150598,
+      150362,
+      151039,
+      151272,
+      150751,
+      150812,
+      150683,
+      150711,
+      151956,
+      151212,
+      150968,
+      150501,
+      151055,
+      150461,
+      151957,
+      150805,
+      151097,
+      150695,
+      150302,
+      151444,
+      151732,
+      150865,
+      151067,
+      151948,
+      150612,
+      151863,
+      150687,
+      151951,
+      150506,
+      150852,
+      150879,
+      152742,
+      151466,
+      151000,
+      150998,
+      150657,
+      152090,
+      150879,
+      150215,
+      150736,
+      151216,
+      151892,
+      150722,
+      150918,
+      152239,
+      152123,
+      151218,
+      151129,
+      150404,
+      150368,
+      150686,
+      150867,
+      150985,
+      151552,
+      150441,
+      150837,
+      150476,
+      151006,
+      150549,
+      151482,
+      151003,
+      150376,
+      150801,
+      150737,
+      150865,
+      150774,
+      150895,
+      150009,
+      150956,
+      150826,
+      152121,
+      151641,
+      150737,
+      150981,
+      151891,
+      150934,
+      150510,
+      150732,
+      151984,
+      150940,
+      152639,
+      151499,
+      152271,
+      150579,
+      150358,
+      151238,
+      150955
+    ]
+  },
+  "execution_detail": [
+    {
+      "name": "Input",
+      "type": "Input",
+      "compute_unit": "NPU",
+      "execution_time": 17,
+      "execution_cycles": 23869
+    },
+    {
+      "name": "Transpose",
+      "type": "Transpose",
+      "compute_unit": "NPU",
+      "execution_time": 296,
+      "execution_cycles": 415325
+    },
+    {
+      "name": "Transpose_out0_reshapeReshape",
+      "type": "Transpose",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/conv1/Conv",
+      "type": "Conv",
+      "compute_unit": "NPU",
+      "execution_time": 1596,
+      "execution_cycles": 2237579
+    },
+    {
+      "name": "/conv1/ConvReshape",
+      "type": "ConvReshape",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 28078,
+      "execution_cycles": 39354593
+    },
+    {
+      "name": "node_Gelu_173_reshapeReshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/conv2/Conv",
+      "type": "Conv",
+      "compute_unit": "NPU",
+      "execution_time": 10181,
+      "execution_cycles": 14270353
+    },
+    {
+      "name": "/conv2/ConvReshape",
+      "type": "ConvReshape",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2079,
+      "execution_cycles": 2914008
+    },
+    {
+      "name": "/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 247,
+      "execution_cycles": 346858
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1055,
+      "execution_cycles": 1478122
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2701,
+      "execution_cycles": 3785935
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 469,
+      "execution_cycles": 657780
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 354,
+      "execution_cycles": 496136
+    },
+    {
+      "name": "/layers.0/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1659,
+      "execution_cycles": 2325046
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.0/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2263,
+      "execution_cycles": 3172068
+    },
+    {
+      "name": "/layers.0/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15205,
+      "execution_cycles": 21311657
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 858,
+      "execution_cycles": 1202794
+    },
+    {
+      "name": "/layers.0/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 696,
+      "execution_cycles": 975124
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 347,
+      "execution_cycles": 485821
+    },
+    {
+      "name": "/layers.0/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1160,
+      "execution_cycles": 1625756
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.0/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 461,
+      "execution_cycles": 645501
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 979,
+      "execution_cycles": 1372008
+    },
+    {
+      "name": "/layers.0/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1033,
+      "execution_cycles": 1447254
+    },
+    {
+      "name": "/layers.0/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 901,
+      "execution_cycles": 1262250
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.0/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 99,
+      "execution_cycles": 138181
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 996,
+      "execution_cycles": 1396578
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2702,
+      "execution_cycles": 3786507
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 453,
+      "execution_cycles": 634355
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 336,
+      "execution_cycles": 471024
+    },
+    {
+      "name": "/layers.1/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1720,
+      "execution_cycles": 2410515
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.1/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2259,
+      "execution_cycles": 3166596
+    },
+    {
+      "name": "/layers.1/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15236,
+      "execution_cycles": 21354501
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 898,
+      "execution_cycles": 1259088
+    },
+    {
+      "name": "/layers.1/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 711,
+      "execution_cycles": 996478
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 350,
+      "execution_cycles": 490485
+    },
+    {
+      "name": "/layers.1/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1164,
+      "execution_cycles": 1631202
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.1/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 440,
+      "execution_cycles": 616048
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 975,
+      "execution_cycles": 1366907
+    },
+    {
+      "name": "/layers.1/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1066,
+      "execution_cycles": 1493600
+    },
+    {
+      "name": "/layers.1/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 929,
+      "execution_cycles": 1302622
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.1/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 109,
+      "execution_cycles": 153215
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 992,
+      "execution_cycles": 1390183
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2695,
+      "execution_cycles": 3776624
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 436,
+      "execution_cycles": 611404
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 341,
+      "execution_cycles": 478551
+    },
+    {
+      "name": "/layers.2/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1711,
+      "execution_cycles": 2397835
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.2/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2271,
+      "execution_cycles": 3182964
+    },
+    {
+      "name": "/layers.2/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15197,
+      "execution_cycles": 21300584
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 914,
+      "execution_cycles": 1281247
+    },
+    {
+      "name": "/layers.2/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 719,
+      "execution_cycles": 1008350
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 357,
+      "execution_cycles": 500526
+    },
+    {
+      "name": "/layers.2/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1152,
+      "execution_cycles": 1614358
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.2/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 446,
+      "execution_cycles": 624796
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 974,
+      "execution_cycles": 1365570
+    },
+    {
+      "name": "/layers.2/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1036,
+      "execution_cycles": 1452714
+    },
+    {
+      "name": "/layers.2/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 896,
+      "execution_cycles": 1256076
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.2/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 117,
+      "execution_cycles": 164404
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1011,
+      "execution_cycles": 1416439
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2675,
+      "execution_cycles": 3749916
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 454,
+      "execution_cycles": 636775
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 348,
+      "execution_cycles": 488326
+    },
+    {
+      "name": "/layers.3/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1681,
+      "execution_cycles": 2355833
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.3/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2255,
+      "execution_cycles": 3161032
+    },
+    {
+      "name": "/layers.3/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15247,
+      "execution_cycles": 21369906
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 887,
+      "execution_cycles": 1243403
+    },
+    {
+      "name": "/layers.3/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 707,
+      "execution_cycles": 990691
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 351,
+      "execution_cycles": 492173
+    },
+    {
+      "name": "/layers.3/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1175,
+      "execution_cycles": 1646743
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.3/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 437,
+      "execution_cycles": 612509
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 974,
+      "execution_cycles": 1365381
+    },
+    {
+      "name": "/layers.3/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1035,
+      "execution_cycles": 1450832
+    },
+    {
+      "name": "/layers.3/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 920,
+      "execution_cycles": 1289558
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.3/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 93,
+      "execution_cycles": 129931
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 991,
+      "execution_cycles": 1388528
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2663,
+      "execution_cycles": 3732431
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 446,
+      "execution_cycles": 624656
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 342,
+      "execution_cycles": 478877
+    },
+    {
+      "name": "/layers.4/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1711,
+      "execution_cycles": 2397872
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.4/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2251,
+      "execution_cycles": 3154747
+    },
+    {
+      "name": "/layers.4/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15217,
+      "execution_cycles": 21328229
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 905,
+      "execution_cycles": 1267913
+    },
+    {
+      "name": "/layers.4/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 718,
+      "execution_cycles": 1006762
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 350,
+      "execution_cycles": 490185
+    },
+    {
+      "name": "/layers.4/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1171,
+      "execution_cycles": 1640938
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.4/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 438,
+      "execution_cycles": 614468
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 974,
+      "execution_cycles": 1364620
+    },
+    {
+      "name": "/layers.4/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1050,
+      "execution_cycles": 1471384
+    },
+    {
+      "name": "/layers.4/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 928,
+      "execution_cycles": 1300934
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.4/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 85,
+      "execution_cycles": 118929
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 992,
+      "execution_cycles": 1390669
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2662,
+      "execution_cycles": 3731099
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 445,
+      "execution_cycles": 623817
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 344,
+      "execution_cycles": 481613
+    },
+    {
+      "name": "/layers.5/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1690,
+      "execution_cycles": 2369125
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.5/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2262,
+      "execution_cycles": 3170936
+    },
+    {
+      "name": "/layers.5/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15199,
+      "execution_cycles": 21302590
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 874,
+      "execution_cycles": 1224615
+    },
+    {
+      "name": "/layers.5/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 716,
+      "execution_cycles": 1003743
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 354,
+      "execution_cycles": 496739
+    },
+    {
+      "name": "/layers.5/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1159,
+      "execution_cycles": 1625123
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.5/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 422,
+      "execution_cycles": 591710
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 978,
+      "execution_cycles": 1370449
+    },
+    {
+      "name": "/layers.5/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1072,
+      "execution_cycles": 1502609
+    },
+    {
+      "name": "/layers.5/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 934,
+      "execution_cycles": 1308854
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.5/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 98,
+      "execution_cycles": 137857
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1007,
+      "execution_cycles": 1411023
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2701,
+      "execution_cycles": 3785144
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 440,
+      "execution_cycles": 616724
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 346,
+      "execution_cycles": 484376
+    },
+    {
+      "name": "/layers.6/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1685,
+      "execution_cycles": 2361565
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.6/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2255,
+      "execution_cycles": 3160917
+    },
+    {
+      "name": "/layers.6/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15198,
+      "execution_cycles": 21301632
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 881,
+      "execution_cycles": 1234305
+    },
+    {
+      "name": "/layers.6/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 723,
+      "execution_cycles": 1013973
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 345,
+      "execution_cycles": 483455
+    },
+    {
+      "name": "/layers.6/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1186,
+      "execution_cycles": 1662207
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.6/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 454,
+      "execution_cycles": 636267
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 971,
+      "execution_cycles": 1360544
+    },
+    {
+      "name": "/layers.6/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1040,
+      "execution_cycles": 1458052
+    },
+    {
+      "name": "/layers.6/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 933,
+      "execution_cycles": 1308263
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.6/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 95,
+      "execution_cycles": 132543
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 997,
+      "execution_cycles": 1397125
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2703,
+      "execution_cycles": 3788073
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 466,
+      "execution_cycles": 653033
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 349,
+      "execution_cycles": 488741
+    },
+    {
+      "name": "/layers.7/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1704,
+      "execution_cycles": 2387877
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.7/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2213,
+      "execution_cycles": 3101696
+    },
+    {
+      "name": "/layers.7/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15220,
+      "execution_cycles": 21332208
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 921,
+      "execution_cycles": 1290523
+    },
+    {
+      "name": "/layers.7/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 719,
+      "execution_cycles": 1008389
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 440,
+      "execution_cycles": 616896
+    },
+    {
+      "name": "/layers.7/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1281,
+      "execution_cycles": 1795356
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.7/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 432,
+      "execution_cycles": 605862
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 987,
+      "execution_cycles": 1384077
+    },
+    {
+      "name": "/layers.7/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1069,
+      "execution_cycles": 1498663
+    },
+    {
+      "name": "/layers.7/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 945,
+      "execution_cycles": 1324173
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.7/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 97,
+      "execution_cycles": 136224
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1001,
+      "execution_cycles": 1403159
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2696,
+      "execution_cycles": 3779128
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 434,
+      "execution_cycles": 607785
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 342,
+      "execution_cycles": 478915
+    },
+    {
+      "name": "/layers.8/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1694,
+      "execution_cycles": 2374795
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.8/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2268,
+      "execution_cycles": 3178678
+    },
+    {
+      "name": "/layers.8/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15243,
+      "execution_cycles": 21365159
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 911,
+      "execution_cycles": 1277125
+    },
+    {
+      "name": "/layers.8/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 707,
+      "execution_cycles": 991430
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 347,
+      "execution_cycles": 486390
+    },
+    {
+      "name": "/layers.8/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1160,
+      "execution_cycles": 1625233
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.8/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 448,
+      "execution_cycles": 627685
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 974,
+      "execution_cycles": 1365318
+    },
+    {
+      "name": "/layers.8/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1052,
+      "execution_cycles": 1475074
+    },
+    {
+      "name": "/layers.8/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 766,
+      "execution_cycles": 1073868
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.8/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 90,
+      "execution_cycles": 126531
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1004,
+      "execution_cycles": 1407815
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2867,
+      "execution_cycles": 4018229
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 437,
+      "execution_cycles": 612169
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 352,
+      "execution_cycles": 493858
+    },
+    {
+      "name": "/layers.9/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1768,
+      "execution_cycles": 2478554
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.9/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2296,
+      "execution_cycles": 3218723
+    },
+    {
+      "name": "/layers.9/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15233,
+      "execution_cycles": 21350790
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 906,
+      "execution_cycles": 1270361
+    },
+    {
+      "name": "/layers.9/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 719,
+      "execution_cycles": 1007561
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 353,
+      "execution_cycles": 495268
+    },
+    {
+      "name": "/layers.9/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1197,
+      "execution_cycles": 1677715
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.9/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 445,
+      "execution_cycles": 623410
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 980,
+      "execution_cycles": 1373978
+    },
+    {
+      "name": "/layers.9/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1048,
+      "execution_cycles": 1469364
+    },
+    {
+      "name": "/layers.9/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 773,
+      "execution_cycles": 1083160
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.9/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 107,
+      "execution_cycles": 150130
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1000,
+      "execution_cycles": 1402104
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2694,
+      "execution_cycles": 3775535
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 430,
+      "execution_cycles": 603276
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 340,
+      "execution_cycles": 476975
+    },
+    {
+      "name": "/layers.10/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1701,
+      "execution_cycles": 2383520
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.10/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2234,
+      "execution_cycles": 3131324
+    },
+    {
+      "name": "/layers.10/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15221,
+      "execution_cycles": 21333727
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 921,
+      "execution_cycles": 1290208
+    },
+    {
+      "name": "/layers.10/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 706,
+      "execution_cycles": 988937
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 345,
+      "execution_cycles": 483585
+    },
+    {
+      "name": "/layers.10/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1167,
+      "execution_cycles": 1635113
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.10/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 462,
+      "execution_cycles": 647137
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 977,
+      "execution_cycles": 1369802
+    },
+    {
+      "name": "/layers.10/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1040,
+      "execution_cycles": 1457539
+    },
+    {
+      "name": "/layers.10/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 773,
+      "execution_cycles": 1083373
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.10/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 88,
+      "execution_cycles": 123992
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 995,
+      "execution_cycles": 1394383
+    },
+    {
+      "name": "node_Gemm",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 2724,
+      "execution_cycles": 3818458
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Split",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 437,
+      "execution_cycles": 612662
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 355,
+      "execution_cycles": 497138
+    },
+    {
+      "name": "/layers.11/self_attn/Mul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1706,
+      "execution_cycles": 2391428
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.11/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 2275,
+      "execution_cycles": 3189235
+    },
+    {
+      "name": "/layers.11/self_attn/Softmax",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 15219,
+      "execution_cycles": 21330491
+    },
+    {
+      "name": "node_Reshape",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 866,
+      "execution_cycles": 1214445
+    },
+    {
+      "name": "/layers.11/self_attn/MatMul",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 719,
+      "execution_cycles": 1008231
+    },
+    {
+      "name": "node_Transpose",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 372,
+      "execution_cycles": 522017
+    },
+    {
+      "name": "/layers.11/self_attn/out_proj/MatMul/MatMulAddFusion",
+      "type": "self",
+      "compute_unit": "NPU",
+      "execution_time": 1148,
+      "execution_cycles": 1608711
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.11/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 414,
+      "execution_cycles": 580125
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 977,
+      "execution_cycles": 1369119
+    },
+    {
+      "name": "/layers.11/fc1/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "node_Gelu",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1070,
+      "execution_cycles": 1499377
+    },
+    {
+      "name": "/layers.11/fc2/MatMul/MatMulAddFusion",
+      "type": "MatMulAddFusion",
+      "compute_unit": "NPU",
+      "execution_time": 774,
+      "execution_cycles": 1085293
+    },
+    {
+      "name": "gemm_output_reshape",
+      "type": "gemm",
+      "compute_unit": "NPU",
+      "execution_time": 0,
+      "execution_cycles": 0
+    },
+    {
+      "name": "/layers.11/Add",
+      "type": "Add",
+      "compute_unit": "NPU",
+      "execution_time": 21,
+      "execution_cycles": 29319
+    },
+    {
+      "name": "node_LayerNormalization",
+      "type": "node",
+      "compute_unit": "NPU",
+      "execution_time": 1823,
+      "execution_cycles": 2555079
+    },
+    {
+      "name": "Output",
+      "type": "Output",
+      "compute_unit": "NPU",
+      "execution_time": 195,
+      "execution_cycles": 273711
+    }
+  ]
+}

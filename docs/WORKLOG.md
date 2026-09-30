@@ -930,3 +930,13 @@ Every finding was checked against the code first; all were confirmed and fixed t
 
 Not done: real Snapdragon measurements (needs the hardware); OCR via UI Automation before
 screenshots (documented as an open risk).
+
+### 2026-09-30 - Snapdragon X Elite measurement; demo video
+
+- **Measured on a real Snapdragon X Elite** through Qualcomm AI Hub (`tools/aihub_profile.py`,
+  the same fp32 encoder file Chaukas uses, ONNX Runtime with the QNN provider): **150 ms per
+  30 s window**, all 313 layers on the NPU, peak memory 272 MB. The same file on this
+  laptop's Intel CPU: 1,217 ms (8.1x). Profile saved in `docs/benchmarks/`. Not measured:
+  the whole pipeline on a Snapdragon laptop, and power.
+- `tools/demo_video.py`: renders the scripted digital-arrest demo from the real app window,
+  frame by frame, into an MP4 (notice, warning, the full-screen pause with every reason).

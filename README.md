@@ -22,8 +22,9 @@ Snapdragon® AI Lab Build & Present Challenge.
 > 9 of them with a critical alert before the harm, and raised **3 false alarms in 8**
 > deliberately hard look-alikes (a film, a news report about scams, a delivery code). All
 > earlier sets and their history are in [Results](#results). Whisper's encoder is built to
-> run on the Snapdragon NPU, with a safe CPU fallback; performance on Snapdragon hardware
-> is not yet measured (see [Snapdragon](#snapdragon)).
+> run on the Snapdragon NPU, with a safe CPU fallback: on a real Snapdragon X Elite (via
+> Qualcomm AI Hub) it takes **150 ms per 30 s window, 8.1× faster** than this project's Intel
+> laptop CPU (see [Snapdragon](#snapdragon)).
 
 ## Contents
 
@@ -318,8 +319,24 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
   on the CPU and the status line says "speech on CPU (NPU unavailable)"; protection never
   stops.
 - **Measure it:** `uv run chaukas benchmark --asr-device npu --json npu.json` prints and
-  saves the encoder / decoder / total time, the providers really used, whether it fell
-  back, the real-time factor and whether the PC was on battery.
+  saves the encoder / decoder / total time, the providers really used, each part's
+  precision, whether it fell back, the real-time factor, peak memory and whether the PC
+  was on battery.
+
+**Measured on a real Snapdragon X Elite** (30 September 2026, through Qualcomm AI Hub,
+which runs the model on real Snapdragon devices in Qualcomm's lab; the same fp32 encoder
+file Chaukas uses, compiled for ONNX Runtime with the QNN provider, as Chaukas runs it):
+
+| Whisper-small encoder, one 30 s window | Time | Where |
+|---|---|---|
+| **Snapdragon X Elite CRD, NPU** | **150 ms** | all 313 layers on the NPU; peak memory 272 MB |
+| This project's Intel Core i7-1360P laptop, CPU (same fp32 file) | 1,217 ms | 8.1× slower |
+| The same laptop, Chaukas's CPU default (int8 encoder) | ~980 ms | measured with `chaukas benchmark` |
+
+Reproduce with `uv run --with qai-hub python tools/aihub_profile.py --device "Snapdragon X
+Elite CRD"`; the full profile is in [docs/benchmarks/](docs/benchmarks/). What this does
+*not* measure: the whole pipeline on a Snapdragon laptop (the decoder, voice detection and
+the rest run on its CPU); that needs the hardware.
 
 ## What works today
 
@@ -336,7 +353,7 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
 | Evaluation: 124 cases (26 dev, 16 held-out, 26 robustness, 20 paraphrase, 20 red-team, 16 remote control), replay, metrics with confidence intervals and breakdowns by language / intent / set, ablations A-E, `--no-semantic` | Built |
 | Decision trace per alert (source, confidence, decay, contribution, chain step, rule); the Why panel is built from it | Built, tested |
 | Optional local LLM (llama.cpp, managed by Chaukas; evidence guard; schema-constrained) | Built, measured; off by default, not wired into live mode |
-| Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; CPU fallback tested |
+| Whisper's encoder on the Snapdragon NPU (QNN plugin), safe CPU fallback, `chaukas benchmark` | Built; encoder measured on a real X Elite via AI Hub (150 ms); CPU fallback tested |
 | Tray icon, spoken alerts, onboarding | **Not built** |
 
 Quality: 875 automated tests (30 security tests, a six-hour soak test), `ruff`, `mypy --strict` and
@@ -426,6 +443,7 @@ use a server you run yourself (e.g. GenieX on Snapdragon), set `llm.server: exte
 |---|---|---|
 | `powershell -ExecutionPolicy Bypass -File tools\offline_check.ps1` | Chaukas works with all outbound network blocked (firewall rule on its Python, proven effective first, always removed) | An Administrator PowerShell |
 | `uv run --with qai-hub python tools/aihub_profile.py --device "Snapdragon X Elite CRD"` | Whisper's encoder compiled for and profiled on a real Snapdragon device, next to this PC's CPU | A Qualcomm AI Hub account; run `qai-hub configure --api_token ...` yourself |
+| `uv run --with imageio-ffmpeg python tools/demo_video.py --out demo.mp4` | A video of the scripted digital-arrest demo, rendered from the real app window | Nothing |
 | `uv run python tools/hinglish_clips.py record`, then `bench` | How well real Hinglish speech is heard: signals found in your own recordings | A microphone and 2 minutes |
 
 ## Development

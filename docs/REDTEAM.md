@@ -150,7 +150,10 @@ MEASURED here, CPU, **on battery** (Windows throttles the CPU): whisper-small in
 11.3 s clip, real-time factor 1.36, peak working set 926 MB. On mains power the same
 model measured about 2.1 s per sentence earlier.
 
-NPU latency and power on real Snapdragon hardware: **NOT YET VERIFIED**.
+Encoder latency on real Snapdragon hardware, MEASURED on 30 September through Qualcomm AI
+Hub (`tools/aihub_profile.py`): Snapdragon X Elite CRD, 150 ms per 30 s window, all 313
+layers on the NPU, peak memory 272 MB; the same fp32 file on this laptop's CPU: 1,217 ms.
+The whole pipeline on a Snapdragon laptop, and power draw: **NOT YET VERIFIED**.
 
 ## G. Resource exhaustion
 
@@ -201,7 +204,8 @@ VERIFIED (`tests/engine/test_trace.py`).
 4. The embedding model barely separates "my screen" from "your screen" (a presenter
    sharing their screen matches "share your screen" by meaning; notice at most).
 5. Rebuilt remote tools and browser-based remote access are not recognised.
-6. Real Hinglish speech recognition and NPU performance: NOT YET VERIFIED.
+6. Real Hinglish speech recognition, and the whole pipeline on a Snapdragon laptop: NOT YET
+   VERIFIED (the encoder alone is measured on a real X Elite through AI Hub).
 7. OCR reads the whole active window once a call is suspicious. Reading only the text of
    the relevant controls through Windows UI Automation, before falling back to a
    screenshot, would expose less unrelated private content. Not built.
