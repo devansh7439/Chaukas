@@ -943,3 +943,11 @@ screenshots (documented as an open risk).
 
 - Snapdragon X Plus 8-core CRD (AI Hub, same file and runtime): 144 ms per window (median of
   100 runs), all 313 layers on the NPU, peak 271 MB; this laptop's CPU in that run: 1,053 ms.
+
+- Snapdragon X2 Elite CRD (AI Hub): Whisper encoder median 70.4 ms per window, all 313 layers
+  on the NPU, peak 50 MB. X Elite median 150.9 ms, X Plus 144.1 ms (100 runs each).
+- Audio chain (`tools/audio_eval.py`): 24 English cases of sets D and E spoken by Windows
+  voices and transcribed by Whisper; every outcome matched the text run (11/13 detected,
+  2/11 false alarms). Found "AnyDesk" heard as "any disk": now recognised.
+- Fixed: piped `chaukas replay` crashed on a cp1252 console (UnicodeEncodeError).
+- Set D re-run on the final code: 12/12 (seen: the claim rule came from RT11's analysis).

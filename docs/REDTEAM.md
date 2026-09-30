@@ -153,7 +153,9 @@ model measured about 2.1 s per sentence earlier.
 Encoder latency on real Snapdragon hardware, MEASURED on 30 September through Qualcomm AI
 Hub (`tools/aihub_profile.py`): Snapdragon X Elite CRD, 150 ms per 30 s window, all 313
 layers on the NPU, peak memory 272 MB; the same fp32 file on this laptop's CPU: 1,217 ms.
-The whole pipeline on a Snapdragon laptop, and power draw: **NOT YET VERIFIED**.
+Also MEASURED through AI Hub (median of 100 runs): Snapdragon X Plus 144 ms (271 MB), X2 Elite
+70 ms (50 MB), all 313 layers on the NPU on every device. The whole pipeline on a Snapdragon
+laptop, and power draw: **NOT YET VERIFIED**.
 
 ## G. Resource exhaustion
 
@@ -279,3 +281,18 @@ Still to do by the author: run `uv run chaukas benchmark --asr-device npu --json
 npu.json` on a Snapdragon PC (after `uv run chaukas setup --asr-device npu`); it records
 whether QNN bound, per-part precision, encoder, decoder and total time, real-time factor,
 peak memory and battery state.
+
+## L. Through real audio, and three Snapdragon chips (30 September)
+
+**Audio chain** (`tools/audio_eval.py`, MEASURED): the 24 English cases of sets D and E (13
+attacks, 11 look-alikes) spoken by Windows voices (Indian English), transcribed by Chaukas's
+Whisper, scored on what was heard. Text: 11/13 detected, 7/13 critical before harm, 2/11
+false alarms. Audio: identical. Whisper misheard words ("Reefens team", "Korea Company") and
+turned spoken digits into numbers; detection held. It heard "AnyDesk" as "any disk", now a
+remote-tool term (test first). Synthetic speech only; real voices and Hinglish: NOT YET VERIFIED.
+
+**Snapdragon** (Qualcomm AI Hub, MEASURED, median of 100 runs): Whisper encoder X Elite
+150.9 ms, X Plus 144.1 ms, X2 Elite 70.4 ms, all layers on the NPU.
+
+**Bug found on the way:** `chaukas replay` piped on Windows crashed on characters the cp1252
+console cannot encode (the trace quotes the caller). Output now substitutes them. VERIFIED.

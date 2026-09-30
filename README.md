@@ -23,8 +23,8 @@ Snapdragon® AI Lab Build & Present Challenge.
 > deliberately hard look-alikes (a film, a news report about scams, a delivery code). All
 > earlier sets and their history are in [Results](#results). Whisper's encoder is built to
 > run on the Snapdragon NPU, with a safe CPU fallback: on a real Snapdragon X Elite (via
-> Qualcomm AI Hub) it takes **150 ms per 30 s window, 8.1× faster** than this project's Intel
-> laptop CPU (see [Snapdragon](#snapdragon)).
+> Qualcomm AI Hub) it takes **150 ms per 30 s window** on an X Elite and **70 ms** on an X2
+> Elite, 7-15× faster than this project's Intel laptop CPU (see [Snapdragon](#snapdragon)).
 
 ## Contents
 
@@ -189,13 +189,23 @@ keywords + semantic layer + engine + screen, no LLM):**
 |---|---|---|---|---|
 | Red-team set D (12 attacks, 8 hard look-alikes) | Fresh: committed before its only run | **11/12** | 9/12 | **3/8** |
 | Set E: remote control (8 attacks, 8 look-alikes) | Fresh: committed before its only run | **6/8** (1/8 before the organisation-claim rule) | 1/8 | **0/8** |
+| Sets D + E, English cases **spoken aloud**, then heard by Whisper (13 + 11) | Seen as text; first run as audio | 11/13 (same as text) | 7/13 (same) | 2/11 (same) |
 | Held-out AT/BT (8 + 8) | Seen twice before | 7/8 | 5/8 | 1/8 |
 | Robustness matrix (18 + 8) | Seen before | 14/18 | 10/18 | 1/8 |
 | Paraphrase sets B and C (12 + 8) | Seen before | 6/12 | 2/12 | 1/8 |
 | Dev (15 + 11) | Used for development | 13/15 | 10/15 | 1/11 |
 
 Only sets D and E are clean measurements (set E: the same fresh set, run once on the code
-before and once after the rule it tests). The tables below keep the history in the order it
+before and once after the rule it tests). Set D re-run on the final code catches 12/12: the
+organisation-claim rule came from analysing its one miss, so that re-run is not clean.
+
+**Through real audio** (`tools/audio_eval.py`): every line of the 24 English cases in sets D
+and E was spoken by a Windows voice (Indian English: the caller as Ravi, the user as Heera),
+transcribed by Chaukas's Whisper and scored on what Whisper heard. Every outcome matched
+the text run, although Whisper misheard words ("refunds team" as "Reefens team",
+"courier company" as "Korea Company") and turned spoken digits into numbers. It also heard
+"AnyDesk" as "any disk", which is now recognised. Still synthetic speech: no real voices,
+noise or Hinglish. The tables below keep the history in the order it
 happened, including each set's first, clean run.
 
 **History.** Detection (configuration E):
@@ -327,7 +337,7 @@ Chaukas is built to run on Snapdragon-powered Windows on ARM64 PCs:
   precision, whether it fell back, the real-time factor, peak memory and whether the PC
   was on battery.
 
-**Measured on a real Snapdragon X Elite** (30 September 2026, through Qualcomm AI Hub,
+**Measured on a real Snapdragon X Elite** (30 September 2026, through Qualcomm AI Hub; median of 100 runs on each device;
 which runs the model on real Snapdragon devices in Qualcomm's lab; the same fp32 encoder
 file Chaukas uses, compiled for ONNX Runtime with the QNN provider, as Chaukas runs it):
 
@@ -335,6 +345,7 @@ file Chaukas uses, compiled for ONNX Runtime with the QNN provider, as Chaukas r
 |---|---|---|
 | **Snapdragon X Elite CRD, NPU** | **150 ms** | all 313 layers on the NPU; peak memory 272 MB |
 | **Snapdragon X Plus 8-core CRD, NPU** | **144 ms** | all 313 layers on the NPU; peak memory 271 MB |
+| **Snapdragon X2 Elite CRD, NPU** | **70 ms** | all 313 layers on the NPU; peak memory 50 MB |
 | This project's Intel Core i7-1360P laptop, CPU (same fp32 file) | 1,053-1,217 ms | 7-8× slower (on battery; two runs) |
 | The same laptop, Chaukas's CPU default (int8 encoder) | ~980 ms | measured with `chaukas benchmark` |
 
